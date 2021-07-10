@@ -98,4 +98,96 @@ public class BatchClusteringConfig {
     /**
      * This method prints the clustering configuration to a Json string.
      * 
-     * @return String that is the Json representation of 
+     * @return String that is the Json representation of this clustering
+     * configuration.
+     */
+    public String toJsonString() {
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(this, BatchClusteringConfig.class);
+        return jsonString;
+    }
+    
+    /**
+     * This method loads the clustering configuration from a Json string.
+     * 
+     * @param jsonString String that is the Json representation of the
+     * clustering configuration.
+     * @return BatchClusteringConfig corresponding to the Json string.
+     */
+    public static BatchClusteringConfig fromJsonString(String jsonString) {
+        Gson gson = new Gson();
+        BatchClusteringConfig configObj = gson.fromJson(jsonString,
+                BatchClusteringConfig.class);
+        return configObj;
+    }
+    
+    /**
+     * This method prints this clustering configuration to a Json file.
+     * 
+     * @param outFile File to print the Json configuration to.
+     * @throws IOException 
+     */
+    public void toJsonFile(File outFile) throws IOException {
+        if (!outFile.exists() || !outFile.isFile()) {
+            throw new IOException("Bad file path.");
+        } else {
+            FileUtil.createFile(outFile);
+            try (PrintWriter pw = new PrintWriter(new FileWriter(outFile));) {
+                pw.write(toJsonString());
+            } catch (IOException e) {
+                throw e;
+            }
+        }
+    }
+    
+    /**
+     * This method loads this clustering configuration from a Json file.
+     * 
+     * @param inFile File containing the Json clustering configuration.
+     * @return BatchClusteringConfig corresponding to the Json specification.
+     * @throws Exception 
+     */
+    public static BatchClusteringConfig fromJsonFile(File inFile)
+            throws Exception {
+        if (!inFile.exists() || !inFile.isFile()) {
+            throw new IOException("Bad file path.");
+        } else {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(inFile)))) {
+                String jsonString = ReaderToStringUtil.readAsSingleString(br);
+                return fromJsonString(jsonString);
+            } catch (IOException e) {
+                throw e;
+            }
+        }
+    }
+    
+    /**
+     * This method loads all the parameters from the provided clustering
+     * configuration file.
+     * 
+     * @param inConfigFile File to load the configuration from.
+     * @throws Exception
+     */
+    public void loadParameters(File inConfigFile) throws Exception {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(inConfigFile)));) {
+            String s = br.readLine();
+            String[] lineParse;
+            Class currIntMet;
+            Class currFloatMet;
+            algorithmParametrizationMap = new HashMap<>();
+            while (s != null) {
+                s = s.trim();
+                if (s.startsWith("@algorithm")) {
+                    // Clustering algorithm name. Can appear multiple times,
+                    // defining multiple algorithms for comparisons.
+                    lineParse = s.split(" ");
+                    clustererNames.add(lineParse[1].toLowerCase());
+                    System.out.print("Gonna test " + lineParse[1]);
+                    // If there is one more field, it is a JSON specification of
+                    // the parameters to use along with the algorithm.
+                    if (lineParse.length > 2) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 2; i < lineParse.length - 1; i++) {
+                
