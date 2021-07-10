@@ -28,3 +28,28 @@ import java.util.ArrayList;
  * 
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
+public class BookPublication extends Publication {
+    
+    /**
+     * Default constructor.
+     */
+    public BookPublication() {
+    }
+    
+    /**
+     * Initialization.
+     * 
+     * @param title String that is the publication title.
+     * @param authors ArrayList<Author> of publication authors.
+     * @param publisher Publisher that published the publication.
+     * @param doi String that is the DOI.
+     * @param url String that is the URL.
+     * @param startPage Integer that is the start page.
+     * @param endPage Integer that is the end page.
+     * @param year Integer that is the year of the publication.
+     */
+    public BookPublication(String title, ArrayList<Author> authors, 
+            Publisher publisher, String doi, String url, int year) {
+        super(title, authors, publisher, doi, url, 0, 0, year);
+    }
+}
