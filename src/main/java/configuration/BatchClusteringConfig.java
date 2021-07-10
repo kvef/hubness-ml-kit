@@ -190,4 +190,69 @@ public class BatchClusteringConfig {
                     if (lineParse.length > 2) {
                         StringBuilder sb = new StringBuilder();
                         for (int i = 2; i < lineParse.length - 1; i++) {
-                
+                            sb.append(lineParse[i]);
+                            sb.append(" ");
+                        }
+                        sb.append(lineParse[lineParse.length - 1]);
+                        Gson gson = new Gson();
+                        HashMap<String, Object> paramValuesMap =
+                                gson.fromJson(sb.toString(),
+                                new TypeLiteral<HashMap<String, Object>>() {
+                                }.getType());
+                        algorithmParametrizationMap.put(
+                                clustererNames.get(
+                                clustererNames.size() - 1), paramValuesMap);
+                    }
+                } else if (s.startsWith("@in_directory")) {
+                    // Directory containing the datasets to be clustered.
+                    lineParse = s.split("\\s+");
+                    inDir = new File(lineParse[1]);
+                } else if (s.startsWith("@distances_directory")) {
+                    // Directory for the distance matrices. This is where they
+                    // are persisted and/or loaded from.
+                    lineParse = s.split("\\s+");
+                    distancesDir = new File(lineParse[1]);
+                } else if (s.startsWith("@alpha") ||
+                        s.startsWith("@approximateNN")) {
+                    // Approximate nearest neighbors with parameter alpha.
+                    lineParse = s.split("\\s+");
+                    approximateNeighborsAlpha = Float.parseFloat(lineParse[1]);
+                    if (approximateNeighborsAlpha < 1f) {
+                        approximateNeighbors = true;
+                        System.out.println("alpha set to: "
+                                + approximateNeighborsAlpha);
+                    }
+                } else if (s.startsWith("@normalization")) {
+                    // The normalization procedure to apply.
+                    lineParse = s.split("\\s+");
+                    if (lineParse[1].toLowerCase().compareTo("no") == 0) {
+                        normType = BatchClusteringTester.Normalization.NONE;
+                    } else if (lineParse[1].toLowerCase().compareTo(
+                            "normalizeTo01".toLowerCase()) == 0) {
+                        normType = BatchClusteringTester.Normalization.NORM_01;
+                    } else if (lineParse[1].toLowerCase().compareTo(
+                            "TFIDF".toLowerCase()) == 0) {
+                        normType = BatchClusteringTester.Normalization.TFIDF;
+                    } else if (lineParse[1].toLowerCase().compareTo(
+                            "standardize".toLowerCase()) == 0) {
+                        normType = BatchClusteringTester.Normalization.STANDARDIZE;
+                    } else {
+                        normType = BatchClusteringTester.Normalization.STANDARDIZE;
+                    }
+                } else if (s.startsWith("@secondary_distance")) {
+                    // Secondary distance specification.
+                    lineParse = s.split("\\s+");
+                    switch (lineParse[1].toLowerCase()) {
+                        case "simcos": {
+                            secondaryDistanceType =
+                                    BatchClassifierTester.
+                                    SecondaryDistance.SIMCOS;
+                            break;
+                        }
+                        case "simhub": {
+                            secondaryDistanceType =
+                                    BatchClassifierTester.
+                                    SecondaryDistance.SIMHUB;
+                            break;
+                        }
+   
