@@ -255,4 +255,75 @@ public class BatchClusteringConfig {
                                     SecondaryDistance.SIMHUB;
                             break;
                         }
-   
+                        case "mp": {
+                            secondaryDistanceType =
+                                    BatchClassifierTester.SecondaryDistance.MP;
+                            break;
+                        }
+                        case "ls": {
+                            secondaryDistanceType =
+                                    BatchClassifierTester.SecondaryDistance.LS;
+                            break;
+                        }
+                        case "nicdm": {
+                            secondaryDistanceType =
+                                    BatchClassifierTester.
+                                    SecondaryDistance.NICDM;
+                            break;
+                        }
+                        default: {
+                            secondaryDistanceType =
+                                    BatchClassifierTester.
+                                    SecondaryDistance.SIMCOS;
+                            break;
+                        }
+                    }
+                    if (lineParse.length >= 3) {
+                        secondaryK = Integer.parseInt(lineParse[2]);
+                    } else {
+                        secondaryK = 50;
+                    }
+                } else if (s.startsWith("@out_directory")) {
+                    // Directory where to output all the results.
+                    lineParse = s.split("\\s+");
+                    outDir = new File(lineParse[1]);
+                } else if (s.startsWith("@split_training")) {
+                    // Whether to use training/test splits or not.
+                    lineParse = s.split(" ");
+                    splitTesting = true;
+                    splitPerc = Float.parseFloat(lineParse[1]);
+                } else if (s.startsWith("@num_clusters")) {
+                    // Range of cluster numbers to be tested for, or a
+                    // specification of natural clustering where the number of
+                    // classes is to be used as a default value.
+                    clustersAutoSet = false;
+                    lineParse = s.split("\\s+");
+                    if (lineParse[1].toLowerCase().equals("natural")) {
+                        clustersAutoSet = true;
+                        nClustSpecified = true;
+                    } else {
+                        cluNumMin = Integer.parseInt(lineParse[1]);
+                        cluNumMax = Integer.parseInt(lineParse[2]);
+                        cluNumStep = Integer.parseInt(lineParse[3]);
+                        clustersAutoSet = false;
+                        nClustSpecified = true;
+                    }
+                } else if (s.startsWith("@k_range")) {
+                    // Neighborhood size range.
+                    lineParse = s.split("\\s+");
+                    kMin = Integer.parseInt(lineParse[1]);
+                    kMax = Integer.parseInt(lineParse[2]);
+                    kStep = Integer.parseInt(lineParse[3]);
+                } else if (s.startsWith("@noise_range")) {
+                    // Uniform feature noiseRate range.
+                    lineParse = s.split("\\s+");
+                    noiseMin = Float.parseFloat(lineParse[1]);
+                    noiseMax = Float.parseFloat(lineParse[2]);
+                    noiseStep = Float.parseFloat(lineParse[3]);
+                } else if (s.startsWith("@mislabeled_range")) {
+                    // Introduced mislabeling rate.
+                    lineParse = s.split("\\s+");
+                    mlMin = Float.parseFloat(lineParse[1]);
+                    mlMax = Float.parseFloat(lineParse[2]);
+                    mlStep = Float.parseFloat(lineParse[3]);
+                } else if (s.startsWith("@mislabeling_
