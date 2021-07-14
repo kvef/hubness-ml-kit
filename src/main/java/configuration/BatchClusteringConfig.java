@@ -326,4 +326,71 @@ public class BatchClusteringConfig {
                     mlMin = Float.parseFloat(lineParse[1]);
                     mlMax = Float.parseFloat(lineParse[2]);
                     mlStep = Float.parseFloat(lineParse[3]);
-                } else if (s.startsWith("@mislabeling_
+                } else if (s.startsWith("@mislabeling_weights_dir")) {
+                    // Directory with the mislabeling instance weights, if
+                    // the user specifies the instance-weight-proportional
+                    // mislabeling scheme, such as hubness-proportional label
+                    // noise.
+                    lineParse = s.split("\\s+");
+                    mlWeightsDir = new File(lineParse[1]);
+                } else if (s.startsWith("@common_threads")) {
+                    // The number of threads to use in distance matrix and kNN
+                    // calculations.
+                    lineParse = s.split("\\s+");
+                    numCommonThreads = Integer.parseInt(lineParse[1]);
+                } else if (s.startsWith("@times")) {
+                    // Number of times a clustering is repeated on a single
+                    // dataset.
+                    lineParse = s.split("\\s+");
+                    timesOnDataSet = Integer.parseInt(lineParse[1]);
+                } else if (s.startsWith("@iter")) {
+                    // Minimum number of iterations to perform by the algorithms
+                    lineParse = s.split("\\s+");
+                    minIter = Integer.parseInt(lineParse[1]);
+                } else if (s.startsWith("@kernel")) {
+                    // Kernel specification.
+                    lineParse = s.split("\\s+");
+                    String kerName = null;
+                    ArrayList<String> paramNames = new ArrayList<>(4);
+                    ArrayList<Float> paramValues = new ArrayList<>(4);
+                    for (int i = 1; i < lineParse.length; i++) {
+                        String[] pair = lineParse[i].split(":");
+                        if (pair[0].equals("name")) {
+                            kerName = pair[1];
+                        } else {
+                            paramNames.add(pair[0]);
+                            paramValues.add(Float.parseFloat(pair[1]));
+                        }
+                    }
+                    if (kerName != null) {
+                        Class clazz = Class.forName(kerName);
+                        ker = (Kernel) (clazz.newInstance());
+                        System.out.println("Using kernel: " + clazz.getName());
+                        for (int i = 0; i < paramNames.size(); i++) {
+                            Field field = clazz.getField(paramNames.get(i));
+                            field.set(ker, paramValues.get(i));
+                        }
+                    }
+                } else if (s.startsWith("@dataset")) {
+                    // Dataset specification: data path + metric to use.
+                    lineParse = s.split("\\s+");
+                    dsPaths.add(lineParse[1]);
+                    if (lineParse[1].startsWith("sparse:")) {
+                        SparseCombinedMetric scmet = new SparseCombinedMetric(
+                                null, null, (SparseMetric) (Class.forName(
+                                lineParse[1]).newInstance()),
+                                CombinedMetric.DEFAULT);
+                        dsMetric.add(scmet);
+                    } else {
+                        CombinedMetric cmet = new CombinedMetric();
+                        if (!lineParse[2].equals("null")) {
+                            currIntMet = Class.forName(lineParse[2]);
+                            cmet.setIntegerMetric((DistanceMeasure) (
+                                    currIntMet.newInstance()));
+                        }
+                        if (!lineParse[3].equals("null")) {
+                            currFloatMet = Class.forName(lineParse[3]);
+                            cmet.setFloatMetric((DistanceMeasure) (
+                                    currFloatMet.newInstance()));
+                        }
+  
