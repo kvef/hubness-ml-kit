@@ -393,4 +393,32 @@ public class BatchClusteringConfig {
                             cmet.setFloatMetric((DistanceMeasure) (
                                     currFloatMet.newInstance()));
                         }
-  
+                        cmet.setCombinationMethod(CombinedMetric.DEFAULT);
+                        dsMetric.add(cmet);
+                    }
+                } else if (s.startsWith("@")) {
+                    // This means that there is probably a typo in the
+                    // configuration file or an option is being set that is not
+                    // supported.
+                    System.err.println("WARNING: The following option line was "
+                            + "ignored: " + s);
+                }
+                s = br.readLine();
+            }
+            // Now correct the paths by adding inDir in front.
+            for (int i = 0; i < dsPaths.size(); i++) {
+                if (!dsPaths.get(i).startsWith("sparse:")) {
+                    dsPaths.set(i, (new File(inDir, dsPaths.get(i))).getPath());
+                } else {
+                    dsPaths.set(i, "sparse:"
+                            + (new File(inDir, dsPaths.get(i).substring(
+                            dsPaths.get(i).indexOf(":") + 1,
+                            dsPaths.get(i).length()))).getPath());
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+    
+}
