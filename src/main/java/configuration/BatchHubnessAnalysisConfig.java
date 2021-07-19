@@ -55,4 +55,102 @@ public class BatchHubnessAnalysisConfig {
     public int kMax = 50;
     // Noise and mislabeling levels to vary, with default values.
     public float noiseMin = 0, noiseMax = 0, noiseStep = 1, mlMin = 0,
-            mlMax = 0, mlStep 
+            mlMax = 0, mlStep = 1;
+    // Input and output files and directories.
+    public File inDir, outDir, mlWeightsDir;
+    // Paths to the datasets that are being processed.
+    public ArrayList<String> dsPaths = new ArrayList<>(100);
+    // A list of metrics corresponding to the datasets.
+    public ArrayList<CombinedMetric> dsMetric = new ArrayList<>(100);
+    // Directory containing the distances.
+    public File distancesDir;
+    // The number of threads used for distance matrix and kNN set calculations.
+    public int numCommonThreads = 8;
+    
+    /**
+     * This method prints the hubness analysis configuration to a Json string.
+     * 
+     * @return String that is the Json representation of this  configuration.
+     */
+    public String toJsonString() {
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(this, BatchHubnessAnalysisConfig.class);
+        return jsonString;
+    }
+    
+    /**
+     * This method loads the hubness analysis configuration from a Json string.
+     * 
+     * @param jsonString String that is the Json representation of the
+     * configuration.
+     * @return BatchHubnessAnalysisConfig corresponding to the Json string.
+     */
+    public static BatchHubnessAnalysisConfig fromJsonString(String jsonString) {
+        Gson gson = new Gson();
+        BatchHubnessAnalysisConfig configObj = gson.fromJson(jsonString,
+                BatchHubnessAnalysisConfig.class);
+        return configObj;
+    }
+    
+    /**
+     * This method prints this hubness analysis configuration to a Json file.
+     * 
+     * @param outFile File to print the Json configuration to.
+     * @throws IOException 
+     */
+    public void toJsonFile(File outFile) throws IOException {
+        if (!outFile.exists() || !outFile.isFile()) {
+            throw new IOException("Bad file path.");
+        } else {
+            FileUtil.createFile(outFile);
+            try (PrintWriter pw = new PrintWriter(new FileWriter(outFile));) {
+                pw.write(toJsonString());
+            } catch (IOException e) {
+                throw e;
+            }
+        }
+    }
+    
+    /**
+     * This method loads this hubness analysis configuration from a Json file.
+     * 
+     * @param inFile File containing the Json configuration.
+     * @return BatchHubnessAnalysisConfig corresponding to the Json
+     * specification.
+     * @throws Exception 
+     */
+    public static BatchHubnessAnalysisConfig fromJsonFile(File inFile)
+            throws Exception {
+        if (!inFile.exists() || !inFile.isFile()) {
+            throw new IOException("Bad file path.");
+        } else {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(inFile)))) {
+                String jsonString = ReaderToStringUtil.readAsSingleString(br);
+                return fromJsonString(jsonString);
+            } catch (IOException e) {
+                throw e;
+            }
+        }
+    }
+    
+    /**
+     * This method loads the parameters from the configuration file.
+     *
+     * @param inConfigFile File to load the configuration from.
+     * @throws Exception
+     */
+    public void loadParameters(File inConfigFile) throws Exception {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(inConfigFile)))) {
+            String s = br.readLine();
+            String[] lineParse;
+            // Integer and float metrics.
+            Class currIntMet;
+            Class currFloatMet;
+            secondaryDistanceType = SecondaryDistance.NONE;
+            // Read the file line by line.
+            while (s != null) {
+                s = s.trim();
+                if (s.startsWith("@in_directory")) {
+                 
