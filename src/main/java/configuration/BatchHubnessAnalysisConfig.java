@@ -219,4 +219,74 @@ public class BatchHubnessAnalysisConfig {
                             break;
                         }
                         case "ls": {
-                            secondaryDistanceType = SecondaryDistance.L
+                            secondaryDistanceType = SecondaryDistance.LS;
+                            break;
+                        }
+                        case "nicdm": {
+                            secondaryDistanceType = SecondaryDistance.NICDM;
+                            break;
+                        }
+                        default: {
+                            secondaryDistanceType = SecondaryDistance.SIMCOS;
+                            break;
+                        }
+                    }
+                    if (lineParse.length >= 3) {
+                        secondaryDistanceK = Integer.parseInt(lineParse[2]);
+                    } else {
+                        secondaryDistanceK = 50;
+                    }
+                } else if (s.startsWith("@distances_directory")) {
+                    // Directory for loading and/or persisting the distance
+                    // matrices.
+                    lineParse = s.split("\\s+");
+                    distancesDir = new File(lineParse[1]);
+                } else if (s.startsWith("@dataset")) {
+                    // Dataset specification.
+                    lineParse = s.split("\\s+");
+                    // The data path relative to the input directory.
+                    dsPaths.add(lineParse[1]);
+                    // What follows is the metric to use on the dataset.
+                    if (lineParse[1].startsWith("sparse:")) {
+                        // If the path is preceded by "sparse:", we read in a
+                        // sparse metric.
+                        SparseCombinedMetric cmetSparse =
+                                new SparseCombinedMetric(null, null,
+                                (SparseMetric) (Class.forName(
+                                lineParse[2]).newInstance()),
+                                CombinedMetric.DEFAULT);
+                        dsMetric.add(cmetSparse);
+                    } else {
+                        // Load the specified metric.
+                        CombinedMetric cmetLoaded = new CombinedMetric();
+                        if (!lineParse[2].equals("null")) {
+                            currIntMet = Class.forName(lineParse[2]);
+                            cmetLoaded.setIntegerMetric(
+                                    (DistanceMeasure) (
+                                    currIntMet.newInstance()));
+                        }
+                        if (!lineParse[3].equals("null")) {
+                            currFloatMet = Class.forName(lineParse[3]);
+                            cmetLoaded.setFloatMetric(
+                                    (DistanceMeasure) (
+                                    currFloatMet.newInstance()));
+                        }
+                        cmetLoaded.setCombinationMethod(CombinedMetric.DEFAULT);
+                        dsMetric.add(cmetLoaded);
+                    }
+                } else if (s.startsWith("@")) {
+                    // This means that there is probably a typo in the
+                    // configuration file or an option is being set that is not
+                    // supported.
+                    System.err.println("WARNING: The following option line was "
+                            + "ignored: " + s);
+                }
+                s = br.readLine();
+            }
+            // Convert relative to absolute paths, by pre-pending the input
+            // directory path.
+            for (int i = 0; i < dsPaths.size(); i++) {
+                if (!dsPaths.get(i).startsWith("sparse:")) {
+                    dsPaths.set(i, (new File(inDir, dsPaths.get(i))).getPath());
+                } else {
+                    dsPaths.set(i, "sparse:"
