@@ -87,4 +87,89 @@ public class MixtureOfFloatGenerators {
      * Generate a certain number of points based on each underlying data
      * generator.
      *
-     * @param amounts An integer array specifying how many instances to
+     * @param amounts An integer array specifying how many instances to generate
+     * by each individual generator specified in the indexes.
+     * @param generatorIndexes Indexes of the generators to use.
+     * @return An array of generated DataInstance objects.
+     */
+    public DataInstance[] generateDataInstances(int[] amounts,
+            int[] generatorIndexes) {
+        int totalAmount = 0;
+        if (amounts == null || generatorIndexes == null || amounts.length == 0
+                || generatorIndexes.length == 0) {
+            return null;
+        }
+        for (int i = 0; i < amounts.length; i++) {
+            totalAmount += amounts[i];
+        }
+        int currIndex = -1;
+        DataInstance[] newData = new DataInstance[totalAmount];
+        DataInstance instance;
+        for (int i = 0; i < amounts.length; i++) {
+            for (int j = 0; j < amounts[i]; j++) {
+                instance = new DataInstance();
+                instance.fAttr =
+                        generators[generatorIndexes[i]].generateFloat();
+                instance.setCategory(generatorIndexes[i]);
+                newData[++currIndex] = instance;
+            }
+        }
+        return newData;
+    }
+
+    /**
+     * Generate a certain number of points based on each underlying data
+     * generator.
+     *
+     * @param amounts An integer array specifying how many instances to generate
+     * by each individual generator.
+     * @return An array of float arrays representing the generated features.
+     */
+    public float[][] generateData(int[] amounts) {
+        int totalAmount = 0;
+        if (amounts == null || amounts.length == 0) {
+            return null;
+        }
+        for (int i = 0; i < amounts.length; i++) {
+            totalAmount += amounts[i];
+        }
+        int currIndex = -1;
+        float[][] newData = new float[totalAmount][];
+        for (int i = 0; i < amounts.length; i++) {
+            for (int j = 0; j < amounts[i]; j++) {
+                newData[++currIndex] = generators[i].generateFloat();
+            }
+        }
+        return newData;
+    }
+
+    /**
+     * Generate a certain number of points based on each underlying data
+     * generator.
+     *
+     * @param amounts An integer array specifying how many instances to generate
+     * by each individual generator.
+     * @return An array of generated DataInstance objects.
+     */
+    public DataInstance[] generateDataInstances(int[] amounts) {
+        int totalAmount = 0;
+        if (amounts == null || amounts.length == 0) {
+            return null;
+        }
+        for (int i = 0; i < amounts.length; i++) {
+            totalAmount += amounts[i];
+        }
+        int currIndex = -1;
+        DataInstance[] newData = new DataInstance[totalAmount];
+        DataInstance instance;
+        for (int i = 0; i < amounts.length; i++) {
+            for (int j = 0; j < amounts[i]; j++) {
+                instance = new DataInstance();
+                instance.fAttr = generators[i].generateFloat();
+                instance.setCategory(i);
+                newData[++currIndex] = instance;
+            }
+        }
+        return newData;
+    }
+}
