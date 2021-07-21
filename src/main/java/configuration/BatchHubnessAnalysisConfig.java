@@ -153,4 +153,70 @@ public class BatchHubnessAnalysisConfig {
             while (s != null) {
                 s = s.trim();
                 if (s.startsWith("@in_directory")) {
-                 
+                    // Input directory.
+                    lineParse = s.split("\\s+");
+                    inDir = new File(lineParse[1]);
+                } else if (s.startsWith("@out_directory")) {
+                    // Output directory.
+                    lineParse = s.split("\\s+");
+                    outDir = new File(lineParse[1]);
+                } else if (s.startsWith("@k_max")) {
+                    // Maximal k-value to which to iterate.
+                    lineParse = s.split("\\s+");
+                    kMax = Integer.parseInt(lineParse[1]);
+                } else if (s.startsWith("@noise_range")) {
+                    // Noise range: min, max, increment.
+                    lineParse = s.split("\\s+");
+                    noiseMin = Float.parseFloat(lineParse[1]);
+                    noiseMax = Float.parseFloat(lineParse[2]);
+                    noiseStep = Float.parseFloat(lineParse[3]);
+                } else if (s.startsWith("@mislabeled_range")) {
+                    // Mislabeling range: min, max, increment.
+                    lineParse = s.split("\\s+");
+                    mlMin = Float.parseFloat(lineParse[1]);
+                    mlMax = Float.parseFloat(lineParse[2]);
+                    mlStep = Float.parseFloat(lineParse[3]);
+                } else if (s.startsWith("@mislabeling_weights_dir")) {
+                    // Directory with the mislabeling instance weights, if
+                    // the user specifies the instance-weight-proportional
+                    // mislabeling scheme, such as hubness-proportional label
+                    // noise.
+                    lineParse = s.split("\\s+");
+                    mlWeightsDir = new File(lineParse[1]);
+                } else if (s.startsWith("@common_threads")) {
+                    // The number of threads to use in distance matrix and kNN
+                    // calculations.
+                    lineParse = s.split("\\s+");
+                    numCommonThreads = Integer.parseInt(lineParse[1]);
+                } else if (s.startsWith("@normalization")) {
+                    // Normalization specification.
+                    lineParse = s.split("\\s+");
+                    if (lineParse[1].toLowerCase().compareTo("no") == 0) {
+                        normType = Normalization.NONE;
+                    } else if (lineParse[1].toLowerCase().compareTo(
+                            "normalizeTo01".toLowerCase()) == 0) {
+                        normType = Normalization.NORM_01;
+                    } else if (lineParse[1].toLowerCase().compareTo(
+                            "TFIDF".toLowerCase()) == 0) {
+                        normType = Normalization.TFIDF;
+                    } else {
+                        normType = Normalization.STANDARDIZE;
+                    }
+                } else if (s.startsWith("@secondary_distance")) {
+                    // Secondary distance specification.
+                    lineParse = s.split("\\s+");
+                    switch (lineParse[1].toLowerCase()) {
+                        case "simcos": {
+                            secondaryDistanceType = SecondaryDistance.SIMCOS;
+                            break;
+                        }
+                        case "simhub": {
+                            secondaryDistanceType = SecondaryDistance.SIMHUB;
+                            break;
+                        }
+                        case "mp": {
+                            secondaryDistanceType = SecondaryDistance.MP;
+                            break;
+                        }
+                        case "ls": {
+                            secondaryDistanceType = SecondaryDistance.L
