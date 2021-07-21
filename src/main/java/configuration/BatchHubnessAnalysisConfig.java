@@ -289,4 +289,15 @@ public class BatchHubnessAnalysisConfig {
                 if (!dsPaths.get(i).startsWith("sparse:")) {
                     dsPaths.set(i, (new File(inDir, dsPaths.get(i))).getPath());
                 } else {
-                    dsPaths.set(i, "sparse:"
+                    dsPaths.set(i, "sparse:" + (new File(inDir,
+                            dsPaths.get(i).substring(
+                            dsPaths.get(i).indexOf(":") + 1,
+                            dsPaths.get(i).length()))).getPath());
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+    
+}
