@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -20,18 +21,31 @@ import data.representation.util.DataMineConstants;
 import java.util.Random;
 
 /**
- * Generate a spheric multi-dimensional Gaussian synthetic data set.
+ * The idea for this class was to have a generator capable of generating
+ * clusters of points that would not be entirely spherical. In particular, this
+ * implementation generates clusters that consist of paired overlapping Gaussian
+ * distributions. Additionally, there will be a difference in relative density
+ * between the two Gaussian generated volumes, so that the centroid would not be
+ * well centered. This makes for an interesting test-shape for clustering.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class MultiDimensionalSphericGaussianGenerator implements DataGenerator {
+public class PairedSphericGaussians implements DataGenerator {
 
+    // Mean, standard deviation and lower and upper value bounds for all the
+    // float features that will be generated.
     private float[] mean;
     private float[] stDev;
     private float[] lowerBounds;
     private float[] upperBounds;
+    // Default robability of belonging to the first subcluster.
+    private float firstProb = 0.67f;
 
     /**
+     * The two subcluster means will be at mean - stDev/2 and mean + stDev/2.
+     * The proportion of elements in the two subclusters is governed by a biased
+     * coin toss.
+     *
      * @param mean Float array representing float feature means.
      * @param stDev Float array representing float feature standard deviations.
      * @param lowerBounds Float array representing float feature value lower
@@ -39,15 +53,17 @@ public class MultiDimensionalSphericGaussianGenerator implements DataGenerator {
      * @param upperBounds Float array representing float feature value upper
      * bounds.
      */
-    public MultiDimensionalSphericGaussianGenerator(
+    public PairedSphericGaussians(
             float[] mean,
             float[] stDev,
             float[] lowerBounds,
-            float[] upperBounds) {
+            float[] upperBounds,
+            float firstProb) {
         this.mean = mean;
         this.stDev = stDev;
         this.lowerBounds = lowerBounds;
         this.upperBounds = upperBounds;
+        this.firstProb = firstProb;
     }
 
     @Override
@@ -55,12 +71,27 @@ public class MultiDimensionalSphericGaussianGenerator implements DataGenerator {
         Random randa = new Random();
         float decision;
         float[] instance = new float[mean.length];
+        firstProb = 0.6f + 0.2f * randa.nextFloat();
         for (int i = 0; i < instance.length; i++) {
             decision = randa.nextFloat();
-            if (decision < 0.5) {
-                instance[i] = mean[i] + stDev[i] * (float) randa.nextGaussian();
+            if (decision > firstProb) {
+                decision = randa.nextFloat();
+                if (decision < 0.5) {
+                    instance[i] = mean[i] - (stDev[i] / 2f) + stDev[i]
+                            * (float) randa.nextGaussian();
+                } else {
+                    instance[i] = mean[i] - (stDev[i] / 2f) - stDev[i]
+                            * (float) randa.nextGaussian();
+                }
             } else {
-                instance[i] = mean[i] - stDev[i] * (float) randa.nextGaussian();
+                decision = randa.nextFloat();
+                if (decision < 0.5) {
+                    instance[i] = mean[i] + (stDev[i] / 2f) + stDev[i]
+                            * (float) randa.nextGaussian();
+                } else {
+                    instance[i] = mean[i] + (stDev[i] / 2f) - stDev[i]
+                            * (float) randa.nextGaussian();
+                }
             }
             // Validation.
             instance[i] = Math.max(lowerBounds[i], instance[i]);
@@ -74,14 +105,27 @@ public class MultiDimensionalSphericGaussianGenerator implements DataGenerator {
         Random randa = new Random();
         float decision;
         int[] instance = new int[mean.length];
+        firstProb = 0.6f + 0.2f * randa.nextFloat();
         for (int i = 0; i < instance.length; i++) {
             decision = randa.nextFloat();
-            if (decision < 0.5) {
-                instance[i] = (int) (mean[i] + stDev[i]
-                        * (float) randa.nextGaussian());
+            if (decision > firstProb) {
+                decision = randa.nextFloat();
+                if (decision < 0.5) {
+                    instance[i] = (int) (mean[i] - (stDev[i] / 2f)
+                            + stDev[i] * (float) randa.nextGaussian());
+                } else {
+                    instance[i] = (int) (mean[i] - (stDev[i] / 2f)
+                            - stDev[i] * (float) randa.nextGaussian());
+                }
             } else {
-                instance[i] = (int) (mean[i] - stDev[i]
-                        * (float) randa.nextGaussian());
+                decision = randa.nextFloat();
+                if (decision < 0.5) {
+                    instance[i] = (int) (mean[i] + (stDev[i] / 2f)
+                            + stDev[i] * (float) randa.nextGaussian());
+                } else {
+                    instance[i] = (int) (mean[i] + (stDev[i] / 2f)
+                            - stDev[i] * (float) randa.nextGaussian());
+                }
             }
             // Validation.
             if (instance[i] < lowerBounds[i]) {
