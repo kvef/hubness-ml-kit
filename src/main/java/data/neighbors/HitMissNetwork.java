@@ -102,4 +102,91 @@ public class HitMissNetwork {
         // First check for trivial cases.
         if (dset == null || dset.isEmpty()) {
             throw new Exception("No data provided.");
-     
+        }
+        int dSize = dset.size();
+        if (k <= 0 || k > dSize) {
+            throw new Exception("Bad neighborhood size provided: " + k);
+        }
+        if (dMat == null) {
+            throw new Exception("No distance matrix provided.");
+        }
+        int numClasses = dset.countCategories();
+        if (numClasses == 1) {
+            throw new Exception("Only one class detected in the data. Use "
+                    + "standard kNN extraction methods instead.");
+        }
+        // Initialize class-specific tabu maps for kNN extraction.
+        Category[] classes = dset.getClassesArray(numClasses);
+        int minClassSize = dSize;
+        for (int c = 0; c < numClasses; c++) {
+            if (classes[c].size() < minClassSize) {
+                minClassSize = classes[c].size();
+            }
+        }
+        if (k > minClassSize) {
+            throw new Exception("Specified neighborhood size exceeds minimum "
+                    + "class size. Unable to form hit networks for k: " + k);
+        }
+        tabuMapsClassQueries = new HashMap[dSize];
+        tabuMapsClassComplementQueries = new HashMap[dSize];
+        for (int c = 0; c < numClasses; c++) {
+            tabuMapsClassQueries[c] = new HashMap<>(dSize);
+            for (int cOther = 0; cOther < c; cOther++) {
+                for (int index: classes[cOther].getIndexes()) {
+                    tabuMapsClassQueries[c].put(index, cOther);
+                }
+            }
+            for (int cOther = c + 1; cOther < numClasses; cOther++) {
+                for (int index: classes[cOther].getIndexes()) {
+                    tabuMapsClassQueries[c].put(index, cOther);
+                }
+            }
+            tabuMapsClassComplementQueries[c] = new HashMap<>(dSize);
+            for (int index: classes[c].getIndexes()) {
+                tabuMapsClassComplementQueries[c].put(index, c);
+            }
+        }
+        // Further initialization.
+        knHits = new int[dSize][k];
+        hitNeighbOccFreqs = new float[dSize];
+        hitReverseNNSets = new List[dSize];
+        for (int i = 0; i < dSize; i++) {
+            hitReverseNNSets[i] = new ArrayList<>(k);
+        }
+        knMisses = new int[dSize][k];
+        missNeighbOccFreqs = new float[dSize];
+        missReverseNNSets = new List[dSize];
+        for (int i = 0; i < dSize; i++) {
+            missReverseNNSets[i] = new ArrayList<>(k);
+        }
+        // Now calculate the hit and miss kNN sets and incrementally update the 
+        // occurrence stats.
+        for (int i = 0; i < dSize; i++) {
+            knHits[i] = NeighborSetFinder.getIndexesOfNeighbors(
+                    dMat, i, k, tabuMapsClassQueries[dset.getLabelOf(i)]);
+            knMisses[i] = NeighborSetFinder.getIndexesOfNeighbors(
+                    dMat, i, k, tabuMapsClassComplementQueries[
+                    dset.getLabelOf(i)]);
+            for (int kIndex = 0; kIndex < k; kIndex++) {
+                hitNeighbOccFreqs[knHits[i][kIndex]]++;
+                missNeighbOccFreqs[knMisses[i][kIndex]]++;
+                hitReverseNNSets[knHits[i][kIndex]].add(i);
+                missReverseNNSets[knMisses[i][kIndex]].add(i);
+            }
+        }
+    }
+    
+    /**
+     * This method 'recycles' some of the existing kNN information.
+     * 
+     * @param nsf NeighborSetFinder object holding some pre-computed kNN info.
+     * @throws Exception 
+     */
+    public void generateNetworkFromExistingNSF(NeighborSetFinder nsf) 
+            throws Exception {
+        if (nsf == null) {
+            generateNetwork();
+            return;
+        }
+        int kNSF = nsf.getKNeighbors() != null ?
+                nsf.getKNeighbors()[0].length : 0;
