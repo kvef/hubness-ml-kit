@@ -437,3 +437,192 @@ public class ImbalancedAnalyzer {
                             if (badHubHash.containsKey(
                                     nsf.getKNeighbors()[j][kTmp])) {
                                 algClassConditionalBadHubsWorseThanKNN[
+                                        i - 1][badHubHash.get(
+                                        nsf.getKNeighbors()[j][kTmp])]++;
+                            }
+                            if (hubHash.containsKey(
+                                    nsf.getKNeighbors()[j][kTmp])) {
+                                algClassConditionalHubsWorseThanKNN[
+                                        i - 1][hubHash.get(
+                                        nsf.getKNeighbors()[j][kTmp])]++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Normalize the results.
+        for (int i = 0; i < nonDiscreteArray.length; i++) {
+            System.out.println(algNames[i] + " acc "
+                    + avgNonDiscrete[i].getAccuracy());
+            for (int j = 0; j < 4; j++) {
+                // As we were performing 10-times 10-fold cross-validation.
+                pointTypeSuccess[i][j] /= (pTypeNums[j] * 10);
+            }
+        }
+        float tTotalSimhub = 0;
+        float tTotalSimcos = 0;
+        for (int i = 0; i < 4; i++) {
+            tTotalSimhub += pTypeNumsSimhub[i];
+            tTotalSimcos += pTypeNumsSimcos[i];
+        }
+        for (int i = 0; i < 4; i++) {
+            pTypeNumsSimhub[i] /= tTotalSimhub;
+            pTypeNumsSimcos[i] /= tTotalSimcos;
+            pTypeNums[i] /= tTotalSimcos;
+        }
+
+        // Persist the results.
+        File outDir = new File((String) clp.getParamValues("-outDir").get(0));
+        File outFile = new File(outDir, name + ".txt");
+        System.out.println("Writing output to: " + outFile.getPath());
+        FileUtil.createFile(outFile);
+        PrintWriter pw = new PrintWriter(new FileWriter(outFile));
+        try {
+            pw.println("Number of instances " + dset.size());
+            pw.println("Class priors");
+            SOPLUtil.printArrayToStream(classPriors, pw, ",");
+            pw.println("Used k " + k);
+            pw.println("Hubs class distribution");
+            SOPLUtil.printArrayToStream(classDistrOverHubs, pw, ",");
+            pw.println("Bad hubs class distribution");
+            SOPLUtil.printArrayToStream(classDistrOverBadHubs, pw, ",");
+            pw.println("Anti-hubs class distribution");
+            SOPLUtil.printArrayToStream(classDistrOverAntihubs, pw, ",");
+            pw.println("Different types of points: 0-safe, 1-borderline, "
+                    + "2-rare. 3-outlier");
+            pw.println("Distribution among the classes");
+            for (int i = 0; i < numCat; i++) {
+                pw.println("class " + i);
+                SOPLUtil.printArrayToStream(pTypeClassDistr[i], pw, ",");
+            }
+            pw.println("Distribution among the classes when using simcos");
+            for (int i = 0; i < numCat; i++) {
+                pw.println("class " + i);
+                SOPLUtil.printArrayToStream(pTypeClassDistrSimcos[i], pw, ",");
+            }
+            pw.println("AVG distribution among the classes for simcos");
+            SOPLUtil.printArrayToStream(pTypeNumsSimcos, pw, ",");
+            pw.println("Distribution among the classes when using simhub");
+            for (int i = 0; i < numCat; i++) {
+                pw.println("class " + i);
+                SOPLUtil.printArrayToStream(pTypeClassDistrSimhub[i], pw, ",");
+            }
+            pw.println("AVG distribution among the classes for simhub");
+            SOPLUtil.printArrayToStream(pTypeNumsSimhub, pw, ",");
+            pw.println("Distribution of hubness among point types in different "
+                    + "classes");
+            for (int i = 0; i < numCat; i++) {
+                pw.println("class " + i);
+                SOPLUtil.printArrayToStream(pTypeClassAVGHubness[i], pw, ",");
+            }
+            pw.println("Distribution of bad hubness among point types in "
+                    + "different classes");
+            for (int i = 0; i < numCat; i++) {
+                pw.println("class " + i);
+                SOPLUtil.printArrayToStream(pTypeClassAVGBHubness[i], pw, ",");
+            }
+            pw.println("overall distribution of point types");
+            SOPLUtil.printArrayToStream(pTypeNums, pw, ",");
+            pw.println("overall distribution of hubness in point types");
+            SOPLUtil.printArrayToStream(pTypeHubness, pw, ",");
+            pw.println("overall distribution of bad hubness in point types");
+            SOPLUtil.printArrayToStream(pTypeBadHubness, pw, ",");
+            for (int i = 0; i < nonDiscreteArray.length; i++) {
+                pw.print(algNames[i] + " ");
+                for (int j = 0; j < 4; j++) {
+                    pw.print(pointTypeSuccess[i][j] + " ");
+                }
+                pw.println();
+            }
+            pw.println();
+            pw.println("Improvement over kNN, by improving classification of "
+                    + "points where bad hubs of particular classes appear:");
+            for (int i = 0; i < nonDiscreteArray.length - 1; i++) {
+                pw.println(algNames[i + 1]);
+                SOPLUtil.printArrayToStream(
+                        algClassConditionalBadHubsImprovementsOverKNN[i],
+                        pw, ",");
+            }
+            pw.println();
+            pw.println("Worse than kNN, by reducing classification of points"
+                    + " where bad hubs of particular classes appear:");
+            for (int i = 0; i < nonDiscreteArray.length - 1; i++) {
+                pw.println(algNames[i + 1]);
+                SOPLUtil.printArrayToStream(
+                        algClassConditionalBadHubsWorseThanKNN[i], pw, ",");
+            }
+            pw.println();
+            pw.println("Improvement over kNN, by improving classification of"
+                    + " points where bad hubs of particular classes appear");
+            pw.println("(improvements - worse)/numBadHubsinClass");
+            for (int i = 0; i < nonDiscreteArray.length - 1; i++) {
+                pw.println(algNames[i + 1]);
+                for (int j = 0; j < numCat; j++) {
+                    pw.print(" "
+                            + (algClassConditionalBadHubsImprovementsOverKNN[i][j]
+                            - algClassConditionalBadHubsWorseThanKNN[i][j])
+                            / ((float) badhubClassCounts[j] + 1) + " ");
+                }
+                pw.println();
+            }
+            pw.println();
+            pw.println("Improvement over kNN, by improving classification of "
+                    + "points where hubs of particular classes appear");
+            pw.println("(improvements - worse)/numHubsinClass");
+            for (int i = 0; i < nonDiscreteArray.length - 1; i++) {
+                pw.println(algNames[i + 1]);
+                for (int j = 0; j < numCat; j++) {
+                    pw.print(" " + (
+                            algClassConditionalHubsImprovementsOverKNN[i][j]
+                            - algClassConditionalHubsWorseThanKNN[i][j])
+                            / ((float) hubClassCounts[j] + 1) + " ");
+                }
+                pw.println();
+            }
+            pw.println();
+            pw.println("Improvement over kNN, by improving classification of "
+                    + "points where hubs of particular classes appear");
+            pw.println("(improvements - worse)/(numHubsinClass*"
+                    + "avgHubSizeinCLass)");
+            for (int i = 0; i < nonDiscreteArray.length - 1; i++) {
+                pw.println(algNames[i + 1]);
+                for (int j = 0; j < numCat; j++) {
+                    pw.print(" " + (
+                            algClassConditionalHubsImprovementsOverKNN[i][j]
+                            - algClassConditionalHubsWorseThanKNN[i][j])
+                            / (((float) hubClassCounts[j] + 1)
+                            * (avgHubClassSize[j] + 1)) + " ");
+                }
+                pw.println();
+            }
+            pw.println();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            throw e;
+        } finally {
+            pw.close();
+        }
+    }
+
+    /**
+     * Get the data file name without extension.
+     *
+     * @param filePath String that is the file path.
+     * @return String that is the file name with extension removed.
+     */
+    public static String getDataFileNameNoExt(String filePath) {
+        File tmp = new File(filePath);
+        String fileNameWithExtension = tmp.getName();
+        if (fileNameWithExtension.endsWith(".csv")
+                || fileNameWithExtension.endsWith(".tsv")) {
+            return fileNameWithExtension.substring(0,
+                    fileNameWithExtension.length() - 4);
+        } else if (fileNameWithExtension.endsWith(".arff")) {
+            return fileNameWithExtension.substring(0,
+                    fileNameWithExtension.length() - 5);
+        } else {
+            return "Unknown";
+        }
+    }
+}
