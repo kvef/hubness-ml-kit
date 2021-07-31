@@ -377,4 +377,102 @@ public class HitMissNetwork {
             return;
         }
         int dSize = knMisses.length;
-        missNeighbOccFreqs = n
+        missNeighbOccFreqs = new float[dSize];
+        missReverseNNSets = new List[dSize];
+        for (int i = 0; i < dSize; i++) {
+            missReverseNNSets[i] = new ArrayList<>(k);
+        }
+        for (int i = 0; i < knMisses.length; i++) {
+            for (int kIndex = 0; kIndex < k; kIndex++) {
+                missNeighbOccFreqs[knMisses[i][kIndex]]++;
+                missReverseNNSets[knMisses[i][kIndex]].add(i);
+            }
+        }
+    }
+
+    /**
+     * @return float[] representing the k-hit neighbor occurrence frequencies.
+     */
+    public float[] getMissNeighbOccFreqs() {
+        return missNeighbOccFreqs;
+    }
+
+    /**
+     * @return List<Integer>[] representing the miss reverse kNN sets.
+     */
+    public List<Integer>[] getMissReverseNNSets() {
+        return missReverseNNSets;
+    }
+    
+    /**
+     * This method computes the hit-miss score that is based on the K-divergence
+     * measure of the hit and miss neighbor occurrence frequencies.
+     * 
+     * @param hitOccFreq Float value representing the occurrence frequency 
+     * among the hit lists.
+     * @param missOccFreq Float value representing the occurrence frequency 
+     * among the miss lists.
+     * @return Double value that is the HM-score.
+     */
+    public static double computeHMScore(float hitOccFreq, float missOccFreq) {
+        if (hitOccFreq < 0 || missOccFreq < 0 ||
+                (hitOccFreq + missOccFreq) == 0) {
+            // Return the default value, lower than the minimal correct value.
+            return -1;
+        }
+        // Normalize the two frequencies so that they sum up to one.
+        float pHit = hitOccFreq / (hitOccFreq + missOccFreq);
+        float pMiss = missOccFreq / (hitOccFreq + missOccFreq);
+        double hmScore = 0;
+        if (pHit > 0) {
+            hmScore += pHit * BasicMathUtil.log2(pHit);
+        }
+        if (pMiss > 0) {
+            hmScore -= pMiss * BasicMathUtil.log2(pMiss);
+        }
+        return hmScore;
+    }
+    
+    /**
+     * This method computes all the HM scores for the points in the considered 
+     * dataset.
+     * 
+     * @return double[] representing the HM scores for the considered data 
+     * points. 
+     */
+    public double[] computeAllHMScores() {
+       if (hitNeighbOccFreqs == null || missNeighbOccFreqs == null || 
+               hitNeighbOccFreqs.length != missNeighbOccFreqs.length) {
+           return null;
+       }
+       int dSize = hitNeighbOccFreqs.length;
+       double[] hmScores = new double[dSize];
+       for (int i = 0; i < dSize; i++) {
+           hmScores[i] = computeHMScore(hitNeighbOccFreqs[i],
+                   missNeighbOccFreqs[i]);
+       }
+       return hmScores;
+    }
+    
+    /**
+     * This small script extracts the hit-miss network for the specified data 
+     * and the Euclidean metric and persists the hit and miss occurrence 
+     * frequencies, as well as the HM scores for all data points.
+     * @param args
+     * @throws Exception 
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-inFile", "Path to the input dataset.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-outFile", "Output path.", CommandLineParser.STRING,
+                true, false);
+        clp.addParam("-k", "Neighborhood size.",
+                CommandLineParser.INTEGER, true, false);
+        clp.parseLine(args);
+        File inFile = new File((String) (clp.getParamValues("-inFile").get(0)));
+        File outFile = new File((String) (clp.getParamValues(
+                "-outFile").get(0)));
+        int k = (Integer) (clp.getParamValues("-k").get(0));
+        DataSet dset = SupervisedLoader.loadData(inFile.getPath(), false);
+        float[
