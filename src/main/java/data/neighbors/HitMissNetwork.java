@@ -475,4 +475,14 @@ public class HitMissNetwork {
                 "-outFile").get(0)));
         int k = (Integer) (clp.getParamValues("-k").get(0));
         DataSet dset = SupervisedLoader.loadData(inFile.getPath(), false);
-        float[
+        float[][] dMat = dset.calculateDistMatrix(CombinedMetric.EUCLIDEAN);
+        HitMissNetwork hmn = new HitMissNetwork(dset, dMat, k);
+        hmn.generateNetwork();
+        try (PrintWriter pw = new PrintWriter(new FileWriter(outFile))) {
+            SOPLUtil.printArrayToStream(hmn.getHitNeighbOccFreqs(), pw, ",");
+            SOPLUtil.printArrayToStream(hmn.getMissNeighbOccFreqs(), pw, ",");
+            SOPLUtil.printArrayToStream(hmn.computeAllHMScores(), pw, ",");
+        }
+    }
+    
+}
