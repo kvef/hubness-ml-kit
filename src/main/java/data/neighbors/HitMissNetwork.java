@@ -276,4 +276,105 @@ public class HitMissNetwork {
             if (numHits < k) {
                 // Update the tabu before and after the query, to avoid 
                 // returning the known neighbor points.
-                for (int
+                for (int kIndex = 0; kIndex < numHits; kIndex++) {
+                    tabuMapsClassQueries[queryLabel].put(knHits[i][kIndex],
+                            dset.getLabelOf(knHits[i][kIndex]));
+                }
+                int kDiff = k - numHits;
+                extraHits = NeighborSetFinder.getIndexesOfNeighbors(
+                        dMat, i, kDiff,
+                        tabuMapsClassQueries[dset.getLabelOf(i)]);
+                // Remove the known neighbors from the tabu map.
+                for (int kIndex = 0; kIndex < numHits; kIndex++) {
+                    tabuMapsClassQueries[queryLabel].remove(knHits[i][kIndex]);
+                }
+                System.arraycopy(extraHits, 0, knHits[i], numHits, kDiff);
+            }
+            if (numMisses < k) {
+                // Update the tabu before and after the query, to avoid 
+                // returning the known neighbor points.
+                for (int kIndex = 0; kIndex < numMisses; kIndex++) {
+                    tabuMapsClassComplementQueries[queryLabel].put(
+                            knMisses[i][kIndex],
+                            dset.getLabelOf(knMisses[i][kIndex]));
+                }
+                int kDiff = k - numMisses;
+                extraMisses = NeighborSetFinder.getIndexesOfNeighbors(
+                        dMat, i, kDiff,
+                        tabuMapsClassComplementQueries[dset.getLabelOf(i)]);
+                // Remove the known neighbors from the tabu map.
+                for (int kIndex = 0; kIndex < numMisses; kIndex++) {
+                    tabuMapsClassComplementQueries[queryLabel].remove(
+                            knMisses[i][kIndex]);
+                }
+                System.arraycopy(extraMisses, 0, knMisses[i], numMisses, kDiff);
+            }
+            for (int kIndex = 0; kIndex < k; kIndex++) {
+                hitNeighbOccFreqs[knHits[i][kIndex]]++;
+                missNeighbOccFreqs[knMisses[i][kIndex]]++;
+                hitReverseNNSets[knHits[i][kIndex]].add(i);
+                missReverseNNSets[knMisses[i][kIndex]].add(i);
+            }
+        }
+    }
+
+    /**
+     * @return int[][] representing the k-hits.
+     */
+    public int[][] getKnHits() {
+        return knHits;
+    }
+
+    /**
+     * @param knHits int[][] representing the k-hits.
+     */
+    public void setKnHits(int[][] knHits) {
+        this.knHits = knHits;
+        if (knHits == null) {
+            return;
+        }
+        int dSize = knHits.length;
+        hitNeighbOccFreqs = new float[dSize];
+        hitReverseNNSets = new List[dSize];
+        for (int i = 0; i < dSize; i++) {
+            hitReverseNNSets[i] = new ArrayList<>(k);
+        }
+        for (int i = 0; i < knHits.length; i++) {
+            for (int kIndex = 0; kIndex < k; kIndex++) {
+                hitNeighbOccFreqs[knHits[i][kIndex]]++;
+                hitReverseNNSets[knHits[i][kIndex]].add(i);
+            }
+        }
+    }
+
+    /**
+     * @return float[] representing the k-hit neighbor occurrence frequencies.
+     */
+    public float[] getHitNeighbOccFreqs() {
+        return hitNeighbOccFreqs;
+    }
+
+    /**
+     * @return List<Integer>[] representing the hit reverse kNN sets.
+     */
+    public List<Integer>[] getHitReverseNNSets() {
+        return hitReverseNNSets;
+    }
+
+    /**
+     * @return int[][] representing the k-misses.
+     */
+    public int[][] getKnMisses() {
+        return knMisses;
+    }
+
+    /**
+     * @param knMisses int[][] representing the k-misses.
+     */
+    public void setKnMisses(int[][] knMisses) {
+        this.knMisses = knMisses;
+        if (knMisses == null) {
+            return;
+        }
+        int dSize = knMisses.length;
+        missNeighbOccFreqs = n
