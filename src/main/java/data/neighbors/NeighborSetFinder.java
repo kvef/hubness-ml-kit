@@ -263,4 +263,104 @@ public class NeighborSetFinder implements Serializable {
             reverseNeighbors = new ArrayList[size];
             // Initialize the reverse neighbor lists.
             for (int i = 0; i < size; i++) {
-                reverseNeighbors[i] = ne
+                reverseNeighbors[i] = new ArrayList<>(k);
+            }
+            int label;
+            for (int i = 0; i < size; i++) {
+                label = dset.getLabelOf(i);
+                // The following line holds the kNN set.
+                line = br.readLine();
+                // The neighbor indexes are split by empty spaces.
+                lineItems = line.split(" ");
+                kCurrLen[i] = Math.min(lineItems.length, k);
+                for (int kInd = 0; kInd < kCurrLen[i]; kInd++) {
+                    // Parse the neighbor index. 
+                    kNeighbors[i][kInd] = Integer.parseInt(lineItems[kInd]);
+                    // Updated the good and bad occurrence counts.
+                    if (label == dset.getLabelOf(kNeighbors[i][kInd])) {
+                        kGoodFrequencies[kNeighbors[i][kInd]]++;
+                    } else {
+                        kBadFrequencies[kNeighbors[i][kInd]]++;
+                    }
+                    // Update the total occurrence count.
+                    kNeighborFrequencies[kNeighbors[i][kInd]]++;
+                    // Update the reverse neighbor list.
+                    reverseNeighbors[kNeighbors[i][kInd]].add(i);
+                }
+                // The following line holds the distances to the previous kNN
+                // set.
+                line = br.readLine();
+                lineItems = line.split(" ");
+                for (int kInd = 0; kInd < Math.min(kCurrLen[i],
+                        lineItems.length); kInd++) {
+                    kDistances[i][kInd] = Float.parseFloat(lineItems[kInd]);
+                }
+            }
+            calculateHubnessStats(false);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    /**
+     * @param k Integer that is the queried neighborhood size.
+     * @return True if the calculated kNN sets' length exceeds k, false
+     * otherwise.
+     */
+    public boolean isCalculatedUpToK(int k) {
+        return (kNeighbors != null && kDistances != null
+                && kNeighbors.length >= k && kDistances.length >= k);
+    }
+
+    /**
+     * This method calculates the average distance to the k-nearest neighbors
+     * for each point for the specified neighborhood size.
+     *
+     * @param k Integer that is the neighborhood size to calculate the average
+     * k-distances for.
+     * @return float[] representing the average distance to the k-nearest
+     * neighbors for each point in the data.
+     */
+    public float[] getAvgDistToNeighbors(int k) {
+        if (k <= 0) {
+            return null;
+        }
+        if (k > kDistances[0].length) {
+            k = kDistances[0].length;
+        }
+        float[] avgKDists = new float[kDistances.length];
+        for (int i = 0; i < kDistances.length; i++) {
+            avgKDists[i] = 0;
+            for (int kInd = 0; kInd < k; kInd++) {
+                avgKDists[i] += kDistances[i][kInd];
+            }
+            avgKDists[i] /= k;
+        }
+        return avgKDists;
+    }
+
+    /**
+     * @return Integer that is the currently operating neighborhood size.
+     */
+    public int getCurrK() {
+        return currK;
+    }
+
+    /**
+     * @param distMatrix float[][] representing the upper triangular distance
+     * matrix, where the length of each row i is (size - i - 1) and each row
+     * contains only the entries for j > i, so that distMatrix[i][j] represents
+     * the distance between i and i + j + 1.
+     */
+    public void setDistances(float[][] distMatrix) {
+        this.distMatrix = distMatrix;
+        distancesCalculated = true;
+        calculateOccFreqMeanAndVariance();
+    }
+
+    /**
+     * @return NeighborSetFinder that is the copy of this NeighborSetFinder
+     * object.
+     */
+    public NeighborSetFinder copy() {
+        Neighb
