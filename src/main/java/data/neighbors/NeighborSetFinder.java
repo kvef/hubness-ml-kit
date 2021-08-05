@@ -161,4 +161,106 @@ public class NeighborSetFinder implements Serializable {
             System.err.println("NSF constructor error.");
             System.err.println(e.getMessage());
         }
-  
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object that holds the data to calculate the kNN sets
+     * for.
+     * @param distMatrix float[][] that is the upper triangular distance matrix.
+     */
+    public NeighborSetFinder(DataSet dset, float[][] distMatrix) {
+        this.dset = dset;
+        this.distMatrix = distMatrix;
+        this.cmet = CombinedMetric.FLOAT_EUCLIDEAN;
+        distancesCalculated = true;
+        try {
+            calculateOccFreqMeanAndVariance();
+        } catch (Exception e) {
+            System.err.println("NSF constructor error.");
+            System.err.println(e.getMessage());
+        }
+    }
+
+    /**
+     * @return True if the distance matrix is already available, false
+     * otherwise.
+     */
+    public boolean distancesCalculated() {
+        return distancesCalculated;
+    }
+
+    /**
+     * This method persists the calculated kNN sets to a file.
+     *
+     * @param outFile File to save the kNN sets to.
+     * @throws Exception
+     */
+    public void saveNeighborSets(File outFile) throws Exception {
+        FileUtil.createFile(outFile);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(outFile));) {
+            if (kNeighbors != null && kNeighbors.length > 0) {
+                pw.println("size:" + kNeighbors.length);
+                pw.println("k:" + kNeighbors[0].length);
+                for (int i = 0; i < kNeighbors.length; i++) {
+                    SOPLUtil.printArrayToStream(kNeighbors[i], pw);
+                    SOPLUtil.printArrayToStream(kDistances[i], pw);
+                }
+            } else {
+                pw.println("size:0");
+                pw.println("k:0");
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    /**
+     * This method loads the NeighborSetFinder object from a kNN set file.
+     *
+     * @param inFile File where the kNN sets were persisted.
+     * @param dset DataSet object that the kNN sets point to.
+     * @return NeighborSet finder that was loaded from the disk.
+     * @throws Exception
+     */
+    public static NeighborSetFinder loadNSF(File inFile, DataSet dset)
+            throws Exception {
+        NeighborSetFinder loadedNSF = new NeighborSetFinder();
+        loadedNSF.loadNeighborSets(inFile, dset);
+        return loadedNSF;
+    }
+
+    /**
+     * This method loads the kNN sets from a file.
+     *
+     * @param inFile File where the kNN sets were persisted.
+     * @param dset DataSet object that the kNN sets point to.
+     * @throws Exception
+     */
+    public void loadNeighborSets(File inFile, DataSet dset) throws Exception {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(inFile)));) {
+            this.dset = dset;
+            String line;
+            String[] lineItems;
+            line = br.readLine();
+            // Get data size.
+            int size = Integer.parseInt((line.split(":"))[1]);
+            line = br.readLine();
+            // Get the neighborhood size.
+            int k = Integer.parseInt((line.split(":"))[1]);
+            currK = k;
+            // Initialize the arrays.
+            kNeighbors = new int[size][k];
+            kDistances = new float[size][k];
+            kCurrLen = new int[size];
+            kNeighborFrequencies = new int[size];
+            kBadFrequencies = new int[size];
+            kGoodFrequencies = new int[size];
+            kEntropies = new float[size];
+            kRNNEntropies = new float[size];
+            reverseNeighbors = new ArrayList[size];
+            // Initialize the reverse neighbor lists.
+            for (int i = 0; i < size; i++) {
+                reverseNeighbors[i] = ne
