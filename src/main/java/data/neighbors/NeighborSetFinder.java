@@ -363,4 +363,93 @@ public class NeighborSetFinder implements Serializable {
      * object.
      */
     public NeighborSetFinder copy() {
-        Neighb
+        NeighborSetFinder nsfCopy = new NeighborSetFinder();
+        // Shallow copies of the DataSet, the distances and the metric object.
+        nsfCopy.dset = dset;
+        nsfCopy.cmet = cmet;
+        nsfCopy.distMatrix = distMatrix;
+        // Copy the k-nearest neighbor sets.
+        if (kNeighbors != null) {
+            nsfCopy.kNeighbors = new int[kNeighbors.length][];
+            for (int i = 0; i < kNeighbors.length; i++) {
+                nsfCopy.kNeighbors[i] = Arrays.copyOf(kNeighbors[i],
+                        kNeighbors[i].length);
+            }
+        }
+        // Copy the distances to the k-nearest neighbors.
+        if (kDistances != null) {
+            nsfCopy.kDistances = new float[kDistances.length][];
+            for (int i = 0; i < kDistances.length; i++) {
+                nsfCopy.kDistances[i] = Arrays.copyOf(kDistances[i],
+                        kDistances[i].length);
+            }
+        }
+        // Copy the current k-lengths.
+        if (kCurrLen != null) {
+            nsfCopy.kCurrLen = Arrays.copyOf(kCurrLen, kCurrLen.length);
+        }
+        // Copy the occurrence frequency and the entropy arrays.
+        if (kNeighborFrequencies != null) {
+            nsfCopy.kNeighborFrequencies = Arrays.copyOf(kNeighborFrequencies,
+                    kNeighborFrequencies.length);
+        }
+        if (kBadFrequencies != null) {
+            nsfCopy.kBadFrequencies = Arrays.copyOf(kBadFrequencies,
+                    kBadFrequencies.length);
+        }
+        if (kGoodFrequencies != null) {
+            nsfCopy.kGoodFrequencies = Arrays.copyOf(kGoodFrequencies,
+                    kGoodFrequencies.length);
+        }
+        if (kEntropies != null) {
+            nsfCopy.kEntropies = Arrays.copyOf(kEntropies, kEntropies.length);
+        }
+        if (kRNNEntropies != null) {
+            nsfCopy.kRNNEntropies = Arrays.copyOf(kRNNEntropies,
+                    kRNNEntropies.length);
+        }
+        // Copy the operating neighborhood size.
+        nsfCopy.currK = currK;
+        // Copy all the stats and flags.
+        nsfCopy.distancesCalculated = distancesCalculated;
+        nsfCopy.distVariance = distVariance;
+        nsfCopy.distMean = distMean;
+        nsfCopy.meanOccFreq = meanOccFreq;
+        nsfCopy.stDevOccFreq = stDevOccFreq;
+        nsfCopy.meanOccBadness = meanOccBadness;
+        nsfCopy.stDevOccBadness = stDevOccBadness;
+        nsfCopy.meanOccGoodness = meanOccGoodness;
+        nsfCopy.stDevOccGoodness = stDevOccGoodness;
+        nsfCopy.meanGoodMinusBadness = meanGoodMinusBadness;
+        nsfCopy.meanRelativeGoodMinusBadness = meanRelativeGoodMinusBadness;
+        nsfCopy.stDevGoodMinusBadness = stDevGoodMinusBadness;
+        nsfCopy.stDevRelativeGoodMinusBadness = stDevRelativeGoodMinusBadness;
+        // Copy the reverse neighbor lists.
+        if (reverseNeighbors != null) {
+            nsfCopy.reverseNeighbors = new ArrayList[reverseNeighbors.length];
+            for (int i = 0; i < reverseNeighbors.length; i++) {
+                if (reverseNeighbors[i] != null) {
+                    nsfCopy.reverseNeighbors[i] =
+                            new ArrayList<>(reverseNeighbors[i].size());
+                    for (int p = 0; p < reverseNeighbors[i].size(); p++) {
+                        nsfCopy.reverseNeighbors[i].add(
+                                reverseNeighbors[i].get(p));
+                    }
+
+                }
+            }
+        }
+        return nsfCopy;
+    }
+
+    /**
+     * @param kcurrLen int[] that are the current kNN set lengths.
+     */
+    public void setKCurrLen(int[] kcurrLen) {
+        this.kCurrLen = kcurrLen;
+    }
+
+    /**
+     * @return int[] that are the current kNN set lengths.
+     */
+    public int
