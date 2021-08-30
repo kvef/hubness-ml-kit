@@ -452,4 +452,83 @@ public class NeighborSetFinder implements Serializable {
     /**
      * @return int[] that are the current kNN set lengths.
      */
-    public int
+    public int[] getKCurrLen() {
+        return kCurrLen;
+    }
+
+    /**
+     * Sets the kNN set to this NeighborSetFinder object.
+     *
+     * @param kneighbors int[][] representing the k-nearest neighbors.
+     * @param kDistances float[][] representing the k-distances.
+     * @param kcurrLen int[] representing the current kNN set lengths (in case
+     * some of them are not yet completed)
+     */
+    public void setKNeighbors(int[][] kneighbors, float[][] kDistances,
+            int[] kcurrLen) {
+        this.kNeighbors = kneighbors;
+        this.kDistances = kDistances;
+        int k = kneighbors[0].length;
+        this.kCurrLen = kcurrLen;
+        // Set the operating neighborhood size to the length of the kNN sets.
+        currK = k;
+        reverseNeighbors = new ArrayList[dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * k);
+        }
+        kNeighborFrequencies = new int[kneighbors.length];
+        kBadFrequencies = new int[kneighbors.length];
+        kGoodFrequencies = new int[kneighbors.length];
+        for (int i = 0; i < kneighbors.length; i++) {
+            for (int kInd = 0; kInd < kcurrLen[i]; kInd++) {
+                reverseNeighbors[kneighbors[i][kInd]].add(i);
+                kNeighborFrequencies[kneighbors[i][kInd]]++;
+                if (dset.data.get(i).getCategory() != dset.data.get(
+                        kneighbors[i][kInd]).getCategory()) {
+                    kBadFrequencies[kneighbors[i][kInd]]++;
+                } else {
+                    kGoodFrequencies[kneighbors[i][kInd]]++;
+                }
+            }
+        }
+        // Calculate the neighbor occurrence frequency stats.
+        meanOccFreq = 0;
+        stDevOccFreq = 0;
+        meanOccBadness = 0;
+        stDevOccBadness = 0;
+        meanOccGoodness = 0;
+        stDevOccGoodness = 0;
+        meanGoodMinusBadness = 0;
+        stDevGoodMinusBadness = 0;
+        meanRelativeGoodMinusBadness = 0;
+        stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            meanOccFreq += kNeighborFrequencies[i];
+            meanOccBadness += kBadFrequencies[i];
+            meanOccGoodness += kGoodFrequencies[i];
+            meanGoodMinusBadness += kGoodFrequencies[i] - kBadFrequencies[i];
+            if (kNeighborFrequencies[i] > 0) {
+                meanRelativeGoodMinusBadness += ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]);
+            } else {
+                meanRelativeGoodMinusBadness += 1;
+            }
+        }
+        meanOccFreq /= (float) kNeighborFrequencies.length;
+        meanOccBadness /= (float) kBadFrequencies.length;
+        meanOccGoodness /= (float) kGoodFrequencies.length;
+        meanGoodMinusBadness /= (float) kGoodFrequencies.length;
+        meanRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            stDevOccFreq += ((meanOccFreq - kNeighborFrequencies[i])
+                    * (meanOccFreq - kNeighborFrequencies[i]));
+            stDevOccBadness += ((meanOccBadness - kBadFrequencies[i])
+                    * (meanOccBadness - kBadFrequencies[i]));
+            stDevOccGoodness += ((meanOccGoodness - kGoodFrequencies[i])
+                    * (meanOccGoodness - kGoodFrequencies[i]));
+            stDevGoodMinusBadness += ((meanGoodMinusBadness
+                    - (kGoodFrequencies[i] - kBadFrequencies[i]))
+                    * (meanGoodMinusBadness - (kGoodFrequencies[i]
+                    - kBadFrequencies[i])));
+            if (kNeighborFrequencies[i] > 0) {
+                stDevRelativeGoodMinusBadness += (meanRela
