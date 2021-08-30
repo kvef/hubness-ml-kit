@@ -531,4 +531,86 @@ public class NeighborSetFinder implements Serializable {
                     * (meanGoodMinusBadness - (kGoodFrequencies[i]
                     - kBadFrequencies[i])));
             if (kNeighborFrequencies[i] > 0) {
-                stDevRelativeGoodMinusBadness += (meanRela
+                stDevRelativeGoodMinusBadness += (meanRelativeGoodMinusBadness
+                        - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (meanRelativeGoodMinusBadness - ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+            } else {
+                stDevRelativeGoodMinusBadness +=
+                        (meanRelativeGoodMinusBadness - 1)
+                        * (meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        stDevOccFreq /= (float) kNeighborFrequencies.length;
+        stDevOccBadness /= (float) kBadFrequencies.length;
+        stDevOccGoodness /= (float) kGoodFrequencies.length;
+        stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevOccFreq = Math.sqrt(stDevOccFreq);
+        stDevOccBadness = Math.sqrt(stDevOccBadness);
+        stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+        stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+        stDevRelativeGoodMinusBadness =
+                Math.sqrt(stDevRelativeGoodMinusBadness);
+    }
+
+    /**
+     * Sets the kNN set to this NeighborSetFinder object.
+     *
+     * @param kneighbors int[][] representing the k-nearest neighbors.
+     * @param kDistances float[][] representing the k-distances.
+     */
+    public void setKNeighbors(int[][] kneighbors, float[][] kDistances) {
+        this.kNeighbors = kneighbors;
+        this.kDistances = kDistances;
+        int k = kneighbors[0].length;
+        kCurrLen = new int[kneighbors.length];
+        // The kNN sets are completed.
+        Arrays.fill(kCurrLen, k);
+        // Set the operating neighborhood size.
+        currK = k;
+        // Initialize the reverse neighbor lists.
+        reverseNeighbors = new ArrayList[dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * k);
+        }
+        kNeighborFrequencies = new int[kneighbors.length];
+        kBadFrequencies = new int[kneighbors.length];
+        kGoodFrequencies = new int[kneighbors.length];
+        // Fill in the reverse neighbor lists and count the occurence
+        // frequencies.
+        for (int i = 0; i < kneighbors.length; i++) {
+            for (int kInd = 0; kInd < k; kInd++) {
+                reverseNeighbors[kneighbors[i][kInd]].add(i);
+                kNeighborFrequencies[kneighbors[i][kInd]]++;
+                if (dset.data.get(i).getCategory() != dset.data.get(
+                        kneighbors[i][kInd]).getCategory()) {
+                    kBadFrequencies[kneighbors[i][kInd]]++;
+                } else {
+                    kGoodFrequencies[kneighbors[i][kInd]]++;
+                }
+            }
+        }
+        // Calculate the occurrence frequency stats.
+        meanOccBadness = 0;
+        stDevOccBadness = 0;
+        meanOccGoodness = 0;
+        stDevOccGoodness = 0;
+        meanGoodMinusBadness = 0;
+        stDevGoodMinusBadness = 0;
+        meanRelativeGoodMinusBadness = 0;
+        stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            meanOccBadness += kBadFrequencies[i];
+            meanOccGoodness += kGoodFrequencies[i];
+            meanGoodMinusBadness += kGoodFrequencies[i] - kBadFrequencies[i];
+            if (kNeighborFrequencies[i] > 0) {
+                meanRelativeGoodMinusBadness +=
+                        ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]);
+            } else {
+                meanRelativeGoodMinusBadness += 1;
+            }
+        }
+        meanOccBadness /= (float) kBadFrequencies.length
