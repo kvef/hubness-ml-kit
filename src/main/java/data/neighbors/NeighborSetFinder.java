@@ -691,4 +691,105 @@ public class NeighborSetFinder implements Serializable {
                 // to misclassification here.
                 for (int j = 0; j < k; j++) {
                     if (dataLabels[i] != dataLabels[kNeighbors[i][j]]) {
-    
+                        errOccFreqs[kNeighbors[i][j]]++;
+                    }
+                }
+            }
+        }
+        return errOccFreqs;
+    }
+
+    /**
+     * Calculates the error-inducing hubness counts, by counting how many of the
+     * bad occurrences contribute to actual misclassification.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @return The error-inducing neighbor occurrence counts.
+     */
+    public float[] getErrorInducingHubness(int k) {
+        int len = kNeighbors.length;
+        int numClasses = dset.countCategories();
+        float[] errOccFreqs = new float[len];
+        float[] classCounts = new float[numClasses];
+        float maxClassVote;
+        int maxClassIndex;
+        for (int i = 0; i < len; i++) {
+            for (int j = 0; j < k; j++) {
+                classCounts[dset.getLabelOf(kNeighbors[i][j])]++;
+            }
+            maxClassVote = 0;
+            maxClassIndex = 0;
+            for (int c = 0; c < numClasses; c++) {
+                if (classCounts[c] > maxClassVote) {
+                    maxClassVote = classCounts[c];
+                    maxClassIndex = c;
+                }
+            }
+            if (maxClassIndex != dset.getLabelOf(i)) {
+                // An error-inducing occurrence, as it would have contributed
+                // to misclassification here.
+                for (int j = 0; j < k; j++) {
+                    if (dset.getLabelOf(i)
+                            != dset.getLabelOf(kNeighbors[i][j])) {
+                        errOccFreqs[kNeighbors[i][j]]++;
+                    }
+                }
+            }
+        }
+        return errOccFreqs;
+    }
+
+    /**
+     * @return DataInstance that is the major hub in the dataset.
+     */
+    public DataInstance getMajorHubInstance() {
+        return dset.data.get(getHubIndex());
+    }
+
+    /**
+     * @return Integer that is the index of the major hub in the dataset.
+     */
+    public int getHubIndex() {
+        int maxFreq = 0;
+        int maxIndex = -1;
+        for (int i = 0; i < kNeighborFrequencies.length; i++) {
+            if (kNeighborFrequencies[i] > maxFreq) {
+                maxFreq = kNeighborFrequencies[i];
+                maxIndex = i;
+            }
+        }
+        return maxIndex;
+    }
+
+    /**
+     * @return CombinedMetric object for distance calculations.
+     */
+    public CombinedMetric getCombinedMetric() {
+        return cmet;
+    }
+
+    /**
+     * This method constructs a NeighborSetFinder object from the approximate
+     * NeighborSetFinder implementation via Lanczos bisections.
+     *
+     * @param appNSF AppKNNGraphLanczosBisection approximate kNN implementation.
+     * @param calculateMissingDistances Boolean flag indicating whether to
+     * calculate the missing distances or not.
+     * @return NeighborSetFinder object based on the kNN sets in the approximate
+     * kNN implementation.
+     * @throws Exception
+     */
+    public static NeighborSetFinder constructFromAppFinder(
+            AppKNNGraphLanczosBisection appNSF,
+            boolean calculateMissingDistances) throws Exception {
+        NeighborSetFinder nsf = new NeighborSetFinder();
+        nsf.dset = appNSF.getDataSet();
+        nsf.currK = appNSF.getK();
+        nsf.distMatrix = appNSF.getDistances();
+        CombinedMetric cmet = appNSF.getMetric();
+        // Calculate the distance matrix, if specified.
+        if (calculateMissingDistances) {
+            for (int i = 0; i < nsf.dset.size(); i++) {
+                for (int j = 0; j < nsf.distMatrix[i].length; j++) {
+                    if (!appNSF.getDistanceFlags()[i][j]) {
+                        nsf.distMatrix[i][j] = cmet.dist(nsf.dset
