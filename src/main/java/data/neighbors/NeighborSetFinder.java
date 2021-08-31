@@ -613,4 +613,82 @@ public class NeighborSetFinder implements Serializable {
                 meanRelativeGoodMinusBadness += 1;
             }
         }
-        meanOccBadness /= (float) kBadFrequencies.length
+        meanOccBadness /= (float) kBadFrequencies.length;
+        meanOccGoodness /= (float) kGoodFrequencies.length;
+        meanGoodMinusBadness /= (float) kGoodFrequencies.length;
+        meanRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            stDevOccBadness += ((meanOccBadness - kBadFrequencies[i])
+                    * (meanOccBadness - kBadFrequencies[i]));
+            stDevOccGoodness += ((meanOccGoodness - kGoodFrequencies[i])
+                    * (meanOccGoodness - kGoodFrequencies[i]));
+            stDevGoodMinusBadness += ((meanGoodMinusBadness
+                    - (kGoodFrequencies[i] - kBadFrequencies[i]))
+                    * (meanGoodMinusBadness - (kGoodFrequencies[i]
+                    - kBadFrequencies[i])));
+            if (kNeighborFrequencies[i] > 0) {
+                stDevRelativeGoodMinusBadness += (meanRelativeGoodMinusBadness
+                        - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (meanRelativeGoodMinusBadness - ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+            } else {
+                stDevRelativeGoodMinusBadness +=
+                        (meanRelativeGoodMinusBadness - 1)
+                        * (meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        // Normalize the averages.
+        stDevOccBadness /= (float) kBadFrequencies.length;
+        stDevOccGoodness /= (float) kGoodFrequencies.length;
+        stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        // Take the square root of the variances to obtain the standard
+        // deviations.
+        stDevOccBadness = Math.sqrt(stDevOccBadness);
+        stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+        stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+        stDevRelativeGoodMinusBadness =
+                Math.sqrt(stDevRelativeGoodMinusBadness);
+    }
+
+    /**
+     * @return float[] The error-inducing neighbor occurrence counts.
+     */
+    public float[] getErrorInducingHubness() {
+        return getErrorInducingHubness(kNeighbors[0].length);
+    }
+
+    /**
+     * Calculates the error-inducing hubness counts, by counting how many of the
+     * bad occurrences contribute to actual misclassification.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param dataLabels int[] representing the external data labels.
+     * @return The error-inducing neighbor occurrence counts.
+     */
+    public float[] getErrorInducingHubness(int k, int[] dataLabels) {
+        int len = kNeighbors.length;
+        int numClasses = ArrayUtil.max(dataLabels) + 1;
+        float[] errOccFreqs = new float[len];
+        float[] classCounts = new float[numClasses];
+        float maxClassVote;
+        int maxClassIndex;
+        for (int i = 0; i < len; i++) {
+            for (int j = 0; j < k; j++) {
+                classCounts[dataLabels[kNeighbors[i][j]]]++;
+            }
+            maxClassVote = 0;
+            maxClassIndex = 0;
+            for (int c = 0; c < numClasses; c++) {
+                if (classCounts[c] > maxClassVote) {
+                    maxClassVote = classCounts[c];
+                    maxClassIndex = c;
+                }
+            }
+            if (maxClassIndex != dataLabels[i]) {
+                // An error-inducing occurrence, as it would have contributed
+                // to misclassification here.
+                for (int j = 0; j < k; j++) {
+                    if (dataLabels[i] != dataLabels[kNeighbors[i][j]]) {
+    
