@@ -946,4 +946,71 @@ public class NeighborSetFinder implements Serializable {
         // Initialize the resulting restriction.
         NeighborSetFinder nsfRestriction = new NeighborSetFinder(
                 protoDSet, protoDistances, cmet);
-        nsfRestriction.kNeighbors = n
+        nsfRestriction.kNeighbors = new int[protoSize][kSmaller];
+        nsfRestriction.kDistances = new float[protoSize][kSmaller];
+        nsfRestriction.kCurrLen = new int[protoSize];
+        nsfRestriction.kNeighborFrequencies = new int[protoSize];
+        nsfRestriction.kBadFrequencies = new int[protoSize];
+        nsfRestriction.kGoodFrequencies = new int[protoSize];
+        // Intervals used for quick restriction calculations in the kNN sets.
+        ArrayList<Integer> knnSetIntervals;
+        int upperIndex, lowerIndex;
+        int minIndVal, maxIndVal;
+        // Neighborhood size.
+        int k;
+        // Auxiliary variable for kNN search.
+        int l;
+        for (int i = 0; i < protoSize; i++) {
+            k = kCurrLen[prototypeIndexes.get(i)];
+            nsfRestriction.kCurrLen[i] = 0;
+            knnSetIntervals = new ArrayList(kSmaller + 2);
+            knnSetIntervals.add(-1);
+            for (int j = 0; j < k; j++) {
+                if (protoMap.containsKey(
+                        kNeighbors[prototypeIndexes.get(i)][j])) {
+                    nsfRestriction.kNeighbors[i][nsfRestriction.kCurrLen[i]] =
+                            protoMap.get(
+                            kNeighbors[prototypeIndexes.get(i)][j]);
+                    nsfRestriction.kDistances[i][nsfRestriction.kCurrLen[i]] =
+                            kDistances[prototypeIndexes.get(i)][j];
+                    knnSetIntervals.add(
+                            nsfRestriction.kNeighbors[i][
+                            nsfRestriction.kCurrLen[i]]);
+                    nsfRestriction.kCurrLen[i]++;
+                }
+                if (nsfRestriction.kCurrLen[i] >= kSmaller) {
+                    break;
+                }
+            }
+            knnSetIntervals.add(protoSize + 1);
+            Collections.sort(knnSetIntervals);
+            if (nsfRestriction.kCurrLen[i] < kSmaller) {
+                int iSizeRed = knnSetIntervals.size() - 1;
+                for (int ind = 0; ind < iSizeRed; ind++) {
+                    lowerIndex = knnSetIntervals.get(ind);
+                    upperIndex = knnSetIntervals.get(ind + 1);
+                    for (int j = lowerIndex + 1; j < upperIndex - 1; j++) {
+                        if (i != j) {
+                            minIndVal = Math.min(i, j);
+                            maxIndVal = Math.max(i, j);
+
+                            if (nsfRestriction.kCurrLen[i] > 0) {
+                                if (nsfRestriction.kCurrLen[i] == kSmaller) {
+                                    if (protoDistances[minIndVal][
+                                            maxIndVal - minIndVal - 1]
+                                            < nsfRestriction.kDistances[i][
+                                            nsfRestriction.kCurrLen[i] - 1]) {
+                                        // Search and insert.
+                                        l = kSmaller - 1;
+                                        while ((l >= 1) && protoDistances[
+                                                minIndVal][maxIndVal - minIndVal
+                                                - 1]
+                                                < nsfRestriction.kDistances[i][
+                                                l - 1]) {
+                                            nsfRestriction.kDistances[i][l] =
+                                                    nsfRestriction.kDistances[
+                                                    i][l - 1];
+                                            nsfRestriction.kNeighbors[i][l] =
+                                                    nsfRestriction.kNeighbors[
+                                                    i][l - 1];
+         
