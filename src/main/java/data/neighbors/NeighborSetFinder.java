@@ -792,4 +792,79 @@ public class NeighborSetFinder implements Serializable {
             for (int i = 0; i < nsf.dset.size(); i++) {
                 for (int j = 0; j < nsf.distMatrix[i].length; j++) {
                     if (!appNSF.getDistanceFlags()[i][j]) {
-                        nsf.distMatrix[i][j] = cmet.dist(nsf.dset
+                        nsf.distMatrix[i][j] = cmet.dist(nsf.dset.data.get(i),
+                                nsf.dset.data.get(i + j + 1));
+                    }
+                }
+            }
+        }
+        nsf.cmet = cmet;
+        // Initialize the reverse neighbor lists.
+        nsf.reverseNeighbors = new ArrayList[nsf.dset.size()];
+        for (int i = 0; i < nsf.reverseNeighbors.length; i++) {
+            nsf.reverseNeighbors[i] = new ArrayList<>(appNSF.getK() * 4);
+        }
+        nsf.distancesCalculated = true;
+        // Get the kNN sets and the k-distances.
+        nsf.kDistances = appNSF.getKdistances();
+        nsf.kNeighbors = appNSF.getKneighbors();
+        nsf.kNeighborFrequencies = new int[nsf.kNeighbors.length];
+        nsf.kBadFrequencies = new int[nsf.kNeighbors.length];
+        nsf.kGoodFrequencies = new int[nsf.kNeighbors.length];
+        // Fill in the reverse neighbor lists and the occurrence frequency
+        // counts.
+        for (int i = 0; i < nsf.kNeighbors.length; i++) {
+            for (int j = 0; j < appNSF.getK(); j++) {
+                nsf.reverseNeighbors[nsf.kNeighbors[i][j]].add(i);
+                nsf.kNeighborFrequencies[nsf.kNeighbors[i][j]]++;
+                if (nsf.dset.data.get(i).getCategory() != nsf.dset.data.get(
+                        nsf.kNeighbors[i][j]).getCategory()) {
+                    nsf.kBadFrequencies[nsf.kNeighbors[i][j]]++;
+                } else {
+                    nsf.kGoodFrequencies[nsf.kNeighbors[i][j]]++;
+                }
+            }
+        }
+        // Calculate the occurrence frequency stats.
+        nsf.meanOccFreq = 0;
+        nsf.stDevOccFreq = 0;
+        nsf.meanOccBadness = 0;
+        nsf.stDevOccBadness = 0;
+        nsf.meanOccGoodness = 0;
+        nsf.stDevOccGoodness = 0;
+        nsf.meanGoodMinusBadness = 0;
+        nsf.stDevGoodMinusBadness = 0;
+        nsf.meanRelativeGoodMinusBadness = 0;
+        nsf.stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < nsf.kBadFrequencies.length; i++) {
+            nsf.meanOccFreq += nsf.kNeighborFrequencies[i];
+            nsf.meanOccBadness += nsf.kBadFrequencies[i];
+            nsf.meanOccGoodness += nsf.kGoodFrequencies[i];
+            nsf.meanGoodMinusBadness += nsf.kGoodFrequencies[i]
+                    - nsf.kBadFrequencies[i];
+            if (nsf.kNeighborFrequencies[i] > 0) {
+                nsf.meanRelativeGoodMinusBadness += ((nsf.kGoodFrequencies[i]
+                        - nsf.kBadFrequencies[i])
+                        / nsf.kNeighborFrequencies[i]);
+            } else {
+                nsf.meanRelativeGoodMinusBadness += 1;
+            }
+        }
+        nsf.meanOccFreq /= (float) nsf.kNeighborFrequencies.length;
+        nsf.meanOccBadness /= (float) nsf.kBadFrequencies.length;
+        nsf.meanOccGoodness /= (float) nsf.kGoodFrequencies.length;
+        nsf.meanGoodMinusBadness /= (float) nsf.kGoodFrequencies.length;
+        nsf.meanRelativeGoodMinusBadness /= (float) nsf.kGoodFrequencies.length;
+        for (int i = 0; i < nsf.kBadFrequencies.length; i++) {
+            nsf.stDevOccFreq += ((nsf.meanOccFreq
+                    - nsf.kNeighborFrequencies[i])
+                    * (nsf.meanOccFreq - nsf.kNeighborFrequencies[i]));
+            nsf.stDevOccBadness += ((nsf.meanOccBadness
+                    - nsf.kBadFrequencies[i]) * (nsf.meanOccBadness
+                    - nsf.kBadFrequencies[i]));
+            nsf.stDevOccGoodness += ((nsf.meanOccGoodness
+                    - nsf.kGoodFrequencies[i]) * (nsf.meanOccGoodness
+                    - nsf.kGoodFrequencies[i]));
+            nsf.stDevGoodMinusBadness += ((nsf.meanGoodMinusBadness
+                    - (nsf.kGoodFrequencies[i] - nsf.kBadFrequencies[i]))
+                    * (nsf.meanGoo
