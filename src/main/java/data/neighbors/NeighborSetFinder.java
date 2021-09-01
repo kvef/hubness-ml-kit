@@ -1013,4 +1013,59 @@ public class NeighborSetFinder implements Serializable {
                                             nsfRestriction.kNeighbors[i][l] =
                                                     nsfRestriction.kNeighbors[
                                                     i][l - 1];
-         
+                                            l--;
+                                        }
+                                        nsfRestriction.kDistances[i][l] =
+                                                protoDistances[minIndVal][
+                                                maxIndVal - minIndVal - 1];
+                                        nsfRestriction.kNeighbors[i][l] = j;
+                                    }
+                                } else {
+                                    if (protoDistances[minIndVal][maxIndVal
+                                            - minIndVal - 1]
+                                            < nsfRestriction.kDistances[i][
+                                            nsfRestriction.kCurrLen[i] - 1]) {
+                                        // Search and insert.
+                                        l = nsfRestriction.kCurrLen[i] - 1;
+                                        nsfRestriction.kDistances[i][
+                                                nsfRestriction.kCurrLen[i]] =
+                                                nsfRestriction.kDistances[i][
+                                                nsfRestriction.kCurrLen[i] - 1];
+                                        nsfRestriction.kNeighbors[i][
+                                                nsfRestriction.kCurrLen[i]] =
+                                                nsfRestriction.kNeighbors[i][
+                                                nsfRestriction.kCurrLen[i] - 1];
+                                        while ((l >= 1) && protoDistances[
+                                                minIndVal][maxIndVal - minIndVal
+                                                - 1]
+                                                < nsfRestriction.kDistances[i][
+                                                l - 1]) {
+                                            nsfRestriction.kDistances[i][l] =
+                                                    nsfRestriction.kDistances[
+                                                    i][l - 1];
+                                            nsfRestriction.kNeighbors[i][l] =
+                                                    nsfRestriction.kNeighbors[
+                                                    i][l - 1];
+                                            l--;
+                                        }
+                                        nsfRestriction.kDistances[i][l] =
+                                                protoDistances[minIndVal][
+                                                maxIndVal - minIndVal - 1];
+                                        nsfRestriction.kNeighbors[i][l] = j;
+                                        nsfRestriction.kCurrLen[i]++;
+                                    } else {
+                                        nsfRestriction.kDistances[i][
+                                                nsfRestriction.kCurrLen[i]] =
+                                                protoDistances[minIndVal][
+                                                maxIndVal - minIndVal - 1];
+                                        nsfRestriction.kNeighbors[i][
+                                                nsfRestriction.kCurrLen[i]] = j;
+                                        nsfRestriction.kCurrLen[i]++;
+                                    }
+                                }
+                            } else {
+                                nsfRestriction.kDistances[i][0] =
+                                        protoDistances[minIndVal][maxIndVal
+                                        - minIndVal - 1];
+                                nsfRestriction.kNeighbors[i][0] = j;
+                                nsfRestrictio
