@@ -867,4 +867,83 @@ public class NeighborSetFinder implements Serializable {
                     - nsf.kGoodFrequencies[i]));
             nsf.stDevGoodMinusBadness += ((nsf.meanGoodMinusBadness
                     - (nsf.kGoodFrequencies[i] - nsf.kBadFrequencies[i]))
-                    * (nsf.meanGoo
+                    * (nsf.meanGoodMinusBadness - (nsf.kGoodFrequencies[i]
+                    - nsf.kBadFrequencies[i])));
+            if (nsf.kNeighborFrequencies[i] > 0) {
+                nsf.stDevRelativeGoodMinusBadness +=
+                        (nsf.meanRelativeGoodMinusBadness
+                        - ((nsf.kGoodFrequencies[i] - nsf.kBadFrequencies[i])
+                        / nsf.kNeighborFrequencies[i]))
+                        * (nsf.meanRelativeGoodMinusBadness
+                        - ((nsf.kGoodFrequencies[i] - nsf.kBadFrequencies[i])
+                        / nsf.kNeighborFrequencies[i]));
+            } else {
+                nsf.stDevRelativeGoodMinusBadness +=
+                        (nsf.meanRelativeGoodMinusBadness - 1)
+                        * (nsf.meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        nsf.stDevOccFreq /= (float) nsf.kNeighborFrequencies.length;
+        nsf.stDevOccBadness /= (float) nsf.kBadFrequencies.length;
+        nsf.stDevOccGoodness /= (float) nsf.kGoodFrequencies.length;
+        nsf.stDevGoodMinusBadness /= (float) nsf.kGoodFrequencies.length;
+        nsf.stDevRelativeGoodMinusBadness /=
+                (float) nsf.kGoodFrequencies.length;
+        nsf.stDevOccFreq = Math.sqrt(nsf.stDevOccFreq);
+        nsf.stDevOccBadness = Math.sqrt(nsf.stDevOccBadness);
+        nsf.stDevOccGoodness = Math.sqrt(nsf.stDevOccGoodness);
+        nsf.stDevGoodMinusBadness = Math.sqrt(nsf.stDevGoodMinusBadness);
+        nsf.stDevRelativeGoodMinusBadness =
+                Math.sqrt(nsf.stDevRelativeGoodMinusBadness);
+        return nsf;
+    }
+
+    /**
+     * @return ArrayList<Integer>[] that is an array of reverse neighbor lists
+     * for all points in the data.
+     */
+    public ArrayList<Integer>[] getReverseNeighbors() {
+        return reverseNeighbors;
+    }
+
+    public float getAvgDistToNNposition(int kPos) {
+        int indexPos = kPos - 1;
+        double sum = 0;
+        for (int i = 0; i < kNeighbors.length; i++) {
+            sum += kDistances[i][indexPos];
+        }
+        float result = (float) (sum / (double) kNeighbors.length);
+        return result;
+    }
+
+    /**
+     * Calculates and generates a NeighborSetFinder object that represents a
+     * smaller k-range than the current object, on the prototype restriction in
+     * case of instance selection.
+     *
+     * @param kSmaller Integer that is the neighborhood size to calculate the
+     * kNN sets for.
+     * @param prototypeIndexes ArrayList<Integer> of selected prototype indexes.
+     * @param protoDistances float[][] representing the distance matrix on the
+     * prototype set.
+     * @param protoDSet DataSet that is the prototype data context.
+     * @return NeighborSetFinder that is the calculated restriction.
+     * @throws Exception
+     */
+    public NeighborSetFinder getSubNSF(int kSmaller,
+            ArrayList<Integer> prototypeIndexes, float[][] protoDistances,
+            DataSet protoDSet) throws Exception {
+        // Initialize the prototype index maps.
+        HashMap<Integer, Integer> originalIndexMap =
+                new HashMap<>(prototypeIndexes.size() * 2);
+        HashMap<Integer, Integer> protoMap =
+                new HashMap<>(prototypeIndexes.size() * 2);
+        int protoSize = prototypeIndexes.size();
+        for (int i = 0; i < protoSize; i++) {
+            originalIndexMap.put(i, prototypeIndexes.get(i));
+            protoMap.put(prototypeIndexes.get(i), i);
+        }
+        // Initialize the resulting restriction.
+        NeighborSetFinder nsfRestriction = new NeighborSetFinder(
+                protoDSet, protoDistances, cmet);
+        nsfRestriction.kNeighbors = n
