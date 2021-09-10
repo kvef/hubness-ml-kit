@@ -1224,4 +1224,79 @@ public class NeighborSetFinder implements Serializable {
                     - nsfRestriction.kBadFrequencies[i])));
             if (kNeighborFrequencies[i] > 0) {
                 nsfRestriction.stDevRelativeGoodMinusBadness +=
-                        (nsfRestriction.meanRelativeG
+                        (nsfRestriction.meanRelativeGoodMinusBadness
+                        - ((nsfRestriction.kGoodFrequencies[i]
+                        - nsfRestriction.kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (nsfRestriction.meanRelativeGoodMinusBadness
+                        - ((nsfRestriction.kGoodFrequencies[i]
+                        - nsfRestriction.kBadFrequencies[i])
+                        / kNeighborFrequencies[i]));
+            } else {
+                nsfRestriction.stDevRelativeGoodMinusBadness +=
+                        (nsfRestriction.meanRelativeGoodMinusBadness)
+                        * (nsfRestriction.meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        // Normalize the averages.
+        nsfRestriction.stDevOccFreq /=
+                (float) nsfRestriction.kNeighborFrequencies.length;
+        nsfRestriction.stDevOccBadness /=
+                (float) nsfRestriction.kBadFrequencies.length;
+        nsfRestriction.stDevOccGoodness /=
+                (float) nsfRestriction.kGoodFrequencies.length;
+        nsfRestriction.stDevGoodMinusBadness /=
+                (float) nsfRestriction.kGoodFrequencies.length;
+        nsfRestriction.stDevRelativeGoodMinusBadness /=
+                (float) nsfRestriction.kGoodFrequencies.length;
+        // Take the square root of the variances to obtain the
+        // standard deviations.
+        nsfRestriction.stDevOccFreq =
+                Math.sqrt(nsfRestriction.stDevOccFreq);
+        nsfRestriction.stDevOccBadness =
+                Math.sqrt(nsfRestriction.stDevOccBadness);
+        nsfRestriction.stDevOccGoodness =
+                Math.sqrt(nsfRestriction.stDevOccGoodness);
+        nsfRestriction.stDevGoodMinusBadness =
+                Math.sqrt(nsfRestriction.stDevGoodMinusBadness);
+        nsfRestriction.stDevRelativeGoodMinusBadness =
+                Math.sqrt(nsfRestriction.stDevRelativeGoodMinusBadness);
+        return nsfRestriction;
+    }
+
+    /**
+     * This method calculates the class-to-class neighbor occurrence probability
+     * matrix for use in the Bayesian hubness-aware classification models.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param laplaceEstimator Float value that is the Laplace estimator for
+     * distribution smoothing.
+     * @param extendByElement Boolean flag indicating whether to use the query
+     * point as its own 0-th nearest neighbor.
+     * @return float[][] representing the class-to-class neighbor occurrence
+     * probability matrix for use in the Bayesian hubness-aware classification
+     * models.
+     */
+    public float[][] getGlobalClassToClassForKforBayerisan(int k,
+            int numClasses, float laplaceEstimator, boolean extendByElement) {
+        float[][] classToClassPriors = new float[numClasses][numClasses];
+        float[] classPriors = new float[numClasses];
+        for (int i = 0; i < dset.size(); i++) {
+            int currClass = dset.data.get(i).getCategory();
+            classPriors[currClass]++;
+            if (extendByElement) {
+                classToClassPriors[currClass][currClass]++;
+            }
+            for (int kInd = 0; kInd < k; kInd++) {
+                classToClassPriors[dset.data.get(kNeighbors[i][kInd]).
+                        getCategory()][currClass]++;
+            }
+        }
+        float laplaceTotal = numClasses * laplaceEstimator;
+        if (extendByElement) {
+            for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+                for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                    classToClassPriors[cFirst][cSecond] += laplaceEstimator;
+                    classToClassPriors[cFirst][cSecond] /= ((k + 1)
+                           
