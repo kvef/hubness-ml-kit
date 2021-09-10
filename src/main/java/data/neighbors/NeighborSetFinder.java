@@ -1068,4 +1068,88 @@ public class NeighborSetFinder implements Serializable {
                                         protoDistances[minIndVal][maxIndVal
                                         - minIndVal - 1];
                                 nsfRestriction.kNeighbors[i][0] = j;
-                                nsfRestrictio
+                                nsfRestriction.kCurrLen[i] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        nsfRestriction.currK = kSmaller;
+        // Calculate the neighbor occurrence frequencies and the reverse
+        // neighbor sets for the calculated restriction.
+        int currClass;
+        int nClass;
+        nsfRestriction.reverseNeighbors = new ArrayList[protoSize];
+        for (int i = 0; i < protoSize; i++) {
+            nsfRestriction.reverseNeighbors[i] = new ArrayList<>(10 * kSmaller);
+        }
+        for (int i = 0; i < protoSize; i++) {
+            currClass = protoDSet.getLabelOf(i);
+
+            for (int j = 0; j < kSmaller; j++) {
+                nClass = protoDSet.getLabelOf(nsfRestriction.kNeighbors[i][j]);
+                nsfRestriction.reverseNeighbors[
+                        nsfRestriction.kNeighbors[i][j]].add(i);
+                if (nClass == currClass) {
+                    nsfRestriction.kGoodFrequencies[
+                            nsfRestriction.kNeighbors[i][j]]++;
+                } else {
+                    nsfRestriction.kBadFrequencies[
+                            nsfRestriction.kNeighbors[i][j]]++;
+                }
+                nsfRestriction.kNeighborFrequencies[
+                        nsfRestriction.kNeighbors[i][j]]++;
+            }
+        }
+
+        nsfRestriction.completeNeighborSets(kSmaller, null);
+        return nsfRestriction;
+    }
+
+    /**
+     * Calculates and generates a NeighborSetFinder object that represents a
+     * smaller k-range than the current object.
+     *
+     * @param kSmaller Integer that is the neighborhood size to re-calculate the
+     * kNN sets for.
+     * @return NeighborSetFinder that is the restriction on a smaller
+     * neighborhood size.
+     */
+    public NeighborSetFinder getSubNSF(int kSmaller) {
+        NeighborSetFinder nsfRestriction =
+                new NeighborSetFinder(dset, distMatrix, cmet);
+        nsfRestriction.kNeighbors = new int[dset.size()][];
+        nsfRestriction.kDistances = new float[dset.size()][];
+        nsfRestriction.kCurrLen = new int[dset.size()];
+        // Copy the full occurrence counts - we will subtract the counts for
+        // the difference between the k values below.
+        nsfRestriction.kNeighborFrequencies =
+                Arrays.copyOfRange(kNeighborFrequencies, 0, dset.size());
+        nsfRestriction.kBadFrequencies =
+                Arrays.copyOfRange(kBadFrequencies, 0, dset.size());
+        nsfRestriction.kGoodFrequencies =
+                Arrays.copyOfRange(kGoodFrequencies, 0, dset.size());
+        for (int i = 0; i < dset.size(); i++) {
+            nsfRestriction.kNeighbors[i] =
+                    Arrays.copyOfRange(kNeighbors[i], 0, kSmaller);
+            nsfRestriction.kDistances[i] =
+                    Arrays.copyOfRange(kDistances[i], 0, kSmaller);
+        }
+        Arrays.fill(kCurrLen, kSmaller);
+        nsfRestriction.currK = kSmaller;
+        nsfRestriction.reverseNeighbors = new ArrayList[dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            nsfRestriction.reverseNeighbors[i] = new ArrayList<>(10 * kSmaller);
+        }
+        for (int i = 0; i < dset.size(); i++) {
+            for (int j = 0; j < kSmaller; j++) {
+                nsfRestriction.reverseNeighbors[kNeighbors[i][j]].add(i);
+            }
+        }
+        // Subtract the additional occurrence counts in the k-range between the
+        // two k values.
+        for (int i = 0; i < dset.size(); i++) {
+            for (int j = kSmaller; j < kNeighbors[0].length; j++) {
+                nsfRestriction.kNeighborFrequencies[kNeighbors[i][j]]--;
+                if (dset.data.get(i).getCategory(
