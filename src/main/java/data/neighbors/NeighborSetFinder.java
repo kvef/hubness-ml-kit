@@ -1152,4 +1152,76 @@ public class NeighborSetFinder implements Serializable {
         for (int i = 0; i < dset.size(); i++) {
             for (int j = kSmaller; j < kNeighbors[0].length; j++) {
                 nsfRestriction.kNeighborFrequencies[kNeighbors[i][j]]--;
-                if (dset.data.get(i).getCategory(
+                if (dset.data.get(i).getCategory()
+                        == dset.data.get(kNeighbors[i][j]).getCategory()) {
+                    nsfRestriction.kGoodFrequencies[kNeighbors[i][j]]--;
+                } else {
+                    nsfRestriction.kBadFrequencies[kNeighbors[i][j]]--;
+                }
+            }
+        }
+        // Calculate the neighbor occurrence frequency stats.
+        nsfRestriction.meanOccFreq = 0;
+        nsfRestriction.stDevOccFreq = 0;
+        nsfRestriction.meanOccBadness = 0;
+        nsfRestriction.stDevOccBadness = 0;
+        nsfRestriction.meanOccGoodness = 0;
+        nsfRestriction.stDevOccGoodness = 0;
+        nsfRestriction.meanGoodMinusBadness = 0;
+        nsfRestriction.meanRelativeGoodMinusBadness = 0;
+        nsfRestriction.stDevGoodMinusBadness = 0;
+        nsfRestriction.stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < nsfRestriction.kBadFrequencies.length; i++) {
+            nsfRestriction.meanOccFreq +=
+                    nsfRestriction.kNeighborFrequencies[i];
+            nsfRestriction.meanOccBadness += nsfRestriction.kBadFrequencies[i];
+            nsfRestriction.meanOccGoodness +=
+                    nsfRestriction.kGoodFrequencies[i];
+            nsfRestriction.meanGoodMinusBadness +=
+                    nsfRestriction.kGoodFrequencies[i]
+                    - nsfRestriction.kBadFrequencies[i];
+            if (kNeighborFrequencies[i] > 0) {
+                nsfRestriction.meanRelativeGoodMinusBadness +=
+                        ((nsfRestriction.kGoodFrequencies[i]
+                        - nsfRestriction.kBadFrequencies[i])
+                        / kNeighborFrequencies[i]);
+            } else {
+                nsfRestriction.meanRelativeGoodMinusBadness += 1;
+            }
+        }
+        nsfRestriction.meanOccFreq /=
+                (float) nsfRestriction.kNeighborFrequencies.length;
+        nsfRestriction.meanOccBadness /=
+                (float) nsfRestriction.kBadFrequencies.length;
+        nsfRestriction.meanOccGoodness /=
+                (float) nsfRestriction.kGoodFrequencies.length;
+        nsfRestriction.meanGoodMinusBadness /=
+                (float) nsfRestriction.kGoodFrequencies.length;
+        nsfRestriction.meanRelativeGoodMinusBadness /=
+                (float) nsfRestriction.kGoodFrequencies.length;
+        for (int i = 0; i < nsfRestriction.kBadFrequencies.length; i++) {
+            nsfRestriction.stDevOccFreq +=
+                    ((nsfRestriction.meanOccFreq
+                    - nsfRestriction.kNeighborFrequencies[i])
+                    * (nsfRestriction.meanOccFreq
+                    - nsfRestriction.kNeighborFrequencies[i]));
+            nsfRestriction.stDevOccBadness +=
+                    ((nsfRestriction.meanOccBadness
+                    - nsfRestriction.kBadFrequencies[i])
+                    * (nsfRestriction.meanOccBadness
+                    - nsfRestriction.kBadFrequencies[i]));
+            nsfRestriction.stDevOccGoodness +=
+                    ((nsfRestriction.meanOccGoodness
+                    - nsfRestriction.kGoodFrequencies[i])
+                    * (nsfRestriction.meanOccGoodness
+                    - nsfRestriction.kGoodFrequencies[i]));
+            nsfRestriction.stDevGoodMinusBadness +=
+                    ((nsfRestriction.meanGoodMinusBadness
+                    - (nsfRestriction.kGoodFrequencies[i]
+                    - nsfRestriction.kBadFrequencies[i]))
+                    * (nsfRestriction.meanGoodMinusBadness
+                    - (nsfRestriction.kGoodFrequencies[i]
+                    - nsfRestriction.kBadFrequencies[i])));
+            if (kNeighborFrequencies[i] > 0) {
+                nsfRestriction.stDevRelativeGoodMinusBadness +=
+                        (nsfRestriction.meanRelativeG
