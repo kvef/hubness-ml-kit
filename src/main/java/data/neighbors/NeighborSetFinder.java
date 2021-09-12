@@ -1383,4 +1383,77 @@ public class NeighborSetFinder implements Serializable {
      * restricted on points that have bad occurrences.
      *
      * @param k Integer that is the neighborhood size.
-     * @param numClasses Integer
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param laplaceEstimator Float value that is the Laplace estimator for
+     * distribution smoothing.
+     * @param extendByElement Boolean flag indicating whether to use the query
+     * point as its own 0-th nearest neighbor.
+     * @return float[][] representing the class-to-class neighbor occurrence
+     * probability matrix for use in the fuzzy hubness-aware classification
+     * models, restricted on points that have bad occurrences.
+     */
+    public float[][] getGlobalClassToClassForKforFuzzyRestrictOnBad(int k,
+            int numClasses, float laplaceEstimator, boolean extendByElement) {
+        float[][] classToClassPriors = new float[numClasses][numClasses];
+        float[] classHubnessSums = new float[numClasses];
+        for (int i = 0; i < dset.size(); i++) {
+            int currClass = dset.data.get(i).getCategory();
+            if (extendByElement) {
+                classToClassPriors[currClass][currClass]++;
+                classHubnessSums[currClass]++;
+            }
+            for (int kInd = 0; kInd < k; kInd++) {
+                if (kBadFrequencies[kNeighbors[i][kInd]] > 0) {
+                    classToClassPriors[dset.data.get(
+                            kNeighbors[i][kInd]).getCategory()][currClass]++;
+                    classHubnessSums[dset.data.get(
+                            kNeighbors[i][kInd]).getCategory()]++;
+                }
+            }
+        }
+        float laplaceTotal = numClasses * laplaceEstimator;
+        for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+            for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                classToClassPriors[cFirst][cSecond] += laplaceEstimator;
+                classToClassPriors[cFirst][cSecond] /=
+                        (classHubnessSums[cFirst] + laplaceTotal);
+            }
+        }
+        return classToClassPriors;
+    }
+
+    /**
+     * This method calculates the class-conditional neighbor occurrence
+     * probability matrix for use in the Bayesian hubness-aware classification
+     * models. This means that the values are normalized to represent the
+     * probability of neighbor given the class, instead of class given the
+     * neighbor.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param laplaceEstimator Float value that is the Laplace estimator for
+     * distribution smoothing.
+     * @param extendByElement Boolean flag indicating whether to use the query
+     * point as its own 0-th nearest neighbor.
+     * @return float[][] representing the class-conditional neighbor occurrence
+     * probability matrix for use in the Bayesian hubness-aware classification
+     * models.
+     */
+    public float[][] getClassDataNeighborRelationForKforBayesian(int k,
+            int numClasses, float laplaceEstimator, boolean extendByElement) {
+        float[][] classDataKNeighborRelation =
+                new float[numClasses][dset.size()];
+        float[] classPriors = new float[numClasses];
+        for (int i = 0; i < dset.size(); i++) {
+            int currClass = dset.data.get(i).getCategory();
+            classPriors[currClass]++;
+            if (extendByElement) {
+                classDataKNeighborRelation[currClass][i]++;
+            }
+            for (int kInd = 0; kInd < k; kInd++) {
+                classDataKNeighborRelation[currClass][kNeighbors[i][kInd]]++;
+            }
+        }
+        float laplaceTotal = dset.size() * laplaceEstimator;
+        for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+            for (int cSecond = 0; cSecond < dset.size(); cSecon
