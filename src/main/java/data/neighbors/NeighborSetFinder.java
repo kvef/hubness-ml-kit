@@ -1456,4 +1456,86 @@ public class NeighborSetFinder implements Serializable {
         }
         float laplaceTotal = dset.size() * laplaceEstimator;
         for (int cFirst = 0; cFirst < numClasses; cFirst++) {
-            for (int cSecond = 0; cSecond < dset.size(); cSecon
+            for (int cSecond = 0; cSecond < dset.size(); cSecond++) {
+                classDataKNeighborRelation[cFirst][cSecond] += laplaceEstimator;
+                classDataKNeighborRelation[cFirst][cSecond] /=
+                        (k * classPriors[cFirst] + laplaceTotal);
+            }
+        }
+        return classDataKNeighborRelation;
+    }
+
+    /**
+     * This method calculates the class-conditional neighbor occurrence
+     * probability matrix for use in the fuzzy hubness-aware classification
+     * models. This means that the values are normalized to represent the
+     * probability of neighbor given the class, instead of class given the
+     * neighbor.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param laplaceEstimator Float value that is the Laplace estimator for
+     * distribution smoothing.
+     * @param extendByElement Boolean flag indicating whether to use the query
+     * point as its own 0-th nearest neighbor.
+     * @return float[][] representing the class-conditional neighbor occurrence
+     * probability matrix for use in the fuzzy hubness-aware classification
+     * models.
+     */
+    public float[][] getFuzzyClassDataNeighborRelation(int k, int numClasses,
+            float laplaceEstimator, boolean extendByElement) {
+        float[][] classDataKNeighborRelation =
+                new float[numClasses][dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            int currClass = dset.data.get(i).getCategory();
+            if (extendByElement) {
+                classDataKNeighborRelation[currClass][i]++;
+            }
+            for (int kInd = 0; kInd < k; kInd++) {
+                classDataKNeighborRelation[currClass][kNeighbors[i][kInd]]++;
+            }
+        }
+        float laplaceTotal = numClasses * laplaceEstimator;
+        recalculateStatsForSmallerK(k);
+        int[] neighbOccFreqs = getNeighborFrequencies();
+        for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+            for (int cSecond = 0; cSecond < dset.size(); cSecond++) {
+                classDataKNeighborRelation[cFirst][cSecond] += laplaceEstimator;
+                classDataKNeighborRelation[cFirst][cSecond] /=
+                        (neighbOccFreqs[cSecond] + 1 + laplaceTotal);
+            }
+        }
+        recalculateStatsForSmallerK(kNeighbors[0].length);
+        return classDataKNeighborRelation;
+    }
+
+    /**
+     * This method calculates the class-conditional neighbor occurrence counts.
+     * In the results, the cell [i,j] holds the occurrence count of point i in
+     * class j.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param extendByElement Boolean flag indicating whether to use the query
+     * point as its own 0-th nearest neighbor.
+     * @return float[][] representing the class-conditional neighbor occurrence
+     * counts. In the results, the cell [i,j] holds the occurrence count of
+     * point i in class j.
+     */
+    public float[][] getDataClassNeighborRelationNonNormalized(int k,
+            int numClasses, boolean extendByElement) {
+        float[][] dataClassKNeighborRelation =
+                new float[dset.size()][numClasses];
+        for (int i = 0; i < dset.size(); i++) {
+            int currClass = dset.data.get(i).getCategory();
+            if (extendByElement) {
+                dataClassKNeighborRelation[i][currClass]++;
+            }
+            for (int kInd = 0; kInd < k; kInd++) {
+                dataClassKNeighborRelation[kNeighbors[i][kInd]][currClass]++;
+            }
+        }
+        return dataClassKNeighborRelation;
+    }
+
+ 
