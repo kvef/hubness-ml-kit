@@ -1538,4 +1538,90 @@ public class NeighborSetFinder implements Serializable {
         return dataClassKNeighborRelation;
     }
 
- 
+    /**
+     * This method calculates the class-conditional neighbor occurrence counts.
+     * In the results, the cell [i,j] holds the occurrence count of point j in
+     * class i.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param extendByElement Boolean flag indicating whether to use the query
+     * point as its own 0-th nearest neighbor.
+     * @return float[][] representing the class-conditional neighbor occurrence
+     * counts. In the results, the cell [i,j] holds the occurrence count of
+     * point j in class i.
+     */
+    public float[][] getClassDataNeighborRelationNonNormalized(int k,
+            int numClasses, boolean extendByElement) {
+        float[][] classDataKNeighborRelation =
+                new float[numClasses][dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            int currClass = dset.data.get(i).getCategory();
+            if (extendByElement) {
+                classDataKNeighborRelation[currClass][i]++;
+            }
+            for (int kInd = 0; kInd < k; kInd++) {
+                classDataKNeighborRelation[currClass][kNeighbors[i][kInd]]++;
+            }
+        }
+        return classDataKNeighborRelation;
+    }
+
+    /**
+     * @return float[][] representing an array of occurrence frequency arrays,
+     * for neighborhood sizes from 1 to the maximum neighborhood size supported
+     * by the current kNN sets, which is their length.
+     */
+    public float[][] getOccFreqsForAllK() {
+        int k = kNeighbors[0].length;
+        float[][] occFreqsAllK = new float[k][kNeighbors.length];
+        for (int kInd = 0; kInd < k; kInd++) {
+            recalculateStatsForSmallerK(kInd + 1);
+            for (int i = 0; i < kNeighbors.length; i++) {
+                occFreqsAllK[kInd][i] = getNeighborFrequencies()[i];
+            }
+        }
+        return occFreqsAllK;
+    }
+
+    /**
+     * This method queries the dataset to determine the neighbors of a
+     * particular point from the dataset.
+     *
+     * @param dset DataSet object to query.
+     * @param instanceIndex Integer that is the index of the data instance that
+     * is the kNN query.
+     * @param neighborhoodSize Integer that is the desired neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @return int[] that contains the indexes of the k-nearest neighbors for
+     * the query point.
+     * @throws Exception
+     */
+    public static int[] getIndexesOfNeighbors(DataSet dset, int instanceIndex,
+            int neighborhoodSize, CombinedMetric cmet) throws Exception {
+        int[] neighbors = new int[neighborhoodSize];
+        float currDist;
+        int kCurrLen = 0;
+        float[] nDists = new float[neighborhoodSize];
+        Arrays.fill(nDists, Float.MAX_VALUE);
+        int l;
+        DataInstance instance = dset.data.get(instanceIndex);
+        // Check the first half of the points, with the index value below the
+        // query index value.
+        for (int i = 0; i < instanceIndex; i++) {
+            currDist = cmet.dist(instance, dset.data.get(i));
+            if (kCurrLen > 0) {
+                if (kCurrLen == neighborhoodSize) {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and inser.
+                        l = neighborhoodSize - 1;
+                        while ((l >= 1) && currDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = currDist;
+                        neighbors[l] = i;
+
+                    }
+                } e
