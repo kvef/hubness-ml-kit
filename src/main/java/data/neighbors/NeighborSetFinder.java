@@ -1624,4 +1624,92 @@ public class NeighborSetFinder implements Serializable {
                         neighbors[l] = i;
 
                     }
-                } e
+                } else {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = kCurrLen - 1;
+                        nDists[kCurrLen] = nDists[kCurrLen - 1];
+                        neighbors[kCurrLen] = neighbors[kCurrLen - 1];
+                        while ((l >= 1) && currDist < nDists[l]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l + 1] = currDist;
+                        neighbors[l + 1] = i;
+                        kCurrLen++;
+                    } else {
+                        nDists[kCurrLen] = currDist;
+                        neighbors[kCurrLen] = i;
+                        kCurrLen++;
+                    }
+                }
+            } else {
+                nDists[0] = currDist;
+                nDists[0] = i;
+                kCurrLen = 1;
+            }
+        }
+        // Check the second half of the points, with the index value above the
+        // query index value.
+        for (int i = instanceIndex + 1; i < dset.size(); i++) {
+            currDist = cmet.dist(instance, dset.data.get(i));
+            if (kCurrLen > 0) {
+                if (kCurrLen == neighborhoodSize) {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = neighborhoodSize - 1;
+                        while ((l >= 1) && currDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = currDist;
+                        neighbors[l] = i;
+                    }
+                } else {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = kCurrLen - 1;
+                        nDists[kCurrLen] = nDists[kCurrLen - 1];
+                        neighbors[kCurrLen] = neighbors[kCurrLen - 1];
+                        while ((l >= 1) && currDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = currDist;
+                        neighbors[l] = i;
+                        kCurrLen++;
+                    } else {
+                        nDists[kCurrLen] = currDist;
+                        neighbors[kCurrLen] = i;
+                        kCurrLen++;
+                    }
+                }
+            } else {
+                nDists[0] = currDist;
+                neighbors[0] = i;
+                kCurrLen = 1;
+            }
+        }
+        return neighbors;
+    }
+
+    /**
+     * This method queries the dataset to determine the neighbors of a
+     * particular point that does not belong to the dataset.
+     *
+     * @param dset DataSet object to query.
+     * @param instance DataInstance that is the query point.
+     * @param neighborhoodSize Integer that is the desired neighborhood size.
+     * @param distances float[] representing the distances from the query point
+     * to the points in the provided DataSet.
+     * @return int[] that contains the indexes of the k-nearest neighbors for
+     * the query point.
+     * @throws Exception
+     */
+    public static int[] getIndexesOfNeighbors(DataSet dset,
+            DataInstance instance, int neighborhoodSize, float[] distances)
+            throws Exception {
+      
