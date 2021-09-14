@@ -1712,4 +1712,94 @@ public class NeighborSetFinder implements Serializable {
     public static int[] getIndexesOfNeighbors(DataSet dset,
             DataInstance instance, int neighborhoodSize, float[] distances)
             throws Exception {
-      
+        int[] neighbors = new int[neighborhoodSize];
+        float currDist;
+        int kCurrLen = 0;
+        float[] nDists = new float[neighborhoodSize];
+        Arrays.fill(nDists, Float.MAX_VALUE);
+        int l;
+        for (int i = 0; i < dset.size(); i++) {
+            currDist = distances[i];
+            if (kCurrLen > 0) {
+                if (kCurrLen == neighborhoodSize) {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = neighborhoodSize - 1;
+                        while ((l >= 1) && currDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = currDist;
+                        neighbors[l] = i;
+                    }
+                } else {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = kCurrLen - 1;
+                        nDists[kCurrLen] = nDists[kCurrLen - 1];
+                        neighbors[kCurrLen] = neighbors[kCurrLen - 1];
+                        while ((l >= 1) && currDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = currDist;
+                        neighbors[l] = i;
+                        kCurrLen++;
+                    } else {
+                        nDists[kCurrLen] = currDist;
+                        neighbors[kCurrLen] = i;
+                        kCurrLen++;
+                    }
+                }
+            } else {
+                nDists[0] = currDist;
+                neighbors[0] = i;
+                kCurrLen = 1;
+            }
+        }
+        return neighbors;
+    }
+
+    /**
+     * Get the indexes of neighbors from the training set for all the instances
+     * in the test set.
+     *
+     * @param trainingDSet DataSet object that is the training data.
+     * @param testDSet DataSet object that is the test data.
+     * @param neighborhoodSize Integer that is the neighborhood size.
+     * @param testToTrainDist Float 2D array of distances from test to training.
+     * @return Integer 2D array of indexes of neighbors from the training data
+     * of points in the test data.
+     * @throws Exception
+     */
+    public static int[][] getIndexesOfNeighbors(DataSet trainingDSet,
+            DataSet testDSet, int neighborhoodSize, float[][] testToTrainDist)
+            throws Exception {
+        if (trainingDSet == null || testDSet == null) {
+            return null;
+        }
+        int[][] neighborIndexes = new int[testDSet.size()][];
+        for (int i = 0; i < testDSet.size(); i++) {
+            DataInstance instance = testDSet.getInstance(i);
+            neighborIndexes[i] = getIndexesOfNeighbors(trainingDSet,
+                    instance, neighborhoodSize, testToTrainDist[i]);
+        }
+        return neighborIndexes;
+    }
+
+    /**
+     * Get the indexes of neighbors from the training set for all the instances
+     * in the test set.
+     *
+     * @param trainingDSet DataSet object that is the training data.
+     * @param testDSet DataSet object that is the test data.
+     * @param neighborhoodSize Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @return Integer 2D array of indexes of neighbors from the training data
+     * of points in the test data.
+     * @throws Exception
+     */
+    public static int[][] getIndexesOfNeighbors(DataSet trainingDSet,
+            DataSet testDSet, int neighborhoodSize, CombinedMetric
