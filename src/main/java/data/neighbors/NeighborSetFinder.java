@@ -1802,4 +1802,93 @@ public class NeighborSetFinder implements Serializable {
      * @throws Exception
      */
     public static int[][] getIndexesOfNeighbors(DataSet trainingDSet,
-            DataSet testDSet, int neighborhoodSize, CombinedMetric
+            DataSet testDSet, int neighborhoodSize, CombinedMetric cmet)
+            throws Exception {
+        if (trainingDSet == null || testDSet == null) {
+            return null;
+        }
+        int[][] neighborIndexes = new int[testDSet.size()][];
+        for (int i = 0; i < testDSet.size(); i++) {
+            DataInstance instance = testDSet.getInstance(i);
+            neighborIndexes[i] = getIndexesOfNeighbors(trainingDSet,
+                    instance, neighborhoodSize, cmet);
+        }
+        return neighborIndexes;
+    }
+
+    /**
+     * This method queries the dataset to determine the neighbors of a
+     * particular point that does not belong to the dataset.
+     *
+     * @param dset DataSet object to query.
+     * @param instance DataInstance that is the query point.
+     * @param neighborhoodSize Integer that is the desired neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations. to the
+     * points in the provided DataSet.
+     * @return int[] that contains the indexes of the k-nearest neighbors for
+     * the query point.
+     * @throws Exception
+     */
+    public static int[] getIndexesOfNeighbors(DataSet dset,
+            DataInstance instance, int neighborhoodSize, CombinedMetric cmet)
+            throws Exception {
+        int[] neighbors = new int[neighborhoodSize];
+        float currDist;
+        int kCurrLen = 0;
+        float[] nDists = new float[neighborhoodSize];
+        Arrays.fill(nDists, Float.MAX_VALUE);
+        int l;
+        for (int i = 0; i < dset.size(); i++) {
+            currDist = cmet.dist(instance, dset.data.get(i));
+            if (kCurrLen > 0) {
+                if (kCurrLen == neighborhoodSize) {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = neighborhoodSize - 1;
+                        while ((l >= 1) && currDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = currDist;
+                        neighbors[l] = i;
+                    }
+                } else {
+                    if (currDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = kCurrLen - 1;
+                        nDists[kCurrLen] = nDists[kCurrLen - 1];
+                        neighbors[kCurrLen] = neighbors[kCurrLen - 1];
+                        while ((l >= 1) && currDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = currDist;
+                        neighbors[l] = i;
+                        kCurrLen++;
+                    } else {
+                        nDists[kCurrLen] = currDist;
+                        neighbors[kCurrLen] = i;
+                        kCurrLen++;
+                    }
+                }
+            } else {
+                nDists[0] = currDist;
+                neighbors[0] = i;
+                kCurrLen = 1;
+            }
+        }
+        return neighbors;
+    }
+
+    /**
+     * This method queries the dataset with an instance, given a tabu map of
+     * points that can not be considered as potential neighbors.
+     *
+     * @param dset DataSet object to query.
+     * @param instance DataInstance that is the query point.
+     * @param neighborhoodSize Integer that is the desired neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations. to the
+     * points in the provided DataSet.
+     * @param tabuMap HashMap containing the in
