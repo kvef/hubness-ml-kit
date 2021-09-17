@@ -2092,4 +2092,107 @@ public class NeighborSetFinder implements Serializable {
      * @param kNeighbors int[][] that is an array of neighbor index arrays for
      * all data points.
      * @return double[] containing the estimated point-wise densities.
-     * @throws Excep
+     * @throws Exception
+     */
+    public static double[] getDataDensitiesByNormalizedRadius(DataSet dset,
+            CombinedMetric cmet, int currK, int[][] kNeighbors)
+            throws Exception {
+        double[] radii = new double[dset.size()];
+        double maxRadius = -Float.MAX_VALUE;
+        for (int i = 0; i < radii.length; i++) {
+            radii[i] = dset.getRadiusOfVolumeForInstances(kNeighbors[i], cmet);
+            if (radii[i] > maxRadius) {
+                maxRadius = radii[i];
+            }
+        }
+        if (maxRadius == 0) {
+            return null;
+        }
+        for (int i = 0; i < radii.length; i++) {
+            if (radii[i] != 0) {
+                radii[i] /= maxRadius;
+                radii[i] = currK / Math.pow(radii[i], dset.getNumFloatAttr());
+            }
+        }
+        return radii;
+    }
+
+    /**
+     * This method calculates an estimate of the data density in a subset of
+     * data points based on their nearest neighbors and the kNN radius. It is
+     * useful for some incremental experiments.
+     *
+     * @param dset DataSet object that the points belong to.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param currK Integer that is the neighborhood size.
+     * @param kNeighbors int[][] that is an array of neighbor index arrays for
+     * all data points.
+     * @param maxPointIndex Integer that is the maximum index to calculate the
+     * densities for.
+     * @return double[] containing the estimated point-wise densities.
+     * @throws Exception
+     */
+    public static double[] getDataDensitiesByNormalizedRadiusForElementsUntil(
+            DataSet dset, CombinedMetric cmet, int currK, int[][] kNeighbors,
+            int maxPointIndex) throws Exception {
+        double[] radii = new double[maxPointIndex];
+        double maxRadius = -Float.MAX_VALUE;
+        for (int i = 0; i < maxPointIndex; i++) {
+            radii[i] = dset.getRadiusOfVolumeForInstances(kNeighbors[i], cmet);
+            if (radii[i] > maxRadius) {
+                maxRadius = radii[i];
+            }
+        }
+        if (maxRadius == 0) {
+            return null;
+        }
+        for (int i = 0; i < maxPointIndex; i++) {
+            if (radii[i] != 0) {
+                radii[i] /= maxRadius;
+                radii[i] = currK / Math.pow(radii[i], dset.getNumFloatAttr());
+            }
+        }
+        return radii;
+    }
+
+    /**
+     * This method calculates an estimate of the data density in all data points
+     * based on their nearest neighbors and the kNN radius.
+     *
+     * @return double[] containing the estimated point-wise densities.
+     * @throws Exception
+     */
+    public double[] getDataDensitiesByNormalizedRadius() throws Exception {
+        double[] radii = new double[dset.size()];
+        double maxRadius = -Float.MAX_VALUE;
+        for (int i = 0; i < radii.length; i++) {
+            radii[i] = dset.getRadiusOfVolumeForInstances(
+                    kNeighbors[i], cmet, currK);
+            if (radii[i] > maxRadius) {
+                maxRadius = radii[i];
+            }
+        }
+        if (maxRadius == 0) {
+            return null;
+        }
+        for (int i = 0; i < radii.length; i++) {
+            if (radii[i] != 0) {
+                radii[i] /= maxRadius;
+                radii[i] = currK / Math.pow(radii[i], dset.getNumFloatAttr());
+            }
+        }
+        return radii;
+    }
+
+    /**
+     * This method calculates the distance mean and variance.
+     */
+    public final void calculateOccFreqMeanAndVariance() {
+        for (int i = 0; i < distMatrix.length; i++) {
+            for (int j = 0; j < distMatrix[i].length; j++) {
+                distMean += distMatrix[i][j];
+            }
+        }
+        distMean = distMean / (dset.size() - 1);
+        distVariance = 0;
+        
