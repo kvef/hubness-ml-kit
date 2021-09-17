@@ -1981,4 +1981,115 @@ public class NeighborSetFinder implements Serializable {
             }
             int minIndex = Math.min(i, instanceIndex);
             int maxIndex = Math.max(i, instanceIndex);
-            
+            tempDist = dMat[minIndex][maxIndex - minIndex - 1];
+            if (kCurrLen > 0) {
+                if (kCurrLen == neighborhoodSize) {
+                    if (tempDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = neighborhoodSize - 1;
+                        while ((l >= 1) && tempDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = tempDist;
+                        neighbors[l] = i;
+                    }
+                } else {
+                    if (tempDist < nDists[kCurrLen - 1]) {
+                        // Search and insert.
+                        l = kCurrLen - 1;
+                        nDists[kCurrLen] = nDists[kCurrLen - 1];
+                        neighbors[kCurrLen] = neighbors[kCurrLen - 1];
+                        while ((l >= 1) && tempDist < nDists[l - 1]) {
+                            nDists[l] = nDists[l - 1];
+                            neighbors[l] = neighbors[l - 1];
+                            l--;
+                        }
+                        nDists[l] = tempDist;
+                        neighbors[l] = i;
+                        kCurrLen++;
+                    } else {
+                        nDists[kCurrLen] = tempDist;
+                        neighbors[kCurrLen] = i;
+                        kCurrLen++;
+                    }
+                }
+            } else {
+                nDists[0] = tempDist;
+                neighbors[0] = i;
+                kCurrLen = 1;
+            }
+        }
+        return neighbors;
+    }
+
+    /**
+     * @return int[] representing the neighbor occurrence frequencies for all
+     * data points.
+     */
+    public int[] getNeighborFrequencies() {
+        return kNeighborFrequencies;
+    }
+
+    /**
+     * @return int[] that contains the good neighbor occurrence frequencies for
+     * all data points.
+     */
+    public int[] getGoodFrequencies() {
+        return kGoodFrequencies;
+    }
+
+    /**
+     * @return int[] that contains the bad neighbor occurrence frequencies for
+     * all data points.
+     */
+    public int[] getBadFrequencies() {
+        return kBadFrequencies;
+    }
+
+    /**
+     * @return DataSet object that is being analyzed.
+     */
+    public DataSet getDataSet() {
+        return dset;
+    }
+
+    /**
+     * @return float[] representing the neighbor occurrence frequencies for all
+     * data points.
+     */
+    public float[] getFloatOccFreqs() {
+        float[] occFreqs = new float[kNeighbors.length];
+        for (int i = 0; i < kNeighbors.length; i++) {
+            occFreqs[i] = kNeighborFrequencies[i];
+        }
+        return occFreqs;
+    }
+
+    /**
+     * @return float[][] representing the upper triangular distance matrix.
+     */
+    public float[][] getDistances() {
+        return distMatrix;
+    }
+
+    /**
+     * @return float[][] representing an array of arrays of k-distances for all
+     * data points.
+     */
+    public float[][] getKDistances() {
+        return kDistances;
+    }
+
+    /**
+     * This method calculates an estimate of the data density in all data points
+     * based on their nearest neighbors and the kNN radius.
+     *
+     * @param dset DataSet object that the points belong to.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param currK Integer that is the neighborhood size.
+     * @param kNeighbors int[][] that is an array of neighbor index arrays for
+     * all data points.
+     * @return double[] containing the estimated point-wise densities.
+     * @throws Excep
