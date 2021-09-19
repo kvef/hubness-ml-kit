@@ -2195,4 +2195,113 @@ public class NeighborSetFinder implements Serializable {
         }
         distMean = distMean / (dset.size() - 1);
         distVariance = 0;
+        for (int i = 0; i < distMatrix.length; i++) {
+            for (int j = 0; j < distMatrix[i].length; j++) {
+                distVariance += (distMean - distMatrix[i][j])
+                        * (distMean - distMatrix[i][j]);
+            }
+        }
+        distVariance = distVariance / (dset.size() - 1);
+    }
+
+    /**
+     * This method calculates the distance matrix if it wasn't provided.
+     *
+     * @throws Exception
+     */
+    public void calculateDistances() throws Exception {
+        if (dset == null || dset.isEmpty()) {
+            return;
+        }
+        distMatrix = new float[dset.size()][];
+        distMean = 0;
+        for (int i = 0; i < dset.size(); i++) {
+            distMatrix[i] = new float[distMatrix.length - i - 1];
+            for (int j = i + 1; j < distMatrix.length; j++) {
+                distMatrix[i][j - i - 1] = cmet.dist(dset.data.get(i),
+                        dset.data.get(j));
+                distMean += distMatrix[i][j - i - 1];
+            }
+        }
+        distMean = distMean / (dset.size() - 1);
+        distVariance = 0;
+        for (int i = 0; i < distMatrix.length; i++) {
+            for (int j = i + 1; j < distMatrix.length; j++) {
+                distVariance += (distMean - distMatrix[i][j - i - 1])
+                        * (distMean - distMatrix[i][j - i - 1]);
+            }
+        }
+        distVariance = distVariance / (dset.size() - 1);
+        distancesCalculated = true;
+    }
+
+    /**
+     * @return Double value that is the distance variance.
+     */
+    public double getDistanceVariance() {
+        return distVariance;
+    }
+
+    /**
+     * @return Double value that is the distance mean.
+     */
+    public double getDistanceMean() {
+        return distMean;
+    }
+
+    /**
+     * This class allows for multi-threaded calculations of the kNN sets.
+     */
+    class ThreadNeighborCalculator implements Runnable {
+
+        private int startRow;
+        private int endRow;
+        private int k;
+        private boolean[] isAllowed;
+
+        /**
+         * Initialization.
+         *
+         * @param startRow Integer that is the index of the start row,
+         * inclusive.
+         * @param endRow Integer that is the index of the end row, inclusive.
+         * @param k Integer that is the neighborhood size.
+         */
+        public ThreadNeighborCalculator(int startRow, int endRow, int k) {
+            this.startRow = startRow;
+            this.k = k;
+            this.endRow = endRow;
+        }
         
+        /**
+         * Initialization.
+         *
+         * @param startRow Integer that is the index of the start row,
+         * inclusive.
+         * @param endRow Integer that is the index of the end row, inclusive.
+         * @param k Integer that is the neighborhood size.
+         * @param isAllowed boolean[] determining whether certain points are to 
+         * be considered as neighbors or not in the given context.
+         */
+        public ThreadNeighborCalculator(int startRow, int endRow, int k, 
+                boolean[] isAllowed) {
+            this.startRow = startRow;
+            this.k = k;
+            this.endRow = endRow;
+            this.isAllowed = isAllowed;
+        }
+
+        @Override
+        public void run() {
+            try {
+                int l;
+                for (int i = startRow; i <= endRow; i++) {
+
+                    for (int j = 0; j < i; j++) {
+                        if (isAllowed != null && !isAllowed[j]) {
+                            continue;
+                        }
+                        if (kCurrLen[i] > 0) {
+                            if (kCurrLen[i] == k) {
+                                if (distMatrix[j][i - j - 1]
+                                        < kDistances[i][kCurrLen[i] - 1]) 
