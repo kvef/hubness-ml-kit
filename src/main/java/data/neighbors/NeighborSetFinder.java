@@ -2304,4 +2304,70 @@ public class NeighborSetFinder implements Serializable {
                         if (kCurrLen[i] > 0) {
                             if (kCurrLen[i] == k) {
                                 if (distMatrix[j][i - j - 1]
-                                        < kDistances[i][kCurrLen[i] - 1]) 
+                                        < kDistances[i][kCurrLen[i] - 1]) {
+                                    // Search and insert.
+                                    l = k - 1;
+                                    while ((l >= 1) && distMatrix[j][i - j - 1]
+                                            < kDistances[i][l - 1]) {
+                                        kDistances[i][l] = kDistances[i][l - 1];
+                                        kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                        l--;
+                                    }
+                                    kDistances[i][l] = distMatrix[j][i - j - 1];
+                                    kNeighbors[i][l] = j;
+                                }
+                            } else {
+                                if (distMatrix[j][i - j - 1] < kDistances[i][
+                                        kCurrLen[i] - 1]) {
+                                    //search to see where to insert
+                                    l = kCurrLen[i] - 1;
+                                    kDistances[i][kCurrLen[i]] = kDistances[i][
+                                            kCurrLen[i] - 1];
+                                    kNeighbors[i][kCurrLen[i]] = kNeighbors[i][
+                                            kCurrLen[i] - 1];
+                                    while ((l >= 1) && distMatrix[j][i - j - 1]
+                                            < kDistances[i][l - 1]) {
+                                        kDistances[i][l] = kDistances[i][l - 1];
+                                        kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                        l--;
+                                    }
+                                    kDistances[i][l] = distMatrix[j][i - j - 1];
+                                    kNeighbors[i][l] = j;
+                                    kCurrLen[i]++;
+                                } else {
+                                    kDistances[i][kCurrLen[i]] = distMatrix[j][
+                                            i - j - 1];
+                                    kNeighbors[i][kCurrLen[i]] = j;
+                                    kCurrLen[i]++;
+                                }
+                            }
+                        } else {
+                            kDistances[i][0] = distMatrix[j][i - j - 1];
+                            kNeighbors[i][0] = j;
+                            kCurrLen[i] = 1;
+                        }
+                    }
+
+                    for (int j = 0; j < distMatrix[i].length; j++) {
+                        if (isAllowed != null && !isAllowed[i + j + 1]) {
+                            continue;
+                        }
+                        if (kCurrLen[i] > 0) {
+                            if (kCurrLen[i] == k) {
+                                if (distMatrix[i][j] < kDistances[i][
+                                        kCurrLen[i] - 1]) {
+                                    // Search and inset.
+                                    l = k - 1;
+                                    while ((l >= 1) && distMatrix[i][j]
+                                            < kDistances[i][l - 1]) {
+                                        kDistances[i][l] = kDistances[i][l - 1];
+                                        kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                        l--;
+                                    }
+                                    kDistances[i][l] = distMatrix[i][j];
+                                    kNeighbors[i][l] = i + j + 1;
+                                }
+                            } else {
+                                if (distMatrix[i][j] < kDistances[i][
+                                        kCurrLen[i] - 1]) {
+                           
