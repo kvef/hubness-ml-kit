@@ -2450,4 +2450,75 @@ public class NeighborSetFinder implements Serializable {
         for (int i = 0; i < kBadFrequencies.length; i++) {
             meanOccFreq += kNeighborFrequencies[i];
             meanOccBadness += kBadFrequencies[i];
- 
+            meanOccGoodness += kGoodFrequencies[i];
+            meanGoodMinusBadness += kGoodFrequencies[i] - kBadFrequencies[i];
+            if (kNeighborFrequencies[i] > 0) {
+                meanRelativeGoodMinusBadness += ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]);
+            } else {
+                meanRelativeGoodMinusBadness += 1;
+            }
+        }
+        meanOccFreq /= (float) kNeighborFrequencies.length;
+        meanOccBadness /= (float) kBadFrequencies.length;
+        meanOccGoodness /= (float) kGoodFrequencies.length;
+        meanGoodMinusBadness /= (float) kGoodFrequencies.length;
+        meanRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            stDevOccFreq += ((meanOccFreq - kNeighborFrequencies[i])
+                    * (meanOccFreq - kNeighborFrequencies[i]));
+            stDevOccBadness += ((meanOccBadness - kBadFrequencies[i])
+                    * (meanOccBadness - kBadFrequencies[i]));
+            stDevOccGoodness += ((meanOccGoodness - kGoodFrequencies[i])
+                    * (meanOccGoodness - kGoodFrequencies[i]));
+            stDevGoodMinusBadness += ((meanGoodMinusBadness
+                    - (kGoodFrequencies[i] - kBadFrequencies[i]))
+                    * (meanGoodMinusBadness - (kGoodFrequencies[i]
+                    - kBadFrequencies[i])));
+            if (kNeighborFrequencies[i] > 0) {
+                stDevRelativeGoodMinusBadness += (meanRelativeGoodMinusBadness
+                        - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (meanRelativeGoodMinusBadness - ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+            } else {
+                stDevRelativeGoodMinusBadness +=
+                        (meanRelativeGoodMinusBadness - 1)
+                        * (meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        stDevOccFreq /= (float) kNeighborFrequencies.length;
+        stDevOccBadness /= (float) kBadFrequencies.length;
+        stDevOccGoodness /= (float) kGoodFrequencies.length;
+        stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevOccFreq = Math.sqrt(stDevOccFreq);
+        stDevOccBadness = Math.sqrt(stDevOccBadness);
+        stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+        stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+        stDevRelativeGoodMinusBadness =
+                Math.sqrt(stDevRelativeGoodMinusBadness);
+    }
+
+    /**
+     * This method allows the users to eliminate a particular neighbor point
+     * from all calculated kNN sets. This can be used in cases of instance
+     * selection, when certain points are removed from the prototype set.
+     *
+     * @param tNeighborIndex Integer that is the index of the neighbor point to
+     * eliminate from all neighbor sets.
+     * @param tVal Integer that is the value to put in the tabu hashmap
+     * alongside the neighbor index.
+     * @param tabuList HashMap that is the list of all banned neighbors.
+     * @param calculateHubnessStatistics Boolean flag indicating whether to
+     * recalculate the mean / stDev after each tabu run.
+     * @throws Exception
+     */
+    public void tabuANeighbor(int tNeighborIndex, int tVal, HashMap tabuList,
+            boolean calculateHubnessStatistics) throws Exception {
+        int k = currK;
+        if (!tabuList.containsKey(tNeighborIndex)) {
+            tabuList.put(tNeighborIndex, tVal);
+        }
+        if (kNeighbors == null) {
+            calculateNeighborSetsMultiT
