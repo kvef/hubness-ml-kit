@@ -2370,4 +2370,84 @@ public class NeighborSetFinder implements Serializable {
                             } else {
                                 if (distMatrix[i][j] < kDistances[i][
                                         kCurrLen[i] - 1]) {
-                           
+                                    // Search and insert.
+                                    l = kCurrLen[i] - 1;
+                                    kDistances[i][kCurrLen[i]] = kDistances[i][
+                                            kCurrLen[i] - 1];
+                                    kNeighbors[i][kCurrLen[i]] = kNeighbors[i][
+                                            kCurrLen[i] - 1];
+                                    while ((l >= 1) && distMatrix[i][j]
+                                            < kDistances[i][l - 1]) {
+                                        kDistances[i][l] = kDistances[i][l - 1];
+                                        kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                        l--;
+                                    }
+                                    kDistances[i][l] = distMatrix[i][j];
+                                    kNeighbors[i][l] = i + j + 1;
+                                    kCurrLen[i]++;
+                                } else {
+                                    kDistances[i][kCurrLen[i]] =
+                                            distMatrix[i][j];
+                                    kNeighbors[i][kCurrLen[i]] = i + j + 1;
+                                    kCurrLen[i]++;
+                                }
+                            }
+                        } else {
+                            kDistances[i][0] = distMatrix[i][j];
+                            kNeighbors[i][0] = i + j + 1;
+                            kCurrLen[i] = 1;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("kNN calculation error.");
+                System.err.println(e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * This method calculates the occurrence frequency (total, good, bad) means
+     * and standard deviations.
+     * 
+     * @param recalculateOccurrences Boolean flag indicating whether to
+     * re-calculate the reverse neighbor lists and occurrence frequencies as
+     * well or to use the existing ones.
+     */
+    public void calculateHubnessStats(boolean recalculateOccurrences) {
+        if (recalculateOccurrences) {
+            reverseNeighbors = new ArrayList[dset.size()];
+            for (int i = 0; i < dset.size(); i++) {
+                reverseNeighbors[i] = new ArrayList<>(10 * currK);
+            }
+            // Count the neighbor occurrence frequencies.
+            kNeighborFrequencies = new int[kNeighbors.length];
+            kBadFrequencies = new int[kNeighbors.length];
+            kGoodFrequencies = new int[kNeighbors.length];
+            for (int i = 0; i < kNeighbors.length; i++) {
+                for (int kInd = 0; kInd < currK; kInd++) {
+                    reverseNeighbors[kNeighbors[i][kInd]].add(i);
+                    kNeighborFrequencies[kNeighbors[i][kInd]]++;
+                    if (dset.data.get(i).getCategory() != dset.data.get(
+                            kNeighbors[i][kInd]).getCategory()) {
+                        kBadFrequencies[kNeighbors[i][kInd]]++;
+                    } else {
+                        kGoodFrequencies[kNeighbors[i][kInd]]++;
+                    }
+                }
+            }
+        }
+        meanOccFreq = 0;
+        stDevOccFreq = 0;
+        meanOccBadness = 0;
+        stDevOccBadness = 0;
+        meanOccGoodness = 0;
+        stDevOccGoodness = 0;
+        meanGoodMinusBadness = 0;
+        stDevGoodMinusBadness = 0;
+        meanRelativeGoodMinusBadness = 0;
+        stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            meanOccFreq += kNeighborFrequencies[i];
+            meanOccBadness += kBadFrequencies[i];
+ 
