@@ -2521,4 +2521,84 @@ public class NeighborSetFinder implements Serializable {
             tabuList.put(tNeighborIndex, tVal);
         }
         if (kNeighbors == null) {
-            calculateNeighborSetsMultiT
+            calculateNeighborSetsMultiThr(k, 4);
+        }
+        if (kCurrLen == null) {
+            kDistances = new float[dset.size()][k];
+            kCurrLen = new int[dset.size()];
+        }
+        // Eliminate the specified neighbor point.
+        if (kNeighborFrequencies[tNeighborIndex] == 0) {
+            // If it is an orphan, never occurs, then there are no places to
+            // remove it from and there is nothing to do.
+            return;
+        }
+
+        ArrayList<Integer> rnnIndexList = reverseNeighbors[tNeighborIndex];
+        ArrayList<Integer> neighborIntervals;
+        int upperVal, lowerVal;
+        int minIndex, maxIndex;
+        int datasize = dset.size();
+        currK = k;
+        int l;
+        int remNeighborIndex;
+        kNeighborFrequencies[tNeighborIndex] = 0;
+        kGoodFrequencies[tNeighborIndex] = 0;
+        kBadFrequencies[tNeighborIndex] = 0;
+        int currClass;
+        for (int tInd = 0; tInd < rnnIndexList.size(); tInd++) {
+            int i = rnnIndexList.get(tInd);
+            currClass = dset.getLabelOf(i);
+            remNeighborIndex = 0;
+            while (remNeighborIndex < kCurrLen[i]
+                    && kNeighbors[i][remNeighborIndex] != tNeighborIndex) {
+                remNeighborIndex++;
+            }
+            // Shift the remaining neighbors.
+            if (remNeighborIndex < k - 1) {
+                for (int m = remNeighborIndex + 1; m < k; m++) {
+                    kNeighbors[i][m - 1] = kNeighbors[i][m];
+                    kDistances[i][m - 1] = kDistances[i][m];
+                }
+            }
+            kNeighbors[i][k - 1] = 0;
+            kDistances[i][k - 1] = Float.MAX_VALUE;
+            kCurrLen[i]--;
+            // Find the replacement neighbor point.
+            if (kCurrLen[i] < k) {
+                neighborIntervals = new ArrayList(k + 2);
+                neighborIntervals.add(-1);
+                for (int j = 0; j < kCurrLen[i]; j++) {
+                    neighborIntervals.add(kNeighbors[i][j]);
+                }
+                neighborIntervals.add(datasize + 1);
+                Collections.sort(neighborIntervals);
+                int iSizeRed = neighborIntervals.size() - 1;
+                for (int ind = 0; ind < iSizeRed; ind++) {
+                    lowerVal = neighborIntervals.get(ind);
+                    upperVal = neighborIntervals.get(ind + 1);
+                    for (int j = lowerVal + 1; j < upperVal - 1; j++) {
+                        if ((tabuList.containsKey(j))) {
+                            continue;
+                        }
+                        if (i != j) {
+                            minIndex = Math.min(i, j);
+                            maxIndex = Math.max(i, j);
+                            if (kCurrLen[i] > 0) {
+                                if (kCurrLen[i] == k) {
+                                    if (distMatrix[minIndex][maxIndex - minIndex
+                                            - 1] < kDistances[i][
+                                            kCurrLen[i] - 1]) {
+                                        // Search and insert.
+                                        l = k - 1;
+                                        while ((l >= 1) && distMatrix[
+                                                minIndex][maxIndex - minIndex
+                                                - 1] < kDistances[i][l - 1]) {
+                                            kDistances[i][l] =
+                                                    kDistances[i][l - 1];
+                                            kNeighbors[i][l] =
+                                                    kNeighbors[i][l - 1];
+                                            l--;
+                                        }
+                                        kDistances[i][l] = distMatrix[
+                              
