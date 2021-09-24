@@ -2601,4 +2601,73 @@ public class NeighborSetFinder implements Serializable {
                                             l--;
                                         }
                                         kDistances[i][l] = distMatrix[
-                              
+                                                minIndex][maxIndex
+                                                - minIndex - 1];
+                                        kNeighbors[i][l] = j;
+                                    }
+                                } else {
+                                    if (distMatrix[minIndex][maxIndex
+                                            - minIndex - 1] < kDistances[i][
+                                            kCurrLen[i] - 1]) {
+                                        // Search and insert.
+                                        l = kCurrLen[i] - 1;
+                                        kDistances[i][kCurrLen[i]] =
+                                                kDistances[i][kCurrLen[i] - 1];
+                                        kNeighbors[i][kCurrLen[i]] =
+                                                kNeighbors[i][kCurrLen[i] - 1];
+                                        while ((l >= 1) && distMatrix[
+                                                minIndex][maxIndex - minIndex
+                                                - 1] < kDistances[i][l - 1]) {
+                                            kDistances[i][l] =
+                                                    kDistances[i][l - 1];
+                                            kNeighbors[i][l] =
+                                                    kNeighbors[i][l - 1];
+                                            l--;
+                                        }
+                                        kDistances[i][l] = distMatrix[
+                                                minIndex][maxIndex
+                                                - minIndex - 1];
+                                        kNeighbors[i][l] = j;
+                                        kCurrLen[i]++;
+                                    } else {
+                                        kDistances[i][kCurrLen[i]] = distMatrix[
+                                                minIndex][maxIndex
+                                                - minIndex - 1];
+                                        kNeighbors[i][kCurrLen[i]] = j;
+                                        kCurrLen[i]++;
+                                    }
+                                }
+                            } else {
+                                kDistances[i][0] = distMatrix[minIndex][
+                                        maxIndex - minIndex - 1];
+                                kNeighbors[i][0] = j;
+                                kCurrLen[i] = 1;
+                            }
+                        }
+                    }
+                }
+                // The last one is the new neighbor point, so update its
+                // occurrence stats and the reverse neighbor list.
+                if (kCurrLen[i] > 0) {
+                    if (dset.getLabelOf(
+                            kNeighbors[i][kCurrLen[i] - 1]) == currClass) {
+                        kGoodFrequencies[kNeighbors[i][kCurrLen[i] - 1]]++;
+                    } else {
+                        kBadFrequencies[kNeighbors[i][kCurrLen[i] - 1]]++;
+                    }
+                    kNeighborFrequencies[kNeighbors[i][kCurrLen[i] - 1]]++;
+                    reverseNeighbors[kNeighbors[i][kCurrLen[i] - 1]].add(i);
+                }
+            }
+        }
+        // Empty the RNN set of the tabu neighbor point.
+        reverseNeighbors[tNeighborIndex] = new ArrayList<>(4);
+        kNeighborFrequencies[tNeighborIndex] = 0;
+        kGoodFrequencies[tNeighborIndex] = 0;
+        kBadFrequencies[tNeighborIndex] = 0;
+        if (calculateHubnessStatistics) {
+            meanOccFreq = 0;
+            stDevOccFreq = 0;
+            meanOccBadness = 0;
+            stDevOccBadness = 0;
+            meanOcc
