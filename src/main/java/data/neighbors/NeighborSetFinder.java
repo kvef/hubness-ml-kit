@@ -2670,4 +2670,72 @@ public class NeighborSetFinder implements Serializable {
             stDevOccFreq = 0;
             meanOccBadness = 0;
             stDevOccBadness = 0;
-            meanOcc
+            meanOccGoodness = 0;
+            stDevOccGoodness = 0;
+            meanGoodMinusBadness = 0;
+            stDevGoodMinusBadness = 0;
+            meanRelativeGoodMinusBadness = 0;
+            stDevRelativeGoodMinusBadness = 0;
+            for (int i = 0; i < kBadFrequencies.length; i++) {
+                meanOccFreq += kNeighborFrequencies[i];
+                meanOccBadness += kBadFrequencies[i];
+                meanOccGoodness += kGoodFrequencies[i];
+                meanGoodMinusBadness += kGoodFrequencies[i]
+                        - kBadFrequencies[i];
+                if (kNeighborFrequencies[i] > 0) {
+                    meanRelativeGoodMinusBadness += ((kGoodFrequencies[i]
+                            - kBadFrequencies[i]) / kNeighborFrequencies[i]);
+                } else {
+                    meanRelativeGoodMinusBadness += 1;
+                }
+            }
+            meanOccFreq /= (float) kNeighborFrequencies.length;
+            meanOccBadness /= (float) kBadFrequencies.length;
+            meanOccGoodness /= (float) kGoodFrequencies.length;
+            meanGoodMinusBadness /= (float) kGoodFrequencies.length;
+            meanRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+            for (int i = 0; i < kBadFrequencies.length; i++) {
+                stDevOccFreq += ((meanOccFreq - kNeighborFrequencies[i])
+                        * (meanOccFreq - kNeighborFrequencies[i]));
+                stDevOccBadness += ((meanOccBadness - kBadFrequencies[i])
+                        * (meanOccBadness - kBadFrequencies[i]));
+                stDevOccGoodness += ((meanOccGoodness - kGoodFrequencies[i])
+                        * (meanOccGoodness - kGoodFrequencies[i]));
+                stDevGoodMinusBadness += ((meanGoodMinusBadness
+                        - (kGoodFrequencies[i] - kBadFrequencies[i]))
+                        * (meanGoodMinusBadness - (kGoodFrequencies[i]
+                        - kBadFrequencies[i])));
+                if (kNeighborFrequencies[i] > 0) {
+                    stDevRelativeGoodMinusBadness +=
+                            (meanRelativeGoodMinusBadness
+                            - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                            / kNeighborFrequencies[i]))
+                            * (meanRelativeGoodMinusBadness
+                            - ((kGoodFrequencies[i]
+                            - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+                } else {
+                    stDevRelativeGoodMinusBadness +=
+                            (meanRelativeGoodMinusBadness - 1)
+                            * (meanRelativeGoodMinusBadness - 1);
+                }
+            }
+            stDevOccFreq /= (float) kNeighborFrequencies.length;
+            stDevOccBadness /= (float) kBadFrequencies.length;
+            stDevOccGoodness /= (float) kGoodFrequencies.length;
+            stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+            stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+            stDevOccFreq = Math.sqrt(stDevOccFreq);
+            stDevOccBadness = Math.sqrt(stDevOccBadness);
+            stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+            stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+            stDevRelativeGoodMinusBadness =
+                    Math.sqrt(stDevRelativeGoodMinusBadness);
+        }
+    }
+
+    /**
+     * If some neighbor sets are incomplete, after the removal of certain
+     * neighbor points from neighbor sets and/or maybe wanting to increase k
+     * (and after the shifting of the neighbor lists and distance lists to the
+     * left) the method reads the kcurrLen array and if some kCurrLen is less
+     * than k, it completes it. also, if k is greater than the le
