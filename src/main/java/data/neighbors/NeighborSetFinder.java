@@ -2738,4 +2738,75 @@ public class NeighborSetFinder implements Serializable {
      * neighbor points from neighbor sets and/or maybe wanting to increase k
      * (and after the shifting of the neighbor lists and distance lists to the
      * left) the method reads the kcurrLen array and if some kCurrLen is less
-     * than k, it completes it. also, if k is greater than the le
+     * than k, it completes it. also, if k is greater than the length of the
+     * neighbor lists, a new matrix is generated, the arrays are extended. All
+     * occurrence-stats calculations are performed after the kNN recalculations.
+     * This method also takes as a parameter a tabu list (or rather, a tabu map)
+     * that marks certain points as 'forbidden' and they are not considered as
+     * potential neighbors during re-calculations.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param tabuList HashMap that contains the forbidden elements, those which
+     * are not to be considered as potential neighbors.
+     */
+    public void completeNeighborSets(int k, HashMap tabuList) throws Exception {
+        if (kNeighbors == null) {
+            calculateNeighborSetsMultiThr(k, 4);
+        }
+        if (kDistances == null) {
+            kDistances = new float[dset.size()][k];
+            kCurrLen = new int[dset.size()];
+        }
+        if (kNeighbors[0].length < k) {
+            int[][] kneighborsExtended = new int[dset.size()][k];
+            float[][] kdistancesExtended = new float[dset.size()][k];
+            for (int i = 0; i < kneighborsExtended.length; i++) {
+                kneighborsExtended[i] = Arrays.copyOf(kNeighbors[i], k);
+                kdistancesExtended[i] = Arrays.copyOf(kDistances[i], k);
+            }
+            kNeighbors = kneighborsExtended;
+            kDistances = kdistancesExtended;
+        }
+        int upperVal, lowerVal;
+        int minIndex, maxIndex;
+        int datasize = dset.size();
+        currK = k;
+        int l;
+        for (int i = 0; i < datasize; i++) {
+            if (kCurrLen[i] < k) {
+                ArrayList<Integer> neighborIntervals = new ArrayList<>(k + 2);
+                neighborIntervals.add(-1);
+                for (int j = 0; j < kCurrLen[i]; j++) {
+                    neighborIntervals.add(kNeighbors[i][j]);
+                }
+                neighborIntervals.add(datasize + 1);
+                // Ascending sort.
+                Collections.sort(neighborIntervals);
+                int iSizeRed = neighborIntervals.size() - 1;
+                for (int ind = 0; ind < iSizeRed; ind++) {
+                    lowerVal = neighborIntervals.get(ind);
+                    upperVal = neighborIntervals.get(ind + 1);
+                    for (int j = lowerVal + 1; j < upperVal - 1; j++) {
+                        if (tabuList != null && tabuList.containsKey(j)) {
+                            continue;
+                        }
+                        if (i != j) {
+                            minIndex = Math.min(i, j);
+                            maxIndex = Math.max(i, j);
+                            if (kCurrLen[i] > 0) {
+                                if (kCurrLen[i] == k) {
+                                    if (distMatrix[minIndex][maxIndex
+                                            - minIndex - 1] < kDistances[i][
+                                            kCurrLen[i] - 1]) {
+                                        // Search and insert.
+                                        l = k - 1;
+                                        while ((l >= 1) && distMatrix[minIndex][
+                                                maxIndex - minIndex - 1]
+                                                < kDistances[i][l - 1]) {
+                                            kDistances[i][l] =
+                                                    kDistances[i][l - 1];
+                                            kNeighbors[i][l] =
+                                                    kNeighbors[i][l - 1];
+                                            l--;
+                                        }
+                                        kDistances[i][l] = distMatrix[minInd
