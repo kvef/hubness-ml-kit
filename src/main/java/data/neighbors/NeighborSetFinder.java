@@ -2809,4 +2809,79 @@ public class NeighborSetFinder implements Serializable {
                                                     kNeighbors[i][l - 1];
                                             l--;
                                         }
-                                        kDistances[i][l] = distMatrix[minInd
+                                        kDistances[i][l] = distMatrix[minIndex][
+                                                maxIndex - minIndex - 1];
+                                        kNeighbors[i][l] = j;
+                                    }
+                                } else {
+                                    if (distMatrix[minIndex][maxIndex
+                                            - minIndex - 1] < kDistances[i][
+                                            kCurrLen[i] - 1]) {
+                                        // Search and insert.
+                                        l = kCurrLen[i] - 1;
+                                        kDistances[i][kCurrLen[i]] =
+                                                kDistances[i][kCurrLen[i] - 1];
+                                        kNeighbors[i][kCurrLen[i]] =
+                                                kNeighbors[i][kCurrLen[i] - 1];
+                                        while ((l >= 1) && distMatrix[minIndex][
+                                                maxIndex - minIndex - 1]
+                                                < kDistances[i][l - 1]) {
+                                            kDistances[i][l] =
+                                                    kDistances[i][l - 1];
+                                            kNeighbors[i][l] =
+                                                    kNeighbors[i][l - 1];
+                                            l--;
+                                        }
+                                        kDistances[i][l] = distMatrix[minIndex][
+                                                maxIndex - minIndex - 1];
+                                        kNeighbors[i][l] = j;
+                                        kCurrLen[i]++;
+                                    } else {
+                                        kDistances[i][kCurrLen[i]] = distMatrix[
+                                                minIndex][maxIndex
+                                                - minIndex - 1];
+                                        kNeighbors[i][kCurrLen[i]] = j;
+                                        kCurrLen[i]++;
+                                    }
+                                }
+                            } else {
+                                kDistances[i][0] = distMatrix[minIndex][
+                                        maxIndex - minIndex - 1];
+                                kNeighbors[i][0] = j;
+                                kCurrLen[i] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        reverseNeighbors = new ArrayList[datasize];
+        for (int i = 0; i < dset.size(); i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * k);
+        }
+        kNeighborFrequencies = new int[kNeighbors.length];
+        kBadFrequencies = new int[kNeighbors.length];
+        kGoodFrequencies = new int[kNeighbors.length];
+        for (int i = 0; i < kNeighbors.length; i++) {
+            for (int j = 0; j < k; j++) {
+                reverseNeighbors[kNeighbors[i][j]].add(i);
+                kNeighborFrequencies[kNeighbors[i][j]]++;
+                if (dset.data.get(i).getCategory() != dset.data.get(
+                        kNeighbors[i][j]).getCategory()) {
+                    kBadFrequencies[kNeighbors[i][j]]++;
+                } else {
+                    kGoodFrequencies[kNeighbors[i][j]]++;
+                }
+            }
+        }
+        meanOccFreq = 0;
+        stDevOccFreq = 0;
+        meanOccBadness = 0;
+        stDevOccBadness = 0;
+        meanOccGoodness = 0;
+        stDevOccGoodness = 0;
+        meanGoodMinusBadness = 0;
+        stDevGoodMinusBadness = 0;
+        meanRelativeGoodMinusBadness = 0;
+        stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < kBadFrequencies.
