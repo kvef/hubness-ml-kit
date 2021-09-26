@@ -3037,4 +3037,94 @@ public class NeighborSetFinder implements Serializable {
                     - kBadFrequencies[i])));
             if (kNeighborFrequencies[i] > 0) {
                 stDevRelativeGoodMinusBadness += (meanRelativeGoodMinusBadness
-                        - ((kGoodFrequencie
+                        - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (meanRelativeGoodMinusBadness - ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+            } else {
+                stDevRelativeGoodMinusBadness +=
+                        (meanRelativeGoodMinusBadness - 1)
+                        * (meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        stDevOccFreq /= (float) kNeighborFrequencies.length;
+        stDevOccBadness /= (float) kBadFrequencies.length;
+        stDevOccGoodness /= (float) kGoodFrequencies.length;
+        stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevOccFreq = Math.sqrt(stDevOccFreq);
+        stDevOccBadness = Math.sqrt(stDevOccBadness);
+        stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+        stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+        stDevRelativeGoodMinusBadness =
+                Math.sqrt(stDevRelativeGoodMinusBadness);
+    }
+
+    /**
+     * This method calculates the k-nearest neighbor sets in a multi-threaded
+     * way.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param numThreads Integer that is the number of threads to use.
+     */
+    public void calculateNeighborSetsMultiThr(int k, int numThreads) {
+        if (dset == null || dset.isEmpty() || distMatrix == null) {
+            return;
+        }
+        currK = k;
+        kNeighbors = new int[dset.size()][k];
+        kDistances = new float[dset.size()][k];
+        kCurrLen = new int[dset.size()];
+        reverseNeighbors = new ArrayList[dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * k);
+        }
+
+        int size = dset.size();
+        int chunkSize = size / numThreads;
+        Thread[] threads = new Thread[numThreads];
+        for (int tIndex = 0; tIndex < numThreads - 1; tIndex++) {
+            threads[tIndex] = new Thread(new ThreadNeighborCalculator(
+                    tIndex * chunkSize, (tIndex + 1) * chunkSize - 1, k));
+            threads[tIndex].start();
+        }
+        threads[numThreads - 1] = new Thread(new ThreadNeighborCalculator(
+                (numThreads - 1) * chunkSize, size - 1, k));
+        threads[numThreads - 1].start();
+        for (int tIndex = 0; tIndex < numThreads; tIndex++) {
+            if (threads[tIndex] != null) {
+                try {
+                    threads[tIndex].join();
+                } catch (Throwable t) {
+                    System.err.println(t.getMessage());
+                }
+            }
+        }
+        // Calculate the occurrence stats.
+        kNeighborFrequencies = new int[kNeighbors.length];
+        kBadFrequencies = new int[kNeighbors.length];
+        kGoodFrequencies = new int[kNeighbors.length];
+        for (int i = 0; i < kNeighbors.length; i++) {
+            for (int j = 0; j < k; j++) {
+                reverseNeighbors[kNeighbors[i][j]].add(i);
+                kNeighborFrequencies[kNeighbors[i][j]]++;
+                if (dset.data.get(i).getCategory() != dset.data.get(
+                        kNeighbors[i][j]).getCategory()) {
+                    kBadFrequencies[kNeighbors[i][j]]++;
+                } else {
+                    kGoodFrequencies[kNeighbors[i][j]]++;
+                }
+            }
+        }
+        meanOccFreq = 0;
+        stDevOccFreq = 0;
+        meanOccBadness = 0;
+        stDevOccBadness = 0;
+        meanOccGoodness = 0;
+        stDevOccGoodness = 0;
+        meanGoodMinusBadness = 0;
+        stDevGoodMinusBadness = 0;
+        meanRelativeGoodMinusBadness = 0;
+        stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            meanOccFreq += kNeighborFrequencie
