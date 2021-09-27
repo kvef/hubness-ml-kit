@@ -3274,4 +3274,88 @@ public class NeighborSetFinder implements Serializable {
                         kDistances[i][kCurrLen[i]] = distMatrix[minIndex][
                                 maxIndex - minIndex - 1];
                         kNeighbors[i][kCurrLen[i]] = neighborIndex;
-  
+                        kCurrLen[i]++;
+                    }
+                }
+            } else {
+                kDistances[i][0] = distMatrix[minIndex][
+                        maxIndex - minIndex - 1];
+                kNeighbors[i][0] = neighborIndex;
+                kCurrLen[i] = 1;
+            }
+        }
+        if (batchUpdateStats) {
+            // It is unfortunately not possible to do an efficient update 
+            // dynamically, since updating the reverse neighbor lists is 
+            // problematic when it comes to deletions, since they are not
+            // sorted in any way. This is why it is done after the neighbor set
+            // updates, here in separate loops.
+            calculateHubnessStats(true);
+        }
+    }
+
+    /**
+     * This method calculates the k-nearest neighbor sets.
+     *
+     * @param k Integer that is the neighborhood size.
+     */
+    public void calculateNeighborSets(int k) {
+        if (dset == null || dset.isEmpty() || distMatrix == null) {
+            return;
+        }
+        currK = k;
+        // Initialize the neighbor and reverse-neighbor lists and distance
+        // arrays.
+        kNeighbors = new int[dset.size()][k];
+        kDistances = new float[dset.size()][k];
+        kCurrLen = new int[dset.size()];
+        reverseNeighbors = new ArrayList[dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * k);
+        }
+        int l;
+        // Calculate the kNN sets.
+        for (int i = 0; i < dset.size(); i++) {
+            for (int j = 0; j < distMatrix[i].length; j++) {
+                int other = i + j + 1;
+                if (kCurrLen[i] > 0) {
+                    if (kCurrLen[i] == k) {
+                        if (distMatrix[i][j] < kDistances[i][kCurrLen[i] - 1]) {
+                            // Search and insert.
+                            l = k - 1;
+                            while ((l >= 1) && distMatrix[i][j]
+                                    < kDistances[i][l - 1]) {
+                                kDistances[i][l] = kDistances[i][l - 1];
+                                kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                l--;
+                            }
+                            kDistances[i][l] = distMatrix[i][j];
+                            kNeighbors[i][l] = i + j + 1;
+                        }
+                    } else {
+                        if (distMatrix[i][j] < kDistances[i][kCurrLen[i] - 1]) {
+                            // Search and insert.
+                            l = kCurrLen[i] - 1;
+                            kDistances[i][kCurrLen[i]] =
+                                    kDistances[i][kCurrLen[i] - 1];
+                            kNeighbors[i][kCurrLen[i]] =
+                                    kNeighbors[i][kCurrLen[i] - 1];
+                            while ((l >= 1) && distMatrix[i][j]
+                                    < kDistances[i][l - 1]) {
+                                kDistances[i][l] = kDistances[i][l - 1];
+                                kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                l--;
+                            }
+                            kDistances[i][l] = distMatrix[i][j];
+                            kNeighbors[i][l] = i + j + 1;
+                            kCurrLen[i]++;
+                        } else {
+                            kDistances[i][kCurrLen[i]] = distMatrix[i][j];
+                            kNeighbors[i][kCurrLen[i]] = i + j + 1;
+                            kCurrLen[i]++;
+                        }
+                    }
+                } else {
+                    kDistances[i][0] = distMatrix[i][j];
+                    kNeighbors[i][0] = i + j + 1;
+                
