@@ -3202,4 +3202,76 @@ public class NeighborSetFinder implements Serializable {
     /**
      * This method is used for incremental neighbor inclusions in incremental 
      * instance selection. It assumes the kNN sets and other structures are 
-     * already initialized and filled 
+     * already initialized and filled with some initial points. It extends the
+     * existing kNN sets by the specified neighbor point where possible if it
+     * was not already included and updates the stats. If the neighbor sets do 
+     * not already exist, the method will break. It is meant to be used in this
+     * very specific context.
+     * 
+     * @param neighborIndex Integer that is the index of the point to consider 
+     * as a neighbor for extending the existing neighbor sets with.
+     * @param batchUpdateStats Boolean flag indicating whether to perform an 
+     * update of the occurrence stats as well after the insertion. If multiple 
+     * insertions are to be made, then it is possible to leave this object in 
+     * inconsistent intermediate states and only update after the last 
+     * insertion, which would yield a significant speed-up.
+     */
+    public void considerNeighbor(int neighborIndex, boolean batchUpdateStats) {
+        int k = kNeighbors[0].length;
+        int l;
+        // Calculate the kNN sets.
+        checkNeighbors:
+        for (int i = 0; i < dset.size(); i++) {
+            if (i == neighborIndex) {
+                continue;
+            }
+            int minIndex = Math.min(i, neighborIndex);
+            int maxIndex = Math.max(i, neighborIndex);
+            if (kCurrLen[i] > 0) {
+                // First check if the index is already contained.
+                for (int kInd = 0; kInd < kCurrLen[i]; kInd++) {
+                    if (kNeighbors[i][kInd] == neighborIndex) {
+                        continue checkNeighbors;
+                    }
+                }
+                if (kCurrLen[i] == k) {
+                    if (distMatrix[minIndex][maxIndex - minIndex - 1] <
+                            kDistances[i][kCurrLen[i] - 1]) {
+                        // Search and insert.
+                        l = k - 1;
+                        while ((l >= 1) && distMatrix[minIndex][
+                                maxIndex - minIndex - 1]
+                                < kDistances[i][l - 1]) {
+                            kDistances[i][l] = kDistances[i][l - 1];
+                            kNeighbors[i][l] = kNeighbors[i][l - 1];
+                            l--;
+                        }
+                        kDistances[i][l] = distMatrix[minIndex][
+                                maxIndex - minIndex - 1];
+                        kNeighbors[i][l] = neighborIndex;
+                    }
+                } else {
+                    if (distMatrix[minIndex][maxIndex - minIndex - 1] <
+                            kDistances[i][kCurrLen[i] - 1]) {
+                        // Search and insert.
+                        l = kCurrLen[i] - 1;
+                        kDistances[i][kCurrLen[i]] =
+                                kDistances[i][kCurrLen[i] - 1];
+                        kNeighbors[i][kCurrLen[i]] =
+                                kNeighbors[i][kCurrLen[i] - 1];
+                        while ((l >= 1) && distMatrix[minIndex][
+                                maxIndex - minIndex - 1]
+                                < kDistances[i][l - 1]) {
+                            kDistances[i][l] = kDistances[i][l - 1];
+                            kNeighbors[i][l] = kNeighbors[i][l - 1];
+                            l--;
+                        }
+                        kDistances[i][l] = distMatrix[minIndex][
+                                maxIndex - minIndex - 1];
+                        kNeighbors[i][l] = neighborIndex;
+                        kCurrLen[i]++;
+                    } else {
+                        kDistances[i][kCurrLen[i]] = distMatrix[minIndex][
+                                maxIndex - minIndex - 1];
+                        kNeighbors[i][kCurrLen[i]] = neighborIndex;
+  
