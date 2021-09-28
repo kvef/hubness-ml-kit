@@ -3358,4 +3358,83 @@ public class NeighborSetFinder implements Serializable {
                 } else {
                     kDistances[i][0] = distMatrix[i][j];
                     kNeighbors[i][0] = i + j + 1;
-                
+                    kCurrLen[i] = 1;
+                }
+                if (kCurrLen[other] > 0) {
+                    if (kCurrLen[other] == k) {
+                        if (distMatrix[i][j] < kDistances[other][
+                                kCurrLen[other] - 1]) {
+                            // Search and insert.
+                            l = k - 1;
+                            while ((l >= 1) && distMatrix[i][j]
+                                    < kDistances[other][l - 1]) {
+                                kDistances[other][l] = kDistances[other][l - 1];
+                                kNeighbors[other][l] = kNeighbors[other][l - 1];
+                                l--;
+                            }
+                            kDistances[other][l] = distMatrix[i][j];
+                            kNeighbors[other][l] = i;
+                        }
+                    } else {
+                        if (distMatrix[i][j] < kDistances[other][
+                                kCurrLen[other] - 1]) {
+                            // Search and insert.
+                            l = kCurrLen[other] - 1;
+                            kDistances[other][kCurrLen[other]] =
+                                    kDistances[other][kCurrLen[other] - 1];
+                            kNeighbors[other][kCurrLen[other]] =
+                                    kNeighbors[other][kCurrLen[other] - 1];
+                            while ((l >= 1) && distMatrix[i][j]
+                                    < kDistances[other][l - 1]) {
+                                kDistances[other][l] = kDistances[other][l - 1];
+                                kNeighbors[other][l] = kNeighbors[other][l - 1];
+                                l--;
+                            }
+                            kDistances[other][l] = distMatrix[i][j];
+                            kNeighbors[other][l] = i;
+                            kCurrLen[other]++;
+                        } else {
+                            kDistances[other][kCurrLen[other]] =
+                                    distMatrix[i][j];
+                            kNeighbors[other][kCurrLen[other]] = i;
+                            kCurrLen[other]++;
+                        }
+                    }
+                } else {
+                    kDistances[other][0] = distMatrix[i][j];
+                    kNeighbors[other][0] = i;
+                    kCurrLen[other] = 1;
+                }
+            }
+        }
+        // Count the neighbor occurrence frequencies.
+        kNeighborFrequencies = new int[kNeighbors.length];
+        kBadFrequencies = new int[kNeighbors.length];
+        kGoodFrequencies = new int[kNeighbors.length];
+        for (int i = 0; i < kNeighbors.length; i++) {
+            for (int kInd = 0; kInd < k; kInd++) {
+                reverseNeighbors[kNeighbors[i][kInd]].add(i);
+                kNeighborFrequencies[kNeighbors[i][kInd]]++;
+                if (dset.data.get(i).getCategory() != dset.data.get(
+                        kNeighbors[i][kInd]).getCategory()) {
+                    kBadFrequencies[kNeighbors[i][kInd]]++;
+                } else {
+                    kGoodFrequencies[kNeighbors[i][kInd]]++;
+                }
+            }
+        }
+        // Calculate the occurrence stats.
+        meanOccFreq = 0;
+        stDevOccFreq = 0;
+        meanOccBadness = 0;
+        stDevOccBadness = 0;
+        meanOccGoodness = 0;
+        stDevOccGoodness = 0;
+        meanGoodMinusBadness = 0;
+        stDevGoodMinusBadness = 0;
+        meanRelativeGoodMinusBadness = 0;
+        stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            meanOccFreq += kNeighborFrequencies[i];
+            meanOccBadness += kBadFrequencies[i];
+            meanOc
