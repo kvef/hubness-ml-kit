@@ -3437,4 +3437,74 @@ public class NeighborSetFinder implements Serializable {
         for (int i = 0; i < kBadFrequencies.length; i++) {
             meanOccFreq += kNeighborFrequencies[i];
             meanOccBadness += kBadFrequencies[i];
-            meanOc
+            meanOccGoodness += kGoodFrequencies[i];
+            meanGoodMinusBadness += kGoodFrequencies[i] - kBadFrequencies[i];
+            if (kNeighborFrequencies[i] > 0) {
+                meanRelativeGoodMinusBadness += ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]);
+            } else {
+                meanRelativeGoodMinusBadness += 1;
+            }
+        }
+        meanOccFreq /= (float) kNeighborFrequencies.length;
+        meanOccBadness /= (float) kBadFrequencies.length;
+        meanOccGoodness /= (float) kGoodFrequencies.length;
+        meanGoodMinusBadness /= (float) kGoodFrequencies.length;
+        meanRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            stDevOccFreq += ((meanOccFreq - kNeighborFrequencies[i])
+                    * (meanOccFreq - kNeighborFrequencies[i]));
+            stDevOccBadness += ((meanOccBadness - kBadFrequencies[i])
+                    * (meanOccBadness - kBadFrequencies[i]));
+            stDevOccGoodness += ((meanOccGoodness - kGoodFrequencies[i])
+                    * (meanOccGoodness - kGoodFrequencies[i]));
+            stDevGoodMinusBadness += ((meanGoodMinusBadness
+                    - (kGoodFrequencies[i] - kBadFrequencies[i]))
+                    * (meanGoodMinusBadness - (kGoodFrequencies[i]
+                    - kBadFrequencies[i])));
+            if (kNeighborFrequencies[i] > 0) {
+                stDevRelativeGoodMinusBadness += (meanRelativeGoodMinusBadness
+                        - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (meanRelativeGoodMinusBadness - ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+            } else {
+                stDevRelativeGoodMinusBadness +=
+                        (meanRelativeGoodMinusBadness - 1)
+                        * (meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        stDevOccFreq /= (float) kNeighborFrequencies.length;
+        stDevOccBadness /= (float) kBadFrequencies.length;
+        stDevOccGoodness /= (float) kGoodFrequencies.length;
+        stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevOccFreq = Math.sqrt(stDevOccFreq);
+        stDevOccBadness = Math.sqrt(stDevOccBadness);
+        stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+        stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+        stDevRelativeGoodMinusBadness =
+                Math.sqrt(stDevRelativeGoodMinusBadness);
+    }
+
+    /**
+     * This method calculates the k-nearest neighbor sets, by also allowing for
+     * distance corrections towards certain points. These corrections are
+     * sometimes used in kNN variations for classification under class imbalance
+     * and this method makes it possible to use them directly in kNN search
+     * without having to modify the entire distance matrix. The corrections are
+     * usually used for subtracting the radius to the closest 'enemy' point.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param distanceCorrections float[] representing the distance corrections
+     * to be subtracted from the actual distances to the points in kNN
+     * calculations.
+     */
+    public void calculateNeighborSets(int k, float[] distanceCorrections) {
+        if (dset == null || dset.isEmpty() || distMatrix == null) {
+            return;
+        }
+        currK = k;
+        // Initialize the kNN arrays.
+        kNeighbors = new int[dset.size()][k];
+        kDistances = new float[
