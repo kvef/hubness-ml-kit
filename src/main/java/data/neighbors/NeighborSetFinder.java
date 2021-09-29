@@ -3507,4 +3507,79 @@ public class NeighborSetFinder implements Serializable {
         currK = k;
         // Initialize the kNN arrays.
         kNeighbors = new int[dset.size()][k];
-        kDistances = new float[
+        kDistances = new float[dset.size()][k];
+        kCurrLen = new int[dset.size()];
+        reverseNeighbors = new ArrayList[dset.size()];
+        // Initialize the reverse neighbor lists.
+        for (int i = 0; i < dset.size(); i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * k);
+        }
+        int l;
+        float distModified = 0;
+        for (int i = 0; i < dset.size(); i++) {
+            for (int j = 0; j < distMatrix[i].length; j++) {
+                int other = i + j + 1;
+                distModified = distMatrix[i][j] - distanceCorrections[i];
+                if (kCurrLen[i] > 0) {
+                    if (kCurrLen[i] == k) {
+                        if (distModified < kDistances[i][kCurrLen[i] - 1]) {
+                            // Search and insert.
+                            l = k - 1;
+                            while ((l >= 1) && distModified
+                                    < kDistances[i][l - 1]) {
+                                kDistances[i][l] = kDistances[i][l - 1];
+                                kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                l--;
+                            }
+                            kDistances[i][l] = distModified;
+                            kNeighbors[i][l] = i + j + 1;
+                        }
+                    } else {
+                        if (distModified < kDistances[i][kCurrLen[i] - 1]) {
+                            // Search and insert.
+                            l = kCurrLen[i] - 1;
+                            kDistances[i][kCurrLen[i]] =
+                                    kDistances[i][kCurrLen[i] - 1];
+                            kNeighbors[i][kCurrLen[i]] =
+                                    kNeighbors[i][kCurrLen[i] - 1];
+                            while ((l >= 1) && distModified
+                                    < kDistances[i][l - 1]) {
+                                kDistances[i][l] = kDistances[i][l - 1];
+                                kNeighbors[i][l] = kNeighbors[i][l - 1];
+                                l--;
+                            }
+                            kDistances[i][l] = distModified;
+                            kNeighbors[i][l] = i + j + 1;
+                            kCurrLen[i]++;
+                        } else {
+                            kDistances[i][kCurrLen[i]] = distModified;
+                            kNeighbors[i][kCurrLen[i]] = i + j + 1;
+                            kCurrLen[i]++;
+                        }
+                    }
+                } else {
+                    kDistances[i][0] = distModified;
+                    kNeighbors[i][0] = i + j + 1;
+                    kCurrLen[i] = 1;
+                }
+                distModified = distMatrix[i][j] - distanceCorrections[other];
+                if (kCurrLen[other] > 0) {
+                    if (kCurrLen[other] == k) {
+                        if (distModified < kDistances[other][
+                                kCurrLen[other] - 1]) {
+                            // Search and insert.
+                            l = k - 1;
+                            while ((l >= 1) && distModified
+                                    < kDistances[other][l - 1]) {
+                                kDistances[other][l] = kDistances[other][l - 1];
+                                kNeighbors[other][l] = kNeighbors[other][l - 1];
+                                l--;
+                            }
+                            kDistances[other][l] = distModified;
+                            kNeighbors[other][l] = i;
+                        }
+                    } else {
+                        if (distModified < kDistances[other][
+                                kCurrLen[other] - 1]) {
+                            // Search and insert.
+     
