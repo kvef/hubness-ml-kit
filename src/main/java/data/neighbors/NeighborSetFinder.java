@@ -3657,4 +3657,101 @@ public class NeighborSetFinder implements Serializable {
             stDevOccFreq += ((meanOccFreq - kNeighborFrequencies[i])
                     * (meanOccFreq - kNeighborFrequencies[i]));
             stDevOccBadness += ((meanOccBadness - kBadFrequencies[i])
-                    * (mean
+                    * (meanOccBadness - kBadFrequencies[i]));
+            stDevOccGoodness += ((meanOccGoodness - kGoodFrequencies[i])
+                    * (meanOccGoodness - kGoodFrequencies[i]));
+            stDevGoodMinusBadness += ((meanGoodMinusBadness
+                    - (kGoodFrequencies[i] - kBadFrequencies[i]))
+                    * (meanGoodMinusBadness - (kGoodFrequencies[i]
+                    - kBadFrequencies[i])));
+            if (kNeighborFrequencies[i] > 0) {
+                stDevRelativeGoodMinusBadness += (meanRelativeGoodMinusBadness
+                        - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (meanRelativeGoodMinusBadness - ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+            } else {
+                stDevRelativeGoodMinusBadness +=
+                        (meanRelativeGoodMinusBadness - 1)
+                        * (meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        stDevOccFreq /= (float) kNeighborFrequencies.length;
+        stDevOccBadness /= (float) kBadFrequencies.length;
+        stDevOccGoodness /= (float) kGoodFrequencies.length;
+        stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevOccFreq = Math.sqrt(stDevOccFreq);
+        stDevOccBadness = Math.sqrt(stDevOccBadness);
+        stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+        stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+        stDevRelativeGoodMinusBadness =
+                Math.sqrt(stDevRelativeGoodMinusBadness);
+    }
+
+
+    /**
+     * This method returns the indexes of neighbor points that exceed the
+     * specified occurrence frequency on the training data.
+     * @param thresholdFrequency Integer that is the threshold frequency.
+     * @return List of indexes of neighbor points that exceed a certain
+     * occurrence frequency on the training data.
+     * @throws Exception 
+     */
+    public ArrayList<Integer> getFrequentAtLeast(int thresholdFrequency)
+            throws Exception {
+        if (kNeighborFrequencies == null) {
+            return null;
+        } else {
+            ArrayList<Integer> result = new ArrayList<>(
+                    kNeighborFrequencies.length);
+            for (int i = 0; i < kNeighborFrequencies.length; i++) {
+                if (kNeighborFrequencies[i] >= thresholdFrequency) {
+                    result.add(new Integer(i));
+                }
+            }
+            return result;
+        }
+    }
+
+
+    /**
+     * @return Double value that is the mean of the bad neighbor occurrence
+     * frequency.
+     */
+    public double getMeanNeighborBadness() {
+        return meanOccBadness;
+    }
+
+
+    /**
+     * @return Double value that is the standard deviation of the bad neighbor
+     * occurrence frequency.
+     */
+    public double getNeighborBadnessStDev() {
+        return stDevOccBadness;
+    }
+
+
+    /**
+     * @return float[] representing the standardized bad neighbor occurrence
+     * frequency scores.
+     */
+    public float[] getStandardizedBadOccFreqs() {
+        float[] zScoredBadOccFreqs = new float[kBadFrequencies.length];
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            zScoredBadOccFreqs[i] = (kBadFrequencies[i] -
+                    (float) meanOccBadness) / (float) stDevOccBadness;
+        }
+        return zScoredBadOccFreqs;
+    }
+
+
+    /**
+     * @return float[] representing the exponential weights based on the
+     * standardized bad neighbor occurrence frequency scores. This weighting
+     * scheme was first used for vote weighting in hw-kNN, that was proposed
+     * by Radovanovic and Nanopulous.
+     */
+    public float[] getHWKNNWeightingScheme() {
+        fl
