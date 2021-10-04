@@ -3941,4 +3941,85 @@ public class NeighborSetFinder implements Serializable {
                 }
                 kRNNEntropies[i] = 0;
                 continue;
-       
+            } else if (reverseNeighbors[i] != null) {
+                try {
+                    for (int rInd = 0; rInd < reverseNeighbors[i].size();
+                            rInd++) {
+                        currCat = dset.data.get(
+                                reverseNeighbors[i].get(rInd)).getCategory();
+                        if (currCat >= 0) {
+                            categoryFrequencies[currCat]++;
+                        }
+                    }
+                    float denominator = 0;
+                    for (int cInd = 0; cInd < numCategories; cInd++) {
+                        denominator += Math.max(categoryWeights[cInd],
+                                0.0000001f) * categoryFrequencies[cInd] /
+                                (float) reverseNeighbors[i].size();
+                    }
+                    // Calculate eh entropy.
+                    for (int cInd = 0; cInd < categoryFrequencies.length;
+                            cInd++) {
+                        if (categoryFrequencies[cInd] > 0) {
+                            factor = (Math.max(categoryWeights[cInd],
+                                    0.0000001f) * categoryFrequencies[cInd] /
+                                    (float) reverseNeighbors[i].size()) /
+                                    denominator;
+                            kRNNEntropies[i] -=
+                                    factor * BasicMathUtil.log2(factor);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+                // Reset the category frequency auxiliary array.
+                for (int cInd = 0; cInd < numCategories; cInd++) {
+                    categoryFrequencies[cInd] = 0;
+                }
+            }
+        }
+    }
+
+
+    /**
+     * This method calculate the entropies of the reverse neighbor sets.
+     * @param numCategories Integer that is the number of classes in the data.
+     */
+    public void calculateReverseNeighborEntropies(int numCategories) {
+        float[] categoryFrequencies = new float[numCategories];
+        kRNNEntropies = new float[dset.data.size()];
+        int currCat;
+        float factor;
+        for (int i = 0; i < kRNNEntropies.length; i++) {
+            if (reverseNeighbors[i] == null ||
+                    reverseNeighbors[i].size() <= 1) {
+                for (int cInd = 0; cInd < numCategories; cInd++) {
+                    categoryFrequencies[cInd] = 0;
+                }
+                kRNNEntropies[i] = 0;
+                continue;
+            } else if (reverseNeighbors[i] != null) {
+                try {
+                    for (int rInd = 0; rInd < reverseNeighbors[i].size();
+                            rInd++) {
+                        currCat = dset.data.get(
+                                reverseNeighbors[i].get(rInd)).getCategory();
+                        if (currCat >= 0) {
+                            categoryFrequencies[currCat]++;
+                        }
+                    }
+                    // Calculate the entropy.
+                    for (int cInd = 0; cInd < categoryFrequencies.length;
+                            cInd++) {
+                        if (categoryFrequencies[cInd] > 0) {
+                            factor = categoryFrequencies[cInd] /
+                                    (float) reverseNeighbors[i].size();
+                            kRNNEntropies[i] -=
+                                    factor * BasicMathUtil.log2(factor);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+                // Reset the category frequency auxiliary array.
+   
