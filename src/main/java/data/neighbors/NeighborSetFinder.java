@@ -3848,4 +3848,97 @@ public class NeighborSetFinder implements Serializable {
 
 
     /**
-     * @return float[] representing the we
+     * @return float[] representing the weights for exponential standardized
+     * neighbor occurrence frequency penalization.
+     */
+    public float[] getPenalizeHubnessWeightingScheme() {
+        float[] weights = new float[kGoodFrequencies.length];
+        float stFull;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            stFull = (kGoodFrequencies[i] + kBadFrequencies[i] -
+                    (float) meanOccFreq) / (float) stDevOccFreq;
+            weights[i] = (float) Math.pow(Math.E, -stFull);
+        }
+        return weights;
+    }
+
+
+    /**
+     * @return float[] representing the weights for the exponential standardized
+     * neighbor occurrence frequency emphasis.
+     */
+    public float[] getRewardHubnessWeightingScheme() {
+        float[] weights = new float[kGoodFrequencies.length];
+        float stFull;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            stFull = (kGoodFrequencies[i] + kBadFrequencies[i] -
+                    (float) meanOccFreq) / (float) stDevOccFreq;
+            weights[i] = (float) Math.pow(Math.E, stFull);
+        }
+        return weights;
+    }
+
+
+    /**
+     * Calculates k-entropies, which measure how mixed the labels are in the
+     * k-neighborhoods of points
+     *
+     * @param numCategories Integer representing the number of classes in the
+     * data.
+     * @param neighborhoodSize Integer that is the neighborhood size to use
+     * for calculating the k-entropies. It has to be lower than the k of the
+     * current k-NN sets.
+     */
+    public void calculateKEntropies(int numCategories, int neighborhoodSize) {
+        if (kNeighbors == null) {
+            return;
+        }
+        float[] categoryFrequencies = new float[numCategories];
+        kEntropies = new float[dset.data.size()];
+        int currCat;
+        float factor;
+        for (int i = 0; i < kEntropies.length; i++) {
+            for (int kInd = 0; kInd < Math.min(neighborhoodSize,
+                    kNeighbors[0].length); kInd++) {
+                currCat = dset.data.get(kNeighbors[i][kInd]).getCategory();
+                if (currCat >= 0) {
+                    categoryFrequencies[currCat]++;
+                }
+            }
+            // Calculate the entropy.
+            for (int cInd = 0; cInd < categoryFrequencies.length; cInd++) {
+                if (categoryFrequencies[cInd] > 0) {
+                    factor = categoryFrequencies[cInd] /
+                            (float) neighborhoodSize;
+                    kEntropies[i] -= factor * BasicMathUtil.log2(factor);
+                }
+            }
+            // Reset the category frequency auxiliary array.
+            for (int cInd = 0; cInd < numCategories; cInd++) {
+                categoryFrequencies[cInd] = 0;
+            }
+        }
+    }
+
+
+    /**
+     * This method calculate the entropies of the reverse neighbor sets, taking
+     * into account different category weights.
+     * @param numCategories Integer that is the number of classes in the data.
+     * @param categoryWeights float[] representing different category weights.
+     */
+    public void calculateReverseNeighborEntropiesWeighted(int numCategories,
+            float[] categoryWeights) {
+        float[] categoryFrequencies = new float[numCategories];
+        kRNNEntropies = new float[dset.data.size()];
+        int currCat;
+        float factor;
+        for (int i = 0; i < kRNNEntropies.length; i++) {
+            if (reverseNeighbors[i] == null ||
+                    reverseNeighbors[i].size() <= 1) {
+                for (int cInd = 0; cInd < numCategories; cInd++) {
+                    categoryFrequencies[cInd] = 0;
+                }
+                kRNNEntropies[i] = 0;
+                continue;
+       
