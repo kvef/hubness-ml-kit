@@ -3754,4 +3754,98 @@ public class NeighborSetFinder implements Serializable {
      * by Radovanovic and Nanopulous.
      */
     public float[] getHWKNNWeightingScheme() {
-        fl
+        float[] bFreqWeights = new float[kBadFrequencies.length];
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            bFreqWeights[i] = (float) Math.pow(Math.E, -((kBadFrequencies[i] -
+                    (float) meanOccBadness) / (float) stDevOccBadness));
+        }
+        return bFreqWeights;
+    }
+
+
+    /**
+     * @return float[] representing the exponential weights based on the
+     * standardized bad neighbor occurrence frequency scores, with a maximum
+     * value of 1 for each weight, achieved via cut-off. This is a slight
+     * modification of the weighting that scheme was first used for vote
+     * weighting in hw-kNN, proposed by Radovanovic and Nanopulous.
+     */
+    public float[] getMaxedAtOneHWKNNWeightingScheme() {
+        float[] bFreqWeights = new float[kBadFrequencies.length];
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            if (stDevOccBadness > 0) {
+                bFreqWeights[i] = Math.min((float) Math.pow(Math.E,
+                        -((kBadFrequencies[i] - (float) meanOccBadness) /
+                        (float) stDevOccBadness)), 1);
+            } else {
+                bFreqWeights[i] = 1;
+            }
+        }
+        return bFreqWeights;
+    }
+
+
+    /**
+     * @return float[] representing the bounded weights derived from the
+     * difference between good and bad neighbor occurrence frequency for each
+     * point.
+     */
+    public float[] getBoundedGoodMinusBadHubnessWeightingScheme() {
+        return getBoundedGoodMinusBadHubnessWeightingScheme(0.2f, 1.8f);
+    }
+    
+
+    /**
+     * @param lowerWeightLimit Float value that is the lower weight limit.
+     * @param upperWeightLimit Float value that is the upper weight limit.
+     * @return float[] representing the bounded weights derived from the
+     * difference between good and bad neighbor occurrence frequency for each
+     * point.
+     */
+    public float[] getBoundedGoodMinusBadHubnessWeightingScheme(
+            float lowerWeightLimit, float upperWeightLimit) {
+        float[] weights = new float[kGoodFrequencies.length];
+        for (int i = 0; i < kGoodFrequencies.length; i++) {
+            if (stDevGoodMinusBadness > 0) {
+                weights[i] = Math.min((float) Math.pow(Math.E,
+                        (((kGoodFrequencies[i] - kBadFrequencies[i]) -
+                        (float) meanGoodMinusBadness) /
+                        (float) stDevGoodMinusBadness)), upperWeightLimit);
+                weights[i] = Math.max(lowerWeightLimit, weights[i]);
+            } else {
+                weights[i] = 1;
+            }
+        }
+        return weights;
+    }
+
+
+    /**
+     * @return float[] weights based on the standardized relative difference
+     * between good and bad neighbor occurrence frequencies, exponential.
+     */
+    public float[] getRelativeGoodMinusBadHubnessWeightingScheme() {
+        float[] weights = new float[kGoodFrequencies.length];
+        for (int i = 0; i < kGoodFrequencies.length; i++) {
+            if (stDevGoodMinusBadness > 0) {
+                if (kNeighborFrequencies[i] > 0) {
+                    weights[i] = (float) Math.pow(Math.E,
+                            ((((kGoodFrequencies[i] - kBadFrequencies[i]) /
+                            kNeighborFrequencies[i]) -
+                            (float) meanRelativeGoodMinusBadness) /
+                            (float) stDevRelativeGoodMinusBadness));
+                } else {
+                    weights[i] = (float) Math.pow(Math.E,
+                            ((1 - (float) meanRelativeGoodMinusBadness) /
+                            (float) stDevRelativeGoodMinusBadness));
+                }
+            } else {
+                weights[i] = 1;
+            }
+        }
+        return weights;
+    }
+
+
+    /**
+     * @return float[] representing the we
