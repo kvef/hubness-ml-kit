@@ -4022,4 +4022,105 @@ public class NeighborSetFinder implements Serializable {
                     System.err.println(e.getMessage());
                 }
                 // Reset the category frequency auxiliary array.
-   
+                for (int cInd = 0; cInd < numCategories; cInd++) {
+                    categoryFrequencies[cInd] = 0;
+                }
+            }
+        }
+    }
+
+
+    /**
+     * @return float[] representing the entropies of the kNN sets.
+     */
+    public float[] getKEntropies() {
+        return kEntropies;
+    }
+
+
+    /**
+     * @return int[][] representing the array of arrays of indexes of k-nearest
+     * neighbors of points on the training data.
+     */
+    public int[][] getKNeighbors() {
+        return kNeighbors;
+    }
+    
+    
+    /**
+     * @return float[] representing the entropies of the reverse kNN sets.
+     */
+    public float[] getReverseNeighborEntropies() {
+        return kRNNEntropies;
+    }
+
+
+    /**
+     * @param thresholdFreq Integer that is the occurrence frequency threshold.
+     * @return Float representing the percentage of points that occur as
+     * neighbors with a frequency that is greater or equal compared to the
+     * provided threshold value.
+     */
+    public float getPercFrequentAtLeast(int thresholdFreq) {
+        float count = 0;
+        for (int i = 0; i < kNeighborFrequencies.length; i++) {
+            if (kNeighborFrequencies[i] >= thresholdFreq) {
+                count++;
+            }
+        }
+        return count / (float) kNeighborFrequencies.length;
+    }
+
+
+    /**
+     * @param thresholdFreq Integer that is the occurrence frequency threshold.
+     * @return Float representing the percentage of points that occur as
+     * neighbors with a frequency that is less or equal compared to the
+     * provided threshold value.
+     */
+    public float getPercFrequentLessOrEqualThan(int thresholdFreq) {
+        float count = 0;
+        for (int i = 0; i < kNeighborFrequencies.length; i++) {
+            if (kNeighborFrequencies[i] <= thresholdFreq) {
+                count++;
+            }
+        }
+        return count / (float) kNeighborFrequencies.length;
+    }
+
+
+    /**
+     * This method re-calculates the occurrence stats for a smaller neighborhood
+     * size. This way, one NeighborSetFinder object can be used to derive the
+     * neighbor stats for any k-value up until the length of the calculated
+     * kNN sets. The operating k value is saved to the currK variable.
+     * @param kSmall Integer that is the smaller neighborhood size.
+     */
+    public void recalculateStatsForSmallerK(int kSmall) {
+        if (kNeighbors == null) {
+            return;
+        }
+        if (kSmall > kNeighbors[0].length) {
+            // In case an inappropriately large value was provided.
+            kSmall = kNeighbors[0].length;
+        }
+        // Indicate the new k value as the operating k value.
+        currK = kSmall;
+        // Re-initialize the occurrence frequency arrays and the reverse
+        // neighbor lists.
+        kNeighborFrequencies = new int[kNeighbors.length];
+        kBadFrequencies = new int[kNeighbors.length];
+        kGoodFrequencies = new int[kNeighbors.length];
+        reverseNeighbors = new ArrayList[kNeighbors.length];
+        for (int i = 0; i < reverseNeighbors.length; i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * kSmall);
+        }
+        // Populate the reverse neighbor lists and count the occurrences.
+        for (int i = 0; i < kNeighbors.length; i++) {
+            if (reverseNeighbors[i] == null) {
+                reverseNeighbors[i] = new ArrayList<>(10 * kSmall);
+            }
+            for (int kInd = 0; kInd < kSmall; kInd++) {
+                kNeighborFrequencies[kNeighbors[i][kInd]]++;
+                if (reverseNeighbors[kNeighbors[i][kInd]] == null) {
+                    reverseNeighbors[kNeighbors[i][kInd]] 
