@@ -4390,4 +4390,88 @@ public class NeighborSetFinder implements Serializable {
     /**
      * This method calculates an alternative type of weights for the simhub
      * secondary shared-neighbor similarity measure, where each weight is
-     * proport
+     * proportional to the estimate of the goodness of the contribution of the
+     * shared neighbor to the intra-class similarities and the badness of its
+     * contribution to the inter-class similarities.
+     * @return float[] representing a goodness-proportional shared-neighbor
+     * weights.
+     */
+    public float[] getSimhubAlternateWeightsGoodnessProportional() {
+        return getSimhubAlternateWeightsGoodnessProportional(currK);
+    }
+
+
+    /**
+     * @return float[] representing the percentages of label mismatches in
+     * k-nearest neighbor sets for all k values from 1 up until the k value that
+     * is the length of the current calculated k-nearest neighbor sets.
+     */
+    public float[] getLabelMismatchPercsAllK() {
+        int kMax = kNeighbors[0].length;
+        int size = dset.size();
+        float mismatchCounter = 0;
+        float[] bhArray = new float[kMax];
+        for (int kInd = 0; kInd < kMax; kInd++) {
+            for (int i = 0; i < size; i++) {
+                if (dset.getLabelOf(i) != dset.getLabelOf(
+                        kNeighbors[i][kInd])) {
+                    mismatchCounter++;
+                }
+            }
+            bhArray[kInd] = mismatchCounter / ((float) (size * (kInd + 1)));
+        }
+        return bhArray;
+    }
+    
+    /**
+     * @return float[] representing the percentages of label mismatches in
+     * k-nearest neighbor sets for all k values from 1 up until the k value that
+     * is the length of the current calculated k-nearest neighbor sets.
+     */
+    public float[] getLabelMismatchPercsAllK(int kMax) {
+        int size = dset.size();
+        float mismatchCounter = 0;
+        float[] bhArray = new float[kMax];
+        for (int kInd = 0; kInd < kMax; kInd++) {
+            for (int i = 0; i < size; i++) {
+                if (dset.getLabelOf(i) != dset.getLabelOf(
+                        kNeighbors[i][kInd])) {
+                    mismatchCounter++;
+                }
+            }
+            bhArray[kInd] = mismatchCounter / ((float) (size * (kInd + 1)));
+        }
+        return bhArray;
+    }
+
+
+    /**
+     * @param kVal Integer that is the neighborhood size to do the calculations
+     * for.
+     * @return float[][] representing the upper triangular matrix of neighbor
+     * co-occurrence counts. The matrix value at i,j represents the
+     * co-occurrence count of point i and i + j + 1. 
+     */
+    public float[][] getKCooccurrences(int kVal) {
+        int size = kNeighbors.length;
+        // Initialization.
+        float[][] kCooccurrences = new float[size][];
+        for (int i = 0; i < size; i++) {
+            kCooccurrences[i] = new float[size - i - 1];
+        }
+        int minIndex, maxIndex;
+        for (int i = 0; i < size; i++) {
+            for (int kIndFirst = 0; kIndFirst < kVal - 1; kIndFirst++) {
+                for (int kIndSecond = kIndFirst + 1; kIndSecond < kVal;
+                        kIndSecond++) {
+                    minIndex = Math.min(kNeighbors[i][kIndFirst],
+                            kNeighbors[i][kIndSecond]);
+                    maxIndex = Math.max(kNeighbors[i][kIndFirst],
+                            kNeighbors[i][kIndSecond]);
+                    kCooccurrences[minIndex][maxIndex - minIndex - 1]++;
+                }
+            }
+        }
+        return kCooccurrences;
+    }
+}
