@@ -4296,4 +4296,98 @@ public class NeighborSetFinder implements Serializable {
             calculateReverseNeighborEntropies(numCategories);
         }
         float maxWeight = 1;
-        for (int i = 0; i < s
+        for (int i = 0; i < size; i++) {
+            weights[i] = (maxEntropy - kRNNEntropies[i] + theta);
+            maxWeight = Math.max(Math.abs(weights[i]), maxWeight);
+        }
+        for (int i = 0; i < size; i++) {
+            weights[i] /= maxWeight;
+        }
+        return weights;
+    }
+
+
+    /**
+     * This method calculates an alternative type of weights for the simhub
+     * secondary shared-neighbor similarity measure, where each weight is either
+     * 0 or 1, depending on how the total shared-neighbor contribution of the
+     * neighbor point is judged. More details are available in the original
+     * paper.
+     * @return float[] representing a 0-1 type of weights for shared-neighbor
+     * distances.
+     */
+    public float[] getSimhubAlternateWeights01() {
+        int size = dset.size();
+        float[] weights = new float[size];
+        int numCategories = dset.countCategories();
+        float[][] classConditionalCounts =
+                this.getClassDataNeighborRelationNonNormalized(currK,
+                numCategories, false);
+        float indicator;
+        float classConditionalSum;
+        for (int i = 0; i < size; i++) {
+            classConditionalSum = 0;
+            for (int cIndex = 0; cIndex < numCategories; cIndex++) {
+                classConditionalSum += classConditionalCounts[cIndex][i] *
+                        classConditionalCounts[cIndex][i];
+            }
+            classConditionalSum *= 1.5f;
+            indicator = classConditionalSum - kNeighborFrequencies[i] *
+                    kNeighborFrequencies[i];
+            if (indicator > 0) {
+                weights[i] = 1;
+            } else {
+                weights[i] = 0;
+            }
+        }
+        return weights;
+    }
+
+
+    /**
+     * This method calculates an alternative type of weights for the simhub
+     * secondary shared-neighbor similarity measure, where each weight is
+     * proportional to the estimate of the goodness of the contribution of the
+     * shared neighbor to the intra-class similarities and the badness of its
+     * contribution to the inter-class similarities.
+     * @param k Integer that is the current neighborhood size.
+     * @return float[] representing a goodness-proportional shared-neighbor
+     * weights.
+     */
+    public float[] getSimhubAlternateWeightsGoodnessProportional(int k) {
+        int size = dset.size();
+        float[] weights = new float[size];
+        int numCategories = dset.countCategories();
+        float[][] classConditionalOccurrenceCounts =
+                this.getClassDataNeighborRelationNonNormalized(
+                k, numCategories, false);
+        float maxWeight = 0;
+        float minWeight = 0;
+        float indicator;
+        float classConditionalSum;
+        for (int i = 0; i < size; i++) {
+            classConditionalSum = 0;
+            for (int j = 0; j < numCategories; j++) {
+                classConditionalSum +=
+                        classConditionalOccurrenceCounts[j][i] *
+                        classConditionalOccurrenceCounts[j][i];
+            }
+            classConditionalSum *= 1.5f;
+            indicator = classConditionalSum - this.kNeighborFrequencies[i] *
+                    this.kNeighborFrequencies[i];
+            weights[i] = indicator;
+            maxWeight = Math.max(weights[i], maxWeight);
+            minWeight = Math.min(weights[i], minWeight);
+        }
+        for (int i = 0; i < size; i++) {
+            weights[i] -= minWeight;
+            weights[i] /= (maxWeight - minWeight);
+        }
+        return weights;
+    }
+
+
+    /**
+     * This method calculates an alternative type of weights for the simhub
+     * secondary shared-neighbor similarity measure, where each weight is
+     * proport
