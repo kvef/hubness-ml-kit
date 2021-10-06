@@ -4123,4 +4123,79 @@ public class NeighborSetFinder implements Serializable {
             for (int kInd = 0; kInd < kSmall; kInd++) {
                 kNeighborFrequencies[kNeighbors[i][kInd]]++;
                 if (reverseNeighbors[kNeighbors[i][kInd]] == null) {
-                    reverseNeighbors[kNeighbors[i][kInd]] 
+                    reverseNeighbors[kNeighbors[i][kInd]] =
+                            new ArrayList<>(10 * kSmall);
+                }
+                reverseNeighbors[kNeighbors[i][kInd]].add(i);
+                if (dset.data.get(i).getCategory() !=
+                        dset.data.get(kNeighbors[i][kInd]).getCategory()) {
+                    kBadFrequencies[kNeighbors[i][kInd]]++;
+                } else {
+                    kGoodFrequencies[kNeighbors[i][kInd]]++;
+                }
+            }
+        }
+        // Calculate the neighbor occurrence stats.
+        meanOccFreq = 0;
+        stDevOccFreq = 0;
+        meanOccBadness = 0;
+        stDevOccBadness = 0;
+        meanOccGoodness = 0;
+        stDevOccGoodness = 0;
+        meanGoodMinusBadness = 0;
+        stDevGoodMinusBadness = 0;
+        meanRelativeGoodMinusBadness = 0;
+        stDevRelativeGoodMinusBadness = 0;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            meanOccFreq += kNeighborFrequencies[i];
+            meanOccBadness += kBadFrequencies[i];
+            meanOccGoodness += kGoodFrequencies[i];
+            meanGoodMinusBadness += kGoodFrequencies[i] - kBadFrequencies[i];
+            if (kNeighborFrequencies[i] > 0) {
+                meanRelativeGoodMinusBadness += ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]);
+            } else {
+                meanRelativeGoodMinusBadness += 1;
+            }
+        }
+        meanOccFreq /= (float) kNeighborFrequencies.length;
+        meanOccBadness /= (float) kBadFrequencies.length;
+        meanOccGoodness /= (float) kGoodFrequencies.length;
+        meanGoodMinusBadness /= (float) kGoodFrequencies.length;
+        meanRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        for (int i = 0; i < kBadFrequencies.length; i++) {
+            stDevOccFreq += ((meanOccFreq - kNeighborFrequencies[i])
+                    * (meanOccFreq - kNeighborFrequencies[i]));
+            stDevOccBadness += ((meanOccBadness - kBadFrequencies[i])
+                    * (meanOccBadness - kBadFrequencies[i]));
+            stDevOccGoodness += ((meanOccGoodness - kGoodFrequencies[i])
+                    * (meanOccGoodness - kGoodFrequencies[i]));
+            stDevGoodMinusBadness += ((meanGoodMinusBadness
+                    - (kGoodFrequencies[i] - kBadFrequencies[i]))
+                    * (meanGoodMinusBadness - (kGoodFrequencies[i]
+                    - kBadFrequencies[i])));
+            if (kNeighborFrequencies[i] > 0) {
+                stDevRelativeGoodMinusBadness += (meanRelativeGoodMinusBadness
+                        - ((kGoodFrequencies[i] - kBadFrequencies[i])
+                        / kNeighborFrequencies[i]))
+                        * (meanRelativeGoodMinusBadness - ((kGoodFrequencies[i]
+                        - kBadFrequencies[i]) / kNeighborFrequencies[i]));
+            } else {
+                stDevRelativeGoodMinusBadness +=
+                        (meanRelativeGoodMinusBadness - 1)
+                        * (meanRelativeGoodMinusBadness - 1);
+            }
+        }
+        stDevOccFreq /= (float) kNeighborFrequencies.length;
+        stDevOccBadness /= (float) kBadFrequencies.length;
+        stDevOccGoodness /= (float) kGoodFrequencies.length;
+        stDevGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevRelativeGoodMinusBadness /= (float) kGoodFrequencies.length;
+        stDevOccFreq = Math.sqrt(stDevOccFreq);
+        stDevOccBadness = Math.sqrt(stDevOccBadness);
+        stDevOccGoodness = Math.sqrt(stDevOccGoodness);
+        stDevGoodMinusBadness = Math.sqrt(stDevGoodMinusBadness);
+        stDevRelativeGoodMinusBadness =
+                Math.sqrt(stDevRelativeGoodMinusBadness);
+    }
+
