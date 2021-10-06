@@ -4199,3 +4199,101 @@ public class NeighborSetFinder implements Serializable {
                 Math.sqrt(stDevRelativeGoodMinusBadness);
     }
 
+    
+    /**
+     * This method calculates the weights for the simhub secondary
+     * shared-neighbor similarity measure.
+     * 
+     * @param numCategories Integer that is the number of categories in the
+     * data.
+     * @param theta Float parameter.
+     * @return float[] representing the weights to be used for shared neighbors
+     * in the simhub secondary similarity measure.
+     */
+    public float[] getSimhubWeightingScheme(int numCategories,
+            float theta) {
+        int size = dset.size();
+        float[] weights = new float[size];
+        float maxEntropy = (float) BasicMathUtil.log2((float) numCategories);
+        if (kRNNEntropies == null) {
+            calculateReverseNeighborEntropies(numCategories);
+        }
+        float maxWeight = 1;
+        for (int i = 0; i < size; i++) {
+            weights[i] = (float) BasicMathUtil.log2(((float) size) /
+                    ((float) kNeighborFrequencies[i] + 1)) *
+                    (maxEntropy - kRNNEntropies[i] + theta);
+            maxWeight = Math.max(Math.abs(weights[i]), maxWeight);
+        }
+        // Normalization.
+        for (int i = 0; i < size; i++) {
+            weights[i] /= maxWeight;
+        }
+        return weights;
+    }
+
+
+    /**
+     * This method calculates the weights for the simhub secondary
+     * shared-neighbor similarity measure.
+     * 
+     * @param theta Float parameter.
+     * @return float[] representing the weights to be used for shared neighbors
+     * in the simhub secondary similarity measure.
+     */
+    public float[] getSimhubWeightingScheme(float theta) {
+        int numCategories = dset.countCategories();
+        return getSimhubWeightingScheme(numCategories, theta);
+    }
+
+
+    /**
+     * This method calculates the weights for the simhub secondary
+     * shared-neighbor similarity measure information component - an
+     * unsupervised part of the total weight.
+     * 
+     * @param theta Float parameter.
+     * @return float[] representing the weights to be used for shared neighbors
+     * in the simhub secondary similarity measure information component - an
+     * unsupervised part of the total weight.
+     */
+    public float[] getSimhubWeightingSchemeUnsupervisedComponent(float theta) {
+        int size = dset.size();
+        float[] weights = new float[size];
+        int numCategories = dset.countCategories();
+        if (kRNNEntropies == null) {
+            calculateReverseNeighborEntropies(numCategories);
+        }
+        float maxWeight = 1;
+        for (int i = 0; i < size; i++) {
+            weights[i] = (float) BasicMathUtil.log2(((float) size) /
+                    ((float) kNeighborFrequencies[i] + 1));
+            maxWeight = Math.max(Math.abs(weights[i]), maxWeight);
+        }
+        for (int i = 0; i < size; i++) {
+            weights[i] /= maxWeight;
+        }
+        return weights;
+    }
+
+
+    /**
+     * This method calculates the weights for the simhub secondary
+     * shared-neighbor similarity measure purity component - the supervised part
+     * of the total weight.
+     * 
+     * @param theta Float parameter.
+     * @return float[] representing the weights to be used for shared neighbors
+     * in the simhub secondary similarity measure purity component - the
+     * supervised part of the total weight.
+     */
+    public float[] getSimhubWeightingSchemeSupervisedComponent(float theta) {
+        int size = dset.size();
+        float[] weights = new float[size];
+        int numCategories = dset.countCategories();
+        float maxEntropy = (float) BasicMathUtil.log2((float) numCategories);
+        if (kRNNEntropies == null) {
+            calculateReverseNeighborEntropies(numCategories);
+        }
+        float maxWeight = 1;
+        for (int i = 0; i < s
