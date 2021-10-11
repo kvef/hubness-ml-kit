@@ -409,3 +409,693 @@ public class SharedNeighborFinder implements Serializable {
      * @param kNeighborsFirst Integer array as the kNN set of the first data
      * instance.
      * @param kNeighborsSecond Integer array as the kNN set of the second data
+     * instance.
+     * @return Float that is the weighted shared-neighbor count between the two
+     * instances.
+     * @throws Exception
+     */
+    public float countSharedNeighborsWithRespectToDataset(
+            DataInstance instanceFirst, DataInstance instanceSecond,
+            int[] kNeighborsFirst, int[] kNeighborsSecond) throws Exception {
+        // We just go through the neighbor sets and compare. Using HashMaps is
+        // another options, though that makes more sense when all pairwise
+        // distances are needed or when the neighborhood size is exceedingly
+        // large.
+        if (kNeighborsFirst == null || kNeighborsSecond == null) {
+            return 0;
+        }
+        float result = 0;
+        for (int k1 = 0; k1 < k; k1++) {
+            for (int k2 = 0; k2 < k; k2++) {
+                if (kNeighborsFirst[k1] == kNeighborsSecond[k2]) {
+                    if (instanceWeights == null) {
+                        result++;
+                    } else {
+                        result += instanceWeights[kNeighborsFirst[k1]];
+                    }
+                    // As the shared neighbor was found, we can skip the
+                    // rest of the inner loop.
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Counts the number of shared k-nearest neighbors between the two points.
+     *
+     * @param instanceFirst First DataInstance.
+     * @param instanceSecond Second DataInstance.
+     * @param neighborHashFirst HashMap that has k-neighbors of the first
+     * instance as keys.
+     * @param neighborHashSecond HashMap that has k-neighbors of the second
+     * instance as keys.
+     * @return Float that is the weighted shared-neighbor count between the two
+     * instances.
+     * @throws Exception
+     */
+    public float countSharedNeighborsWithRespectToDataset(
+            DataInstance instanceFirst, DataInstance instanceSecond,
+            HashMap<Integer, Object> neighborHashFirst,
+            HashMap<Integer, Object> neighborHashSecond) throws Exception {
+        if (neighborHashFirst == null || neighborHashSecond == null) {
+            return 0;
+        }
+        float result = 0;
+        Set<Integer> keysFirst = neighborHashFirst.keySet();
+        for (int index : keysFirst) {
+            if (neighborHashSecond.containsKey(index)) {
+                if (instanceWeights == null) {
+                    result++;
+                } else {
+                    result += instanceWeights[index];
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Counts the number of shared k-nearest neighbors between the two points.
+     *
+     * @param instanceFirst First DataInstance.
+     * @param instanceSecond Second DataInstance.
+     * @param distToDataFromFirst Float array representing the distances from
+     * the first data instance to the training data points.
+     * @param kNeighborsSecond Integer array as the kNN set of the second data
+     * instance.
+     * @return Float that is the weighted shared-neighbor count between the two
+     * instances.
+     * @throws Exception
+     */
+    public float countSharedNeighborsWithRespectToDataset(
+            DataInstance instanceFirst, DataInstance instanceSecond,
+            float[] distToDataFromFirst, int[] kNeighborsSecond)
+            throws Exception {
+        // First we find the kNN set of the first point, to compare it with
+        // the kNN set of the second point.
+        if (distToDataFromFirst == null || kNeighborsSecond == null) {
+            return 0;
+        }
+        float[] kDistancesFirst = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistancesFirst[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighborsFirst = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = distToDataFromFirst[i];
+            if (currDistance < kDistancesFirst[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistancesFirst[index - 1] > currDistance) {
+                    kDistancesFirst[index] = kDistancesFirst[index - 1];
+                    kNeighborsFirst[index] = kNeighborsFirst[index - 1];
+                    index--;
+                }
+                kDistancesFirst[index] = currDistance;
+                kNeighborsFirst[index] = i;
+            }
+        }
+        // Now for the main comparisons.
+        float result = 0;
+        for (int k1 = 0; k1 < k; k1++) {
+            for (int k2 = 0; k2 < k; k2++) {
+                if (kNeighborsFirst[k1] == kNeighborsSecond[k2]) {
+                    if (instanceWeights == null) {
+                        result++;
+                    } else {
+                        result += instanceWeights[kNeighborsFirst[k1]];
+                    }
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Counts the number of shared k-nearest neighbors between the two points.
+     *
+     * @param instanceFirst First DataInstance.
+     * @param instanceSecond Second DataInstance.
+     * @param distToDataFromFirst Float array representing the distances from
+     * the first data instance to the training data points.
+     * @param distToDataFromSecond Float array representing the distances from
+     * the second data instance to the training data points.
+     * @return Float that is the weighted shared-neighbor count between the two
+     * instances.
+     * @throws Exception
+     */
+    public float countSharedNeighborsWithRespectToDataset(
+            DataInstance instanceFirst, DataInstance instanceSecond,
+            float[] distToDataFromFirst, float[] distToDataFromSecond)
+            throws Exception {
+        // Find the neighbors of the first point.
+        float[] kDistancesFirst = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistancesFirst[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighborsFirst = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = distToDataFromFirst[i];
+            if (currDistance < kDistancesFirst[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistancesFirst[index - 1] > currDistance) {
+                    kDistancesFirst[index] = kDistancesFirst[index - 1];
+                    kNeighborsFirst[index] = kNeighborsFirst[index - 1];
+                    index--;
+                }
+                kDistancesFirst[index] = currDistance;
+                kNeighborsFirst[index] = i;
+            }
+        }
+        // Find the neighbors of the second point.
+        float[] kDistancesSecond = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistancesSecond[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighborsSecond = new int[k];
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = distToDataFromSecond[i];
+            if (currDistance < kDistancesSecond[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0
+                        && kDistancesSecond[index - 1] > currDistance) {
+                    kDistancesSecond[index] = kDistancesSecond[index - 1];
+                    kNeighborsSecond[index] = kNeighborsSecond[index - 1];
+                    index--;
+                }
+                kDistancesSecond[index] = currDistance;
+                kNeighborsSecond[index] = i;
+            }
+        }
+        // Look for the shared neighbors.
+        float result = 0;
+        for (int k1 = 0; k1 < k; k1++) {
+            for (int k2 = 0; k2 < k; k2++) {
+                if (kNeighborsFirst[k1] == kNeighborsSecond[k2]) {
+                    if (instanceWeights == null) {
+                        result++;
+                    } else {
+                        result += instanceWeights[kNeighborsFirst[k1]];
+                    }
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Counts the number of shared k-nearest neighbors between the two points.
+     *
+     * @param instanceFirst First DataInstance.
+     * @param instanceSecond Second DataInstance.
+     * @return Float that is the weighted shared-neighbor count between the two
+     * instances.
+     * @throws Exception
+     */
+    public float countSharedNeighborsWithRespectToDataset(
+            DataInstance instanceFirst, DataInstance instanceSecond)
+            throws Exception {
+        // Find the neighbors of the two instances and then compare the kNN
+        // sets to find the shared neighbor points.
+        float[] kDistancesFirst = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistancesFirst[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighborsFirst = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = cmet.dist(dset.data.get(i), instanceFirst);
+            if (currDistance < kDistancesFirst[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistancesFirst[index - 1] > currDistance) {
+                    kDistancesFirst[index] = kDistancesFirst[index - 1];
+                    kNeighborsFirst[index] = kNeighborsFirst[index - 1];
+                    index--;
+                }
+                kDistancesFirst[index] = currDistance;
+                kNeighborsFirst[index] = i;
+            }
+        }
+        // Now for the second instance.
+        float[] kDistancesSecond = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistancesSecond[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighborsSecond = new int[k];
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = cmet.dist(dset.data.get(i), instanceSecond);
+            if (currDistance < kDistancesSecond[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistancesSecond[index - 1] > currDistance) {
+                    kDistancesSecond[index] = kDistancesSecond[index - 1];
+                    kNeighborsSecond[index] = kNeighborsSecond[index - 1];
+                    index--;
+                }
+                kDistancesSecond[index] = currDistance;
+                kNeighborsSecond[index] = i;
+            }
+        }
+        float result = 0;
+        for (int k1 = 0; k1 < k; k1++) {
+            for (int k2 = 0; k2 < k; k2++) {
+                if (kNeighborsFirst[k1] == kNeighborsSecond[k2]) {
+                    if (instanceWeights == null) {
+                        result++;
+                    } else {
+                        result += instanceWeights[kNeighborsFirst[k1]];
+                    }
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Finds the shared k-nearest neighbors between the two points.
+     *
+     * @param instanceFirst First DataInstance.
+     * @param instanceSecond Second DataInstance.
+     * @return ArrayList of integer indexes of the neighbor points that are
+     * shared between the two instances.
+     * @throws Exception
+     */
+    public ArrayList<Integer> findSharedNeighborsWithRespectToDataset(
+            DataInstance instanceFirst, DataInstance instanceSecond)
+            throws Exception {
+        // First find the neighbors.
+        float[] kDistancesFirst = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistancesFirst[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighborsFirst = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = cmet.dist(dset.data.get(i), instanceFirst);
+            if (currDistance < kDistancesFirst[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistancesFirst[index - 1] > currDistance) {
+                    kDistancesFirst[index] = kDistancesFirst[index - 1];
+                    kNeighborsFirst[index] = kNeighborsFirst[index - 1];
+                    index--;
+                }
+                kDistancesFirst[index] = currDistance;
+                kNeighborsFirst[index] = i;
+            }
+        }
+        // Now for the second instance.
+        float[] kDistancesSecond = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistancesSecond[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighborsSecond = new int[k];
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = cmet.dist(dset.data.get(i), instanceSecond);
+            if (currDistance < kDistancesSecond[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistancesSecond[index - 1] >
+                        currDistance) {
+                    kDistancesSecond[index] = kDistancesSecond[index - 1];
+                    kNeighborsSecond[index] = kNeighborsSecond[index - 1];
+                    index--;
+                }
+                kDistancesSecond[index] = currDistance;
+                kNeighborsSecond[index] = i;
+            }
+        }
+        // Now look for the shared neighbor points.
+        ArrayList<Integer> result = new ArrayList<>(k);
+        for (int k1 = 0; k1 < k; k1++) {
+            for (int k2 = 0; k2 < k; k2++) {
+                if (kNeighborsFirst[k1] == kNeighborsSecond[k2]) {
+                    result.add(kNeighborsSecond[k2]);
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Counts how many neighbors this point shares with the training data.
+     *
+     * @param instance DataInstance that is being analyzed.
+     * @return The count of shared neighbors between the instance and the
+     * training data points.
+     * @throws Exception
+     */
+    public float[] coundSharedNeighborsWithDataset(DataInstance instance)
+            throws Exception {
+        // First find the neighbors of the query instance.
+        float[] kDistances = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistances[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = cmet.dist(dset.data.get(i), instance);
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        if (!hashInitialized()) {
+            initializeHashes();
+        }
+        float[] result = new float[dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            for (int k1 = 0; k1 < k; k1++) {
+                if (neighborHash[i].containsKey(kNeighbors[k1])) {
+                    if (instanceWeights == null) {
+                        result[i]++;
+                    } else {
+                        result[i] += instanceWeights[kNeighbors[k1]];
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Analyzes how many neighbors this point shares with the training data.
+     *
+     * @param instance DataInstance that is being analyzed.
+     * @return The lists of shared neighbors between the instance and the
+     * training data points.
+     * @throws Exception
+     */
+    public ArrayList<Integer>[] findSharedNeighborsWithDataset(
+            DataInstance instance) throws Exception {
+        // First find the neighbors of the query instance.
+        float[] kDistances = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistances[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < dset.size(); i++) {
+            currDistance = cmet.dist(dset.data.get(i), instance);
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        if (!hashInitialized()) {
+            initializeHashes();
+        }
+        ArrayList<Integer>[] result = new ArrayList[dset.size()];
+        for (int i = 0; i < dset.size(); i++) {
+            result[i] = new ArrayList<>(k);
+            for (int k1 = 0; k1 < k; k1++) {
+                if (neighborHash[i].containsKey(kNeighbors[k1])) {
+                    result[i].add(kNeighbors[k1]);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets the count of shared neighbors for an index pair, according to
+     * previous calculations.
+     *
+     * @param firstIndex Index of the first data instance.
+     * @param secondIndex Index of the second data instance.
+     * @return The count of shared neighbors between the two.
+     */
+    public float getCountOfSharedNeighborsFor(int firstIndex, int secondIndex) {
+        if (sharedNeighborCount == null || sharedNeighborCount.length
+                <= firstIndex || sharedNeighborCount.length <= secondIndex) {
+            return 0;
+        }
+        if (firstIndex == secondIndex) {
+            return nsf.getKNeighbors()[firstIndex].length;
+        }
+        int min = Math.min(firstIndex, secondIndex);
+        int max = Math.max(firstIndex, secondIndex);
+        return sharedNeighborCount[min][max - min - 1];
+    }
+
+    /**
+     * Gets the list of shared neighbors for an index pair, according to
+     * previous calculations.
+     *
+     * @param firstIndex Index of the first data instance.
+     * @param secondIndex Index of the second data instance.
+     * @return The list of indexes of shared neighbors between the two.
+     */
+    public ArrayList<Integer> getSharedNeighborsFor(int firstIndex,
+            int secondIndex) {
+        if (sharedNeighborCount == null || sharedNeighborCount.length
+                <= firstIndex || sharedNeighborCount.length <= secondIndex) {
+            return null;
+        }
+        if (firstIndex == secondIndex) {
+            ArrayList<Integer> result = new ArrayList<>(
+                    nsf.getKNeighbors()[firstIndex].length);
+            for (int index : nsf.getKNeighbors()[firstIndex]) {
+                result.add(index);
+            }
+            return result;
+        }
+        int min = Math.min(firstIndex, secondIndex);
+        int max = Math.max(firstIndex, secondIndex);
+        return sharedNeighbors[min][max - min - 1];
+    }
+
+    /**
+     * This method finds all the shared neighbors between pairs of points on the
+     * training data and memorizes the lists and counts.
+     */
+    public void findSharedNeighbors() throws Exception {
+        if (nsf == null && dset == null) {
+            return;
+        }
+        if (nsf == null) {
+            nsf = new NeighborSetFinder(dset, cmet);
+        }
+        if (dset == null) {
+            dset = nsf.getDataSet();
+        }
+        if (nsf.getKNeighbors() == null || nsf.getKNeighbors().length == 0) {
+            if (!nsf.distancesCalculated()) {
+                nsf.calculateDistances();
+            }
+            nsf.calculateNeighborSets(k);
+        }
+        if (!hashInitialized()) {
+            initializeHashes();
+        }
+        sharedNeighbors = new ArrayList[dset.size()][];
+        sharedNeighborCount = new float[dset.size()][];
+        for (int i = 0; i < dset.size(); i++) {
+            sharedNeighbors[i] = new ArrayList[dset.size() - i - 1];
+            sharedNeighborCount[i] = new float[dset.size() - i - 1];
+            Set<Integer> keysFirst = neighborHash[i].keySet();
+            for (int j = i + 1; j < dset.size(); j++) {
+                sharedNeighbors[i][j - i - 1] = new ArrayList<>(k);
+                for (int index : keysFirst) {
+                    if (neighborHash[j].containsKey(index)) {
+                        sharedNeighbors[i][j - i - 1].add(index);
+                        if (instanceWeights == null) {
+                            sharedNeighborCount[i][j - i - 1]++;
+                        } else {
+                            sharedNeighborCount[i][j - i - 1] +=
+                                    instanceWeights[index];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * This class is a worker class for multi-threaded shared-neighbor count
+     * calculations.
+     */
+    class SharedNeighborCounterThread implements Runnable {
+
+        float[][] sharedNeighborCount;
+        int startIndex;
+        int limitIndex;
+
+        public SharedNeighborCounterThread(
+                float[][] sharedNeighborCount, int startIndex, int limitIndex) {
+            this.sharedNeighborCount = sharedNeighborCount;
+            this.startIndex = startIndex;
+            this.limitIndex = limitIndex;
+        }
+
+        @Override
+        public void run() {
+            try {
+                for (int i = startIndex; i < limitIndex; i++) {
+                    sharedNeighborCount[i] = new float[dset.size() - i - 1];
+                    Set<Integer> keysFirst = neighborHash[i].keySet();
+                    for (int j = i + 1; j < dset.size(); j++) {
+                        for (int index : keysFirst) {
+                            if (neighborHash[j].containsKey(index)) {
+                                if (instanceWeights == null) {
+                                    sharedNeighborCount[i][j - i - 1]++;
+                                } else {
+                                    sharedNeighborCount[i][j - i - 1] +=
+                                            instanceWeights[index];
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("SNN multithread error.");
+                System.err.println(e.getMessage());
+                System.err.println("Limit indexes: " + startIndex + " "
+                        + limitIndex);
+            }
+        }
+    }
+
+    /**
+     * Count the shared neighbors in a multi-threaded way.
+     *
+     * @throws Exception
+     */
+    public void countSharedNeighborsMultiThread() throws Exception {
+        countSharedNeighborsMultiThread(DEFAULT_NUM_THREADS);
+    }
+
+    /**
+     * Count the shared neighbors in a multi-threaded way.
+     *
+     * @param numThreads Integer that is the number of threads to use.
+     * @throws Exception
+     */
+    public void countSharedNeighborsMultiThread(int numThreads)
+            throws Exception {
+        if (nsf == null && dset == null) {
+            return;
+        }
+        if (nsf == null) {
+            nsf = new NeighborSetFinder(dset, cmet);
+        }
+        if (dset == null) {
+            dset = nsf.getDataSet();
+        }
+        if (nsf.getKNeighbors() == null || nsf.getKNeighbors().length == 0) {
+            if (!nsf.distancesCalculated()) {
+                try {
+                    nsf.setDistances(dset.
+                            calculateDistMatrixMultThr(cmet, numThreads));
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+            nsf.calculateNeighborSets(k);
+        }
+        if (!hashInitialized()) {
+            initializeHashes();
+        }
+        sharedNeighborCount = new float[dset.size()][];
+        int[][] kneighbors = nsf.getKNeighbors();
+        int size = kneighbors.length;
+        int segLength = size / numThreads;
+        Thread[] countThreads = new Thread[numThreads];
+        for (int i = 0; i < numThreads - 1; i++) {
+            countThreads[i] = new Thread(
+                    new SharedNeighborCounterThread(
+                    sharedNeighborCount,
+                    i * segLength,
+                    (i + 1) * segLength));
+            countThreads[i].start();
+        }
+        countThreads[numThreads - 1] =
+                new Thread(new SharedNeighborCounterThread(
+                sharedNeighborCount, (numThreads - 1) * segLength, size));
+        countThreads[numThreads - 1].start();
+        for (int i = 0; i < numThreads; i++) {
+            if (countThreads[i] != null) {
+                try {
+                    countThreads[i].join();
+                } catch (Throwable t) {
+                }
+            }
+        }
+    }
+
+    /**
+     * This method counts all the shared neighbors between pairs of points on
+     * the training data and memorizes the lists and counts.
+     */
+    public void countSharedNeighbors() throws Exception {
+        if (nsf == null && dset == null) {
+            return;
+        }
+        if (nsf == null) {
+            nsf = new NeighborSetFinder(dset, cmet);
+        }
+        if (dset == null) {
+            dset = nsf.getDataSet();
+        }
+        if (nsf.getKNeighbors() == null || nsf.getKNeighbors().length == 0) {
+            if (!nsf.distancesCalculated()) {
+                nsf.calculateDistances();
+            }
+            nsf.calculateNeighborSets(k);
+        }
+        if (!hashInitialized()) {
+            initializeHashes();
+        }
+        sharedNeighborCount = new float[dset.size()][];
+        for (int i = 0; i < dset.size(); i++) {
+            sharedNeighborCount[i] = new float[dset.size() - i - 1];
+            Set<Integer> keysFirst = neighborHash[i].keySet();
+            for (int j = i + 1; j < dset.size(); j++) {
+                for (int index : keysFirst) {
+                    if (neighborHash[j].containsKey(index)) {
+                        if (instanceWeights == null) {
+                            sharedNeighborCount[i][j - i - 1]++;
+                        } else {
+                            sharedNeighborCount[i][j - i - 1] +=
+                                    instanceWeights[index];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
