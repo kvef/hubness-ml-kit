@@ -89,4 +89,37 @@ public class HubnessExtremesGrabber {
                         extremalIndexes[kIndex][exIndex] =
                                 indexPermutation[neighbOccFreqs.length
                                 - (numElementsToFetch - exIndex)];
-  
+                    } else {
+                        // Copy from the beginning.
+                        extremalScores[kIndex][exIndex] =
+                                neighbOccFreqs[exIndex];
+                        extremalIndexes[kIndex][exIndex] =
+                                indexPermutation[exIndex];
+                    }
+                }
+            }
+            this.hubnessExtremalScores = extremalScores;
+            this.hubnessExtremalIndexes = extremalIndexes;
+            return extremalScores;
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * @return int[][] representing the indexes of the extremal points w.r.t.
+     * hubness for a range of neighborhood sizes.
+     */
+    public int[][] getExtremeIndexes() {
+        return hubnessExtremalIndexes;
+    }
+
+    /**
+     * @return float[][] representing the neighbor occurrence frequencies of the
+     * extremal points w.r.t. hubness for a range of neighborhood sizes.
+     */
+    public float[][] getExtremeScores() {
+        return hubnessExtremalScores;
+    }
+}
