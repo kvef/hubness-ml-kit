@@ -139,4 +139,73 @@ public class MultiLabelBatchHubnessAnalyzer {
             if (normType != NORM_NO) {
                 System.out.print("Normalizing features-");
                 if (normType == NORM_01) {
-                    
+                    // Normalize all float features to the [0, 1] range.
+                    originalDSet.normalizeFloats();
+                } else if (normType == NORM_STANDARDIZE) {
+                    // Standardize all float values.
+                    originalDSet.standardizeAllFloats();
+                } else if (normType == N_TFIDF) {
+                    // Perform TFIDF weighting.
+                    boolean[] fBool;
+                    if (originalDSet instanceof BOWDataSet) {
+                        fBool = new boolean[((BOWDataSet) originalDSet).
+                                getNumDifferentWords()];
+                    } else {
+                        fBool = new boolean[originalDSet.getNumFloatAttr()];
+                    }
+                    Arrays.fill(fBool, true);
+                    TFIDF filterTFIDF = new TFIDF(fBool,
+                            DataMineConstants.FLOAT);
+                    if (originalDSet instanceof BOWDataSet) {
+                        filterTFIDF.setSparse(true);
+                    }
+                    filterTFIDF.filter(originalDSet);
+                }
+                System.out.println("-Normalization complete.");
+            } else {
+                System.out.println("Skipping feature normalization.");
+            }
+            // First iterate over different noise levels.
+            for (float noise = noiseMin; noise <= noiseMax; noise +=
+                    noiseStep) {
+                System.gc();
+                currDSet = originalDSet.copy();
+                // Add noise if a positive noise level was indicated.
+                if (noise > 0) {
+                    currDSet.addGaussianNoiseToNormalizedCollection(
+                            noise, 0.1f);
+                }
+                for (int lIndex = 0; lIndex < labelArrayLength; lIndex++) {
+                    // Assign labels to the data.
+                    // Iterate over the mislabeling levels.
+                    for (float ml = mlMin; ml <= mlMax; ml += mlStep) {
+                        for (int dInd = 0; dInd < currDSet.size(); dInd++) {
+                            currDSet.data.get(dInd).setCategory(
+                                    labelDataset.data.get(dInd).iAttr[lIndex]);
+                        }
+                        // Induce mislabeling, if specified.
+                        if (ml > 0) {
+                            currDSet.induceMislabeling(ml, numCategories);
+                        }
+                        // Calculate the out directory.
+                        currOutDSDir = new File(outDir,
+                                dsFile.getName().substring(0,
+                                dsFile.getName().lastIndexOf(".")) + "l"
+                                + lIndex + File.separator + "k" + kMax
+                                + File.separator + "ml" + ml + File.separator
+                                + "noise" + noise);
+                        FileUtil.createDirectory(currOutDSDir);
+                        // Get the appropriate metric.
+                        cmet = dsMetric.get(dsIndex);
+                        // Calculate class priors.
+                        float[] classPriors = currDSet.getClassPriors();
+                        // Calculate the k-nearest neighbor sets.
+                        NeighborSetFinder nsf = new NeighborSetFinder(
+                                currDSet, cmet);
+                        // Determine the correct distance matrix path.
+                        String dMatPath = null;
+                        if (distancesDir != null) {
+                            if (!(cmet instanceof SparseCombinedMetric)) {
+                                switch (normType) {
+                                    case NORM_NO:
+                                    
