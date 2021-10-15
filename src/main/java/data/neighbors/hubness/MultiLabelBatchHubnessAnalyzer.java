@@ -266,4 +266,64 @@ public class MultiLabelBatchHubnessAnalyzer {
                                         break;
                                 }
                             }
-                  
+                        }
+                        File dMatFile = null;
+                        float[][] distMat = null;
+                        // First initialize with a dummy class object, to avoid
+                        // some warnings and exceptions in the pathological
+                        // cases.
+                        Class cmetClass = originalDSet.getClass();
+                        // Determine the proper metric class and the distance
+                        // matrix file.
+                        if (dMatPath != null && noise == 0) {
+                            dMatFile = new File(
+                                    distancesDir, dsFile.getName().substring(0,
+                                    dsFile.getName().lastIndexOf("."))
+                                    + File.separator + dMatPath);
+                            cmetClass = Class.forName(
+                                    dMatFile.getParentFile().getName());
+                        }
+                        if (distMat == null) {
+                            if (dMatFile == null
+                                    || !dMatFile.exists()
+                                    || !(cmetClass.isInstance(
+                                    cmet.getFloatMetric()))) {
+                                // If the file does not exist or the loaded name
+                                // is not an appropriate float metric, then
+                                // calculate the distances with the specified
+                                // metric.
+                                System.out.print("Calculating distances-");
+                                distMat = currDSet.calculateDistMatrixMultThr(
+                                        cmet, 4);
+                                System.out.println("-distances calculated.");
+                                if (dMatFile != null) {
+                                    // If the file path is good, persist the
+                                    // newly calculated distance matrix.
+                                    DistanceMatrixIO.printDMatToFile(
+                                            distMat, dMatFile);
+                                }
+                            } else {
+                                // Load the distances from an existing source.
+                                System.out.print("Loading distances-");
+                                distMat = DistanceMatrixIO.loadDMatFromFile(
+                                        dMatFile);
+                                System.out.println("-distance loaded from "
+                                        + "file: " + dMatFile.getPath());
+                            }
+                        }
+                        if (secondaryDistanceType == BatchClassifierTester.
+                                SecondaryDistance.NONE) {
+                            // Use the primary distance matrix for kNN
+                            // calculations.
+                            nsf.setDistances(distMat);
+                        } else {
+                            // Use the secondary shared-neighbor distances.
+                            if (secondaryDistanceType == BatchClassifierTester.
+                                    SecondaryDistance.SIMCOS) {
+                                // The simcos secondary distance.
+                                NeighborSetFinder nsfSND =
+                                        new NeighborSetFinder(currDSet, distMat,
+                                        cmet);
+                                nsfSND.calculateNeighborSetsMultiThr(
+                                        secondaryDistanceK, 8);
+ 
