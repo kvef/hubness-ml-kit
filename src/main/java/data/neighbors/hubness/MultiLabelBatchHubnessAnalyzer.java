@@ -51,4 +51,92 @@ import util.BasicMathUtil;
  * of datasets. It is meant for the multi-label case, when several different
  * label arrays are provided for the datasets. Different datasets are different
  * feature representations of the same underlying data. This is different from
- * the BatchHubnessAnalyzer class, which handles the general batch processi
+ * the BatchHubnessAnalyzer class, which handles the general batch processing
+ * case. However, this class is more efficient for multi-label analysis, as the
+ * distance matrices and kNN sets are only calculated once for each data
+ * representation.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class MultiLabelBatchHubnessAnalyzer {
+
+    // Normalization types.
+    private static final int NORM_STANDARDIZE = 0;
+    private static final int NORM_NO = 1;
+    private static final int NORM_01 = 2;
+    private static final int N_TFIDF = 3;
+    // Normalization to use on the features.
+    private int normType = NORM_STANDARDIZE;
+    private BatchClassifierTester.SecondaryDistance secondaryDistanceType;
+    // Neighborhood size to use for secondary distances.
+    private int secondaryDistanceK = 50;
+    // The upper bound on the neighborhood size to test. All smaller 
+    // neighborhood sizes will be examined.
+    private int kMax = 50;
+    // Noise and mislabeling range definitions, with default values.
+    private float noiseMin = 0, noiseMax = 0, noiseStep = 1, mlMin = 0,
+            mlMax = 0, mlStep = 1;
+    // Input and output files and directories.
+    private File inConfigFile, inDir, outDir, currOutDSDir, inLabelFile;
+    // Dataset paths.
+    private ArrayList<String> dsPaths = new ArrayList<>(100);
+    // A list of corresponding dataset metrics.
+    private ArrayList<CombinedMetric> dsMetric = new ArrayList<>(100);
+    // Data holders.
+    private DataSet originalDSet, currDSet;
+    // The current metric object.
+    private CombinedMetric cmet;
+    // Number of categories in the data.
+    private int numCategories;
+    // Label separator in the label file.
+    private String labelSeparator;
+    // Directory containing the distances.
+    File distancesDir;
+
+    /**
+     * Initialization.
+     *
+     * @param inConfigFile File containing the experiment configuration.
+     */
+    public MultiLabelBatchHubnessAnalyzer(File inConfigFile) {
+        this.inConfigFile = inConfigFile;
+    }
+
+    /**
+     * This method runs the script and performs batch analysis of the stats
+     * relevant for interpreting the hubness of the data on a series on
+     * datasets.
+     *
+     * @throws Exception
+     */
+    public void runAllTests() throws Exception {
+        // First load different data label arrays.
+        DataSet labelDataset = null;
+        int labelArrayLength;
+        if (inLabelFile.getPath().endsWith(".arff")) {
+            // Each label array is a column, i.e. corresponds to a feature in
+            // the dataset.
+            IOARFF aPers = new IOARFF();
+            labelDataset = aPers.load(inLabelFile.getPath());
+        } else if (inLabelFile.getPath().endsWith(".csv")) {
+            IOCSV reader = new IOCSV(false, labelSeparator,
+                    DataMineConstants.INTEGER);
+            labelDataset = reader.readData(inLabelFile);
+        } else {
+            System.out.println("Wrong label format.");
+            throw new Exception();
+        }
+        labelArrayLength = labelDataset.getNumIntAttr();
+        int dsIndex = 0;
+        for (String dsPath : dsPaths) {
+            File dsFile = new File(dsPath);
+            // Load in the multi-label mode.
+            originalDSet = SupervisedLoader.loadData(dsFile, true);
+            System.out.println("Testing on: " + dsPath);
+            originalDSet.standardizeCategories();
+            // Count the categories in the data.
+            numCategories = originalDSet.countCategories();
+            if (normType != NORM_NO) {
+                System.out.print("Normalizing features-");
+                if (normType == NORM_01) {
+                    
