@@ -208,4 +208,62 @@ public class MultiLabelBatchHubnessAnalyzer {
                             if (!(cmet instanceof SparseCombinedMetric)) {
                                 switch (normType) {
                                     case NORM_NO:
-                                    
+                                        dMatPath = "NO" + File.separator
+                                                + cmet.getFloatMetric().
+                                                getClass().getName() +
+                                                File.separator + "dMat.txt";
+                                        break;
+                                    case NORM_01:
+                                        dMatPath = "NORM01" + File.separator
+                                                + cmet.getFloatMetric().
+                                                getClass().getName() +
+                                                File.separator + "dMat.txt";
+                                        break;
+                                    case NORM_STANDARDIZE:
+                                        dMatPath = "STANDARDIZED" +
+                                                File.separator + cmet.
+                                                getFloatMetric().getClass().
+                                                getName() + File.separator
+                                                + "dMat.txt";
+                                        break;
+                                    case N_TFIDF:
+                                        dMatPath = "TFIDF" + File.separator
+                                                + cmet.getFloatMetric().
+                                                getClass().getName() +
+                                                File.separator + "dMat.txt";
+                                        break;
+                                }
+                            } else {
+                                switch (normType) {
+                                    case NORM_NO:
+                                        dMatPath = "NO" + File.separator
+                                                + ((SparseCombinedMetric) cmet).
+                                                getSparseMetric().getClass().
+                                                getName() + File.separator
+                                                + "dMat.txt";
+                                        break;
+                                    case NORM_01:
+                                        dMatPath = "NORM01" + File.separator
+                                                + ((SparseCombinedMetric) cmet).
+                                                getSparseMetric().getClass().
+                                                getName() + File.separator
+                                                + "dMat.txt";
+                                        break;
+                                    case NORM_STANDARDIZE:
+                                        dMatPath = "STANDARDIZED" +
+                                                File.separator +
+                                                ((SparseCombinedMetric) cmet).
+                                                getSparseMetric().getClass().
+                                                getName() + File.separator
+                                                + "dMat.txt";
+                                        break;
+                                    case N_TFIDF:
+                                        dMatPath = "TFIDF" + File.separator
+                                                + ((SparseCombinedMetric) cmet).
+                                                getSparseMetric().getClass().
+                                                getName() + File.separator
+                                                + "dMat.txt";
+                                        break;
+                                }
+                            }
+                  
