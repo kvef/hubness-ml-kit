@@ -326,4 +326,63 @@ public class MultiLabelBatchHubnessAnalyzer {
                                         cmet);
                                 nsfSND.calculateNeighborSetsMultiThr(
                                         secondaryDistanceK, 8);
- 
+                                SharedNeighborFinder snf =
+                                        new SharedNeighborFinder(nsfSND);
+                                snf.countSharedNeighbors();
+                                SharedNeighborCalculator snc =
+                                        new SharedNeighborCalculator(snf,
+                                        SharedNeighborCalculator.
+                                        WeightingType.NONE);
+                                float[][] simcosSimMat =
+                                        snf.getSharedNeighborCounts();
+                                float[][] simcosDMat =
+                                        new float[simcosSimMat.length][];
+                                // Transform similarities into distances.
+                                for (int i = 0; i < simcosDMat.length; i++) {
+                                    simcosDMat[i] =
+                                            new float[simcosSimMat[i].length];
+                                    for (int j = 0;
+                                            j < simcosDMat[i].length; j++) {
+                                        simcosDMat[i][j] = secondaryDistanceK
+                                                - simcosSimMat[i][j];
+                                    }
+                                }
+                                // Normalize the scores.
+                                float max = 0;
+                                float min = Float.MAX_VALUE;
+                                for (int i = 0; i < simcosDMat.length; i++) {
+                                    for (int j = 0; j < simcosDMat[i].length;
+                                            j++) {
+                                        max = Math.max(max, simcosDMat[i][j]);
+                                        min = Math.min(min, simcosDMat[i][j]);
+                                    }
+                                }
+                                for (int i = 0; i < simcosDMat.length; i++) {
+                                    for (int j = 0; j < simcosDMat[i].length;
+                                            j++) {
+                                        simcosDMat[i][j] =
+                                                (simcosDMat[i][j] - min)
+                                                / (max - min);
+                                    }
+                                }
+                                // Use the simcos distance matrix for kNN set
+                                // calculations.
+                                nsf = new NeighborSetFinder(originalDSet,
+                                        simcosDMat, snc);
+                            } else if (secondaryDistanceType
+                                    == BatchClassifierTester.
+                                    SecondaryDistance.SIMHUB) {
+                                // The hubness-aware simhub secondary distance
+                                // measure based on shared-neighbor methodology.
+                                NeighborSetFinder nsfSND =
+                                        new NeighborSetFinder(
+                                        currDSet, distMat, cmet);
+                                nsfSND.calculateNeighborSetsMultiThr(
+                                        secondaryDistanceK, 8);
+                                SharedNeighborFinder snf =
+                                        new SharedNeighborFinder(nsfSND, 5);
+                                snf.obtainWeightsFromHubnessInformation(0);
+                                snf.countSharedNeighbors();
+                                SharedNeighborCalculator snc =
+                                        new SharedNeighborCalculator(snf,
+                                        Shar
