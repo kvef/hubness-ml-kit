@@ -445,3 +445,63 @@ public class MultiLabelBatchHubnessAnalyzer {
                                 for (int i = 0; i < mpDistMat.length; i++) {
                                     for (int j = 0; j < mpDistMat[i].length;
                                             j++) {
+                                        max = Math.max(max, mpDistMat[i][j]);
+                                        min = Math.min(min, mpDistMat[i][j]);
+                                    }
+                                }
+                                for (int i = 0; i < mpDistMat.length; i++) {
+                                    for (int j = 0; j < mpDistMat[i].length;
+                                            j++) {
+                                        mpDistMat[i][j] =
+                                                (mpDistMat[i][j] - min)
+                                                / (max - min);
+                                    }
+                                }
+                                nsf = new NeighborSetFinder(
+                                        originalDSet, mpDistMat, calc);
+                            } else if (secondaryDistanceType
+                                    == BatchClassifierTester.
+                                    SecondaryDistance.LS) {
+                                // Local scaling secondary distance measure.
+                                NeighborSetFinder nsfSecondary =
+                                        new NeighborSetFinder(currDSet, distMat,
+                                        cmet);
+                                nsfSecondary.calculateNeighborSetsMultiThr(
+                                        secondaryDistanceK, 8);
+                                LocalScalingCalculator lsc =
+                                        new LocalScalingCalculator(
+                                        nsfSecondary);
+                                float[][] lsDistMat = lsc.
+                                        getTransformedDMatFromNSFPrimaryDMat();
+                                // Normalize the scores.
+                                float max = 0;
+                                float min = Float.MAX_VALUE;
+                                for (int i = 0; i < lsDistMat.length; i++) {
+                                    for (int j = 0; j < lsDistMat[i].length;
+                                            j++) {
+                                        max = Math.max(max, lsDistMat[i][j]);
+                                        min = Math.min(min, lsDistMat[i][j]);
+                                    }
+                                }
+                                for (int i = 0; i < lsDistMat.length; i++) {
+                                    for (int j = 0; j < lsDistMat[i].length;
+                                            j++) {
+                                        lsDistMat[i][j] =
+                                                (lsDistMat[i][j] - min)
+                                                / (max - min);
+                                    }
+                                }
+                                nsf = new NeighborSetFinder(
+                                        originalDSet, lsDistMat, lsc);
+                            } else if (secondaryDistanceType
+                                    == BatchClassifierTester.
+                                    SecondaryDistance.NICDM) {
+                                // NICDM secondary distance measure.
+                                NeighborSetFinder nsfSecondary =
+                                        new NeighborSetFinder(currDSet, distMat,
+                                        cmet);
+                                nsfSecondary.calculateNeighborSetsMultiThr(
+                                        secondaryDistanceK, 8);
+                                NICDMCalculator nicdmCalc =
+                                        new NICDMCalculator(nsfSecondary);
+  
