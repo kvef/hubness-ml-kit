@@ -385,4 +385,63 @@ public class MultiLabelBatchHubnessAnalyzer {
                                 snf.countSharedNeighbors();
                                 SharedNeighborCalculator snc =
                                         new SharedNeighborCalculator(snf,
-                                        Shar
+                                        SharedNeighborCalculator.
+                                        WeightingType.HUBNESS_INFORMATION);
+                                float[][] simhubSimMat =
+                                        snf.getSharedNeighborCounts();
+                                // Transform similarities into distances.
+                                float[][] simhubDMat =
+                                        new float[simhubSimMat.length][];
+                                for (int i = 0; i < simhubDMat.length; i++) {
+                                    simhubDMat[i] =
+                                            new float[simhubSimMat[i].length];
+                                    for (int j = 0; j < simhubDMat[i].length;
+                                            j++) {
+                                        simhubDMat[i][j] = secondaryDistanceK
+                                                - simhubSimMat[i][j];
+                                    }
+                                }
+                                // Normalize the scores.
+                                float max = 0;
+                                float min = Float.MAX_VALUE;
+                                for (int i = 0; i < simhubDMat.length; i++) {
+                                    for (int j = 0; j < simhubDMat[i].length;
+                                            j++) {
+                                        max = Math.max(max, simhubDMat[i][j]);
+                                        min = Math.min(min, simhubDMat[i][j]);
+                                    }
+                                }
+                                for (int i = 0; i < simhubDMat.length; i++) {
+                                    for (int j = 0; j < simhubDMat[i].length;
+                                            j++) {
+                                        simhubDMat[i][j] =
+                                                (simhubDMat[i][j] - min)
+                                                / (max - min);
+                                    }
+                                }
+                                nsf = new NeighborSetFinder(
+                                        originalDSet, simhubDMat, snc);
+                            } else if (secondaryDistanceType
+                                    == BatchClassifierTester.
+                                    SecondaryDistance.MP) {
+                                // Mutual proximity secondary similarity
+                                // measure.
+                                NeighborSetFinder nsfSecondary =
+                                        new NeighborSetFinder(currDSet, distMat,
+                                        cmet);
+                                nsfSecondary.calculateNeighborSetsMultiThr(
+                                        secondaryDistanceK, 8);
+                                MutualProximityCalculator calc =
+                                        new MutualProximityCalculator(
+                                        nsfSecondary.getDistances(),
+                                        nsfSecondary.getDataSet(),
+                                        nsfSecondary.getCombinedMetric());
+                                float[][] mpDistMat =
+                                        calc.calculateSecondaryDistMatrixMultThr(
+                                        nsfSecondary, 8);
+                                // Normalize the scores.
+                                float max = 0;
+                                float min = Float.MAX_VALUE;
+                                for (int i = 0; i < mpDistMat.length; i++) {
+                                    for (int j = 0; j < mpDistMat[i].length;
+                                            j++) {
