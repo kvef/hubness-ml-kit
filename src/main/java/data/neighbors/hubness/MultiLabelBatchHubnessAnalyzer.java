@@ -687,4 +687,63 @@ public class MultiLabelBatchHubnessAnalyzer {
                             pw.println("kEntropyKurtosis: ");
                             pw.print(BasicMathUtil.makeADecimalCutOff(
                                     kEntropiesKurtosis[0], 3));
-                            for
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kEntropiesKurtosis[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kHubnessEntropyMeans: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kRNNEntropiesMeans[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kRNNEntropiesMeans[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kHubnessEntropyStDevs: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kRNNEntropiesStDevs[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kRNNEntropiesStDevs[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kHubnessEntropySkews: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kRNNEntropiesSkews[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kRNNEntropiesSkews[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kHubnessEntropyKurtosis: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kRNNEntropiesKurtosis[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kRNNEntropiesKurtosis[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kEnt - khEnt avgs: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    entDiffs[0], 3));
+                            for (int i = 1; i < entDiffs.length; i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        entDiffs[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("Hubness above zero percentage Array: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    aboveZeroArray[0], 2));
+                  
