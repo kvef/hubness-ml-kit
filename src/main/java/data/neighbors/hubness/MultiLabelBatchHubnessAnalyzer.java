@@ -626,4 +626,65 @@ public class MultiLabelBatchHubnessAnalyzer {
                                         stDevArray[i], 3));
                             }
                             pw.println();
-                            pw.println("--------------
+                            pw.println("-------------------------------------");
+                            pw.println("skewArray: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    skewArray[0], 3));
+                            for (int i = 1; i < skewArray.length; i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        skewArray[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kurtosisArray: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kurtosisArray[0], 3));
+                            for (int i = 1; i < kurtosisArray.length; i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        kurtosisArray[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("bad hubness: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    bhArray[0], 3));
+                            for (int i = 1; i < bhArray.length; i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        bhArray[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kEntropyMeans: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kEntropiesMeans[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kEntropiesMeans[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kEntropyStDevs: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kEntropiesStDevs[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kEntropiesStDevs[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kEntropySkews: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kEntropiesSkews[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        kEntropiesSkews[i], 3));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("kEntropyKurtosis: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    kEntropiesKurtosis[0], 3));
+                            for
