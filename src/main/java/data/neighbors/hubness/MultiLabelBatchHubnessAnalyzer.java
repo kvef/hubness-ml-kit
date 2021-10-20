@@ -504,4 +504,63 @@ public class MultiLabelBatchHubnessAnalyzer {
                                         secondaryDistanceK, 8);
                                 NICDMCalculator nicdmCalc =
                                         new NICDMCalculator(nsfSecondary);
-  
+                                float[][] lsDistMat = nicdmCalc.
+                                        getTransformedDMatFromNSFPrimaryDMat();
+                                // Normalize the scores.
+                                float max = 0;
+                                float min = Float.MAX_VALUE;
+                                for (int i = 0; i < lsDistMat.length; i++) {
+                                    for (int j = 0; j < lsDistMat[i].length;
+                                            j++) {
+                                        max = Math.max(max, lsDistMat[i][j]);
+                                        min = Math.min(min, lsDistMat[i][j]);
+                                    }
+                                }
+                                for (int i = 0; i < lsDistMat.length; i++) {
+                                    for (int j = 0; j < lsDistMat[i].length;
+                                            j++) {
+                                        lsDistMat[i][j] =
+                                                (lsDistMat[i][j] - min)
+                                                / (max - min);
+                                    }
+                                }
+                                nsf = new NeighborSetFinder(
+                                        originalDSet, lsDistMat, nicdmCalc);
+                            }
+                        }
+                        nsf.calculateNeighborSets(kMax);
+                        // Initialize the hubness stats calculators.
+                        HubnessAboveThresholdExplorer hte =
+                                new HubnessAboveThresholdExplorer(1, true, nsf);
+                        HubnessSkewAndKurtosisExplorer hske =
+                                new HubnessSkewAndKurtosisExplorer(nsf);
+                        HubnessExtremesGrabber heg =
+                                new HubnessExtremesGrabber(true, nsf);
+                        HubnessVarianceExplorer hve =
+                                new HubnessVarianceExplorer(nsf);
+                        TopHubsClusterUtil thcu = new TopHubsClusterUtil(nsf);
+                        KNeighborEntropyExplorer knee =
+                                new KNeighborEntropyExplorer(nsf,
+                                numCategories);
+
+                        // Use the hubness stats calculators to obtain the stats
+                        // for interpreting the hubness of the data.
+                        // The percentages of points that occur at least once.
+                        float[] aboveZeroArray =
+                                hte.getThresholdPercentageArray();
+                        hske.calcSkewAndKurtosisArrays();
+                        // Skewness of the neighbor occurrence frequency
+                        // distribution.
+                        float[] skewArray = hske.getOccFreqsSkewnessArray();
+                        // Kurtosis of the neighbor occurrence frequency
+                        // distribution.
+                        float[] kurtosisArray = hske.getOccFreqsKurtosisArray();
+                        // Highest neighbor occurrence frequencies.
+                        float[][] highestOccFreqs =
+                                heg.getHubnessExtremesForKValues(15);
+                        float[] stDevArray = hve.getStDevForKRange();
+                        thcu.calcTopHubnessDiamAndAvgDist(10);
+                        float[] topHubClustDiamsArr =
+                                thcu.getTopHubClusterDiameters();
+                        float[] topHubClustAvgDistArr =
+                                thcu.getTopHubClust
