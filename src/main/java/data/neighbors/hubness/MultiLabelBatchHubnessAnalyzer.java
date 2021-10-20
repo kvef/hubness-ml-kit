@@ -563,4 +563,67 @@ public class MultiLabelBatchHubnessAnalyzer {
                         float[] topHubClustDiamsArr =
                                 thcu.getTopHubClusterDiameters();
                         float[] topHubClustAvgDistArr =
-                                thcu.getTopHubClust
+                                thcu.getTopHubClusterAvgDists();
+                        knee.calculateAllKNNEntropyStats();
+                        // Direct and reverse kNN entropy distributions.
+                        float[] kEntropiesMeans = knee.getDirectEntropyMeans();
+                        float[] kRNNEntropiesMeans =
+                                knee.getReverseEntropyMeans();
+                        float[] kEntropiesStDevs =
+                                knee.getDirectEntropyStDevs();
+                        float[] kRNNEntropiesStDevs =
+                                knee.getReverseEntropyStDevs();
+                        float[] kEntropiesSkews =
+                                knee.getDirectEntropySkews();
+                        float[] kRNNEntropiesSkews =
+                                knee.getReverseEntropySkews();
+                        float[] kEntropiesKurtosis =
+                                knee.getDirectEntropyKurtosisVals();
+                        float[] kRNNEntropiesKurtosis =
+                                knee.getReverseEntropyKurtosisVals();
+                        float[] entDiffs = knee.
+                                getAverageDirectAndReverseEntropyDifs();
+                        // Bad neighbor occurrence frequencies.
+                        float[] bhArray = nsf.getLabelMismatchPercsAllK();
+                        float[][][] gClasstoClassHubness = new float[kMax][][];
+                        for (int kVal = 1; kVal <= kMax; kVal++) {
+                            gClasstoClassHubness[kVal - 1] = nsf.
+                                    getGlobalClassToClassForKforFuzzy(
+                                    kVal, numCategories, 0.01f, true);
+                        }
+
+                        File currOutFile = new File(currOutDSDir,
+                                "hubnessOverview.txt");
+                        // Print out the results.
+                        try (PrintWriter pw =
+                                new PrintWriter(new FileWriter(currOutFile));) {
+                            pw.println("dataset: " + dsFile.getName());
+                            pw.println("k_max: " + kMax);
+                            pw.println("noise: " + noise);
+                            pw.println("ml: " + ml);
+                            pw.println("instances: " + originalDSet.size());
+                            pw.println("numCat: " + numCategories);
+                            pw.print("class priors: ");
+                            for (int cIndex = 0; cIndex < numCategories;
+                                    cIndex++) {
+                                pw.print(BasicMathUtil.makeADecimalCutOff(
+                                        classPriors[cIndex], 3));
+                                pw.print(" ");
+                            }
+                            pw.println();
+                            try {
+                                pw.println("dim: "
+                                        + originalDSet.fAttrNames.length);
+                            } catch (Exception e) {
+                                System.err.println(e.getMessage());
+                            }
+                            pw.println("-------------------------------------");
+                            pw.println("stDevArray: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    stDevArray[0], 3));
+                            for (int i = 1; i < stDevArray.length; i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        stDevArray[i], 3));
+                            }
+                            pw.println();
+                            pw.println("--------------
