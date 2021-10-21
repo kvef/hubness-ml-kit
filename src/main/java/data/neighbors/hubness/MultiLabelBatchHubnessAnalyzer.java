@@ -804,4 +804,65 @@ public class MultiLabelBatchHubnessAnalyzer {
                             pw.println("Top ten hubs diam: ");
                             pw.print(BasicMathUtil.makeADecimalCutOff(
                                     topHubClustDiamsArr[0], 2));
-                 
+                            for (int i = 1; i < topHubClustDiamsArr.length;
+                                    i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        topHubClustDiamsArr[i], 2));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("Top ten hubs avg within cluster "
+                                    + "dist: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    topHubClustAvgDistArr[0], 2));
+                            for (int i = 1; i < topHubClustAvgDistArr.length;
+                                    i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        topHubClustAvgDistArr[i], 2));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            thcu.calcTopHubnessDiamAndAvgDist(5);
+                            topHubClustDiamsArr =
+                                    thcu.getTopHubClusterDiameters();
+                            topHubClustAvgDistArr =
+                                    thcu.getTopHubClusterAvgDists();
+                            pw.println("Top five hubs diam: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    topHubClustDiamsArr[0], 2));
+                            for (int i = 1; i < topHubClustDiamsArr.length;
+                                    i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        topHubClustDiamsArr[i], 2));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("Top five hubs avg within cluster "
+                                    + "dist: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    topHubClustAvgDistArr[0], 2));
+                            for (int i = 1; i < topHubClustAvgDistArr.length;
+                                    i++) {
+                                pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                        topHubClustAvgDistArr[i], 2));
+                            }
+                            pw.println();
+                            pw.println("-------------------------------------");
+                            pw.println("highest occurrence frequencies (each"
+                                    + " line is for one k value, lines go from"
+                                    + " zero to k_max): ");
+                            for (int k = 0; k < kMax; k++) {
+                                pw.print("k: " + (k + 1) + ":: ");
+                                pw.print(BasicMathUtil.makeADecimalCutOff(
+                                        highestOccFreqs[k][0], 3));
+                                for (int i = 1; i < 20; i++) {
+                                    pw.print(","
+                                            + BasicMathUtil.makeADecimalCutOff(
+                                            highestOccFreqs[k][i], 3));
+                                }
+                                pw.println();
+                            }
+                            pw.println("-------------------------------------");
+                            pw.println("global class to class hubness matrices"
+                                    + " for all K-s: ");
+                            for (int k = 1; k
