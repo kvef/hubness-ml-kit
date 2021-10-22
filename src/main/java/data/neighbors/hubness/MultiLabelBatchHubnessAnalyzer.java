@@ -945,4 +945,72 @@ public class MultiLabelBatchHubnessAnalyzer {
                         normType = NORM_STANDARDIZE;
                     }
                 } else if (s.startsWith("@label_file")) {
-                    // Path
+                    // Path to the file containing the labels.
+                    lineParse = s.split(" ");
+                    inLabelFile = new File(lineParse[1]);
+                    if (lineParse.length >= 3) {
+                        String separatorBuffer = lineParse[2];
+                        for (int hrm = 3; hrm < lineParse.length; hrm++) {
+                            separatorBuffer += " ";
+                            separatorBuffer += lineParse[hrm];
+                        }
+                        labelSeparator = separatorBuffer.substring(1,
+                                separatorBuffer.length() - 1);
+                        System.out.println("label separator \""
+                                + labelSeparator + "\"");
+                    }
+                } else if (s.startsWith("@dataset")) {
+                    // Dataset specification.
+                    lineParse = s.split(" ");
+                    dsPaths.add(lineParse[1]);
+                    if (lineParse[1].startsWith("sparse:")) {
+                        // If the path is preceded by "sparse:", we read in a
+                        // sparse metric.
+                        SparseCombinedMetric cmetSparse =
+                                new SparseCombinedMetric(null, null,
+                                (SparseMetric) (Class.forName(
+                                lineParse[2]).newInstance()),
+                                CombinedMetric.DEFAULT);
+                        dsMetric.add(cmetSparse);
+                    } else {
+                        // Load the specified metric.
+                        CombinedMetric cmetLoaded = new CombinedMetric();
+                        if (!lineParse[2].equals("null")) {
+                            currIntMet = Class.forName(lineParse[3]);
+                            cmetLoaded.setIntegerMetric((DistanceMeasure)
+                                    (currIntMet.newInstance()));
+                        }
+                        if (!lineParse[3].equals("null")) {
+                            currFloatMet = Class.forName(lineParse[4]);
+                            cmetLoaded.setFloatMetric((DistanceMeasure)
+                                    (currFloatMet.newInstance()));
+                        }
+                        cmetLoaded.setCombinationMethod(CombinedMetric.DEFAULT);
+                        dsMetric.add(cmetLoaded);
+                    }
+                } else if (s.startsWith("@distances_directory")) {
+                    // Directory for loading and/or persisting the distance
+                    // matrices.
+                    lineParse = s.split("\\s+");
+                    distancesDir = new File(lineParse[1]);
+                } else if (s.startsWith("@secondary_distance")) {
+                    // Secondary distance specification.
+                    lineParse = s.split("\\s+");
+                    switch (lineParse[1].toLowerCase()) {
+                        case "simcos": {
+                            secondaryDistanceType =BatchClassifierTester.
+                                    SecondaryDistance.SIMCOS;
+                            break;
+                        }
+                        case "simhub": {
+                            secondaryDistanceType = BatchClassifierTester.
+                                    SecondaryDistance.SIMHUB;
+                            break;
+                        }
+                        case "mp": {
+                            secondaryDistanceType = BatchClassifierTester.
+                                    SecondaryDistance.MP;
+                            break;
+                        }
+                        case "ls": {
+     
