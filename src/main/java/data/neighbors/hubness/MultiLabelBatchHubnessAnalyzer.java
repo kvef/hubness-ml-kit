@@ -865,4 +865,84 @@ public class MultiLabelBatchHubnessAnalyzer {
                             pw.println("-------------------------------------");
                             pw.println("global class to class hubness matrices"
                                     + " for all K-s: ");
-                            for (int k = 1; k
+                            for (int k = 1; k <= kMax; k++) {
+                                pw.println("k = " + k);
+                                for (int c1 = 0; c1 < numCategories; c1++) {
+                                    for (int c2 = 0; c2 < numCategories; c2++) {
+                                        pw.print(BasicMathUtil.
+                                                makeADecimalCutOff(
+                                                gClasstoClassHubness[k - 1][c1][
+                                                c2], 3));
+                                        pw.print(" ");
+                                    }
+                                    pw.println();
+                                }
+                                pw.println();
+                            }
+
+                        } catch (Exception e) {
+                            System.err.println(e.getMessage());
+                        }
+                    }
+                }
+            }
+            dsIndex++;
+        }
+    }
+
+    /**
+     * This method loads the parameters from the configuration file.
+     *
+     * @throws Exception
+     */
+    public void loadParameters() throws Exception {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(inConfigFile)));) {
+            String s = br.readLine();
+            String[] lineParse;
+            // Integer and float metrics.
+            Class currIntMet;
+            Class currFloatMet;
+            // Read the file line by line.
+            while (s != null) {
+                s = s.trim();
+                if (s.startsWith("@in_directory")) {
+                    // Input directory.
+                    lineParse = s.split(" ");
+                    inDir = new File(lineParse[1]);
+                } else if (s.startsWith("@out_directory")) {
+                    // Output directory.
+                    lineParse = s.split(" ");
+                    outDir = new File(lineParse[1]);
+                } else if (s.startsWith("@k_max")) {
+                    // Maximal k-value to which to iterate.
+                    lineParse = s.split(" ");
+                    kMax = Integer.parseInt(lineParse[1]);
+                } else if (s.startsWith("@noise_range")) {
+                    // Noise range: min, max, increment.
+                    lineParse = s.split(" ");
+                    noiseMin = Float.parseFloat(lineParse[1]);
+                    noiseMax = Float.parseFloat(lineParse[2]);
+                    noiseStep = Float.parseFloat(lineParse[3]);
+                } else if (s.startsWith("@mislabeled_range")) {
+                    // Mislabeling range: min, max, increment.
+                    lineParse = s.split(" ");
+                    mlMin = Float.parseFloat(lineParse[1]);
+                    mlMax = Float.parseFloat(lineParse[2]);
+                    mlStep = Float.parseFloat(lineParse[3]);
+                } else if (s.startsWith("@normalization")) {
+                    // Normalization specification.
+                    lineParse = s.split("\\s+");
+                    if (lineParse[1].toLowerCase().compareTo("no") == 0) {
+                        normType = NORM_NO;
+                    } else if (lineParse[1].toLowerCase().compareTo(
+                            "normalizeTo01".toLowerCase()) == 0) {
+                        normType = NORM_01;
+                    } else if (lineParse[1].toLowerCase().compareTo(
+                            "TFIDF".toLowerCase()) == 0) {
+                        normType = N_TFIDF;
+                    } else {
+                        normType = NORM_STANDARDIZE;
+                    }
+                } else if (s.startsWith("@label_file")) {
+                    // Path
