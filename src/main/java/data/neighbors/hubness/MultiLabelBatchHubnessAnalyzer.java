@@ -1013,4 +1013,55 @@ public class MultiLabelBatchHubnessAnalyzer {
                             break;
                         }
                         case "ls": {
-     
+                            secondaryDistanceType = BatchClassifierTester.
+                                    SecondaryDistance.LS;
+                            break;
+                        }
+                        case "nicdm": {
+                            secondaryDistanceType = BatchClassifierTester.
+                                    SecondaryDistance.NICDM;
+                            break;
+                        }
+                        default: {
+                            secondaryDistanceType = BatchClassifierTester.
+                                    SecondaryDistance.SIMCOS;
+                            break;
+                        }
+                    }
+                }
+                s = br.readLine();
+            }
+            // Convert relative to absolute paths, by pre-pending the input
+            // directory path.
+            for (int i = 0; i < dsPaths.size(); i++) {
+                if (!dsPaths.get(i).startsWith("sparse:")) {
+                    dsPaths.set(i, (new File(inDir, dsPaths.get(i))).getPath());
+                } else {
+                    dsPaths.set(i, "sparse:" + (new File(inDir, dsPaths.get(i).
+                            substring(dsPaths.get(i).indexOf(":") + 1,
+                            dsPaths.get(i).length()))).getPath());
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    /**
+     * This method runs the batch multi-label hubness analysis script.
+     *
+     * @param args Command line parameters, as specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            System.out.println("1 parameter - file with test configuration");
+            return;
+        }
+        File inConfigFile = new File(args[0]);
+        MultiLabelBatchHubnessAnalyzer tester =
+                new MultiLabelBatchHubnessAnalyzer(inConfigFile);
+        tester.loadParameters();
+        tester.runAllTests();
+    }
+}
