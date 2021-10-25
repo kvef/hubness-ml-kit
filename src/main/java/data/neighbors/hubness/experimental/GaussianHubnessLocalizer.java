@@ -127,4 +127,73 @@ public class GaussianHubnessLocalizer {
         Arrays.fill(uBounds, 10);
         // Initialize the Gaussian generator.
         MultiDimensionalSphericGaussianGenerator gen =
-                new MultiDimens
+                new MultiDimensionalSphericGaussianGenerator(
+                featureMeans, featureStDevs, lBounds, uBounds);
+        // Initialize the dataset.
+        DataSet dset = new DataSet();
+        dset.fAttrNames = new String[dim];
+        for (int dIndex = 0; dIndex < dim; dIndex++) {
+            dset.fAttrNames[dIndex] = "f" + dIndex;
+        }
+        dset.data = new ArrayList<>(maxInst);
+        // Generate all the data instances.
+        DataInstance instance;
+        for (int i = 0; i < maxInst; i++) {
+            instance = new DataInstance(dset);
+            instance.fAttr = gen.generateFloat();
+            dset.addDataInstance(instance);
+        }
+        // Persist the generated experimental data.
+        File outDsetFile = new File(outDir, "data.arff");
+        IOARFF pers = new IOARFF();
+        pers.saveLabeledWithIdentifiers(dset, outDsetFile.getPath(), null);
+        // Calculate the distance matrices in a multi-threaded way.
+        distancesMan = dset.calculateDistMatrixMultThr(cmetMan, 4);
+        distancesEuc = dset.calculateDistMatrixMultThr(cmetEuc, 4);
+        distancesFrac = dset.calculateDistMatrixMultThr(cmetFrac, 4);
+        // Notify the user about the end of distance calculations.
+        System.out.println("All distances calculated.");
+        // Initialize the result sets. Results are also represented as DataSet
+        // objects.
+        DataSet resultsManh = new DataSet();
+        resultsManh.fAttrNames = new String[2 + 10 * maxK];
+        // Relative contrast and relative variance do not depend on neighborhood
+        // size.
+        resultsManh.fAttrNames[0] = "relativeContrast";
+        resultsManh.fAttrNames[1] = "relativeVariance";
+        // The remaining measures depend on neighborhood size.
+        for (int kIndex = 0; kIndex < maxK; kIndex++) {
+            // Ratio between the hub and medoid distance.
+            resultsManh.fAttrNames[2 + 10 * kIndex] =
+                    "hDist/mDist_ratio" + (kIndex + 1);
+            // Hub to medoid distance.
+            resultsManh.fAttrNames[3 + 10 * kIndex] = "hmDist" + (kIndex + 1);
+            // Normalized hub to medoid distance.
+            resultsManh.fAttrNames[4 + 10 * kIndex] =
+                    "hmDist/avgDist_ratio" + (kIndex + 1);
+            // Hub distance.
+            resultsManh.fAttrNames[5 + 10 * kIndex] = "hDist" + (kIndex + 1);
+            // Correlation between hubness and norm.
+            resultsManh.fAttrNames[6 + 10 * kIndex] =
+                    "normHubnessCorr" + (kIndex + 1);
+            // Correlation between hubness and density.
+            resultsManh.fAttrNames[7 + 10 * kIndex] =
+                    "densityHubnessCorr" + (kIndex + 1);
+            // Correlation between norm and density.
+            resultsManh.fAttrNames[8 + 10 * kIndex] =
+                    "densityNormCorr" + (kIndex + 1);
+            // Distance correlation between hubness and norm.
+            resultsManh.fAttrNames[9 + 10 * kIndex] =
+                    "normHubnessDistCorr" + (kIndex + 1);
+            // Distance correlation between hubness and density.
+            resultsManh.fAttrNames[10 + 10 * kIndex] =
+                    "densityHubnessDistCorr" + (kIndex + 1);
+            // Distance correlation between density and norm.
+            resultsManh.fAttrNames[11 + 10 * kIndex] =
+                    "densityNormDistCorr" + (kIndex + 1);
+        }
+        // Initialize the result holder instances.
+        resultsManh.data = new ArrayList<>(maxInst - minInst);
+        for (int i = minInst; i < maxInst; i++) {
+            instance = new DataInstance(resultsManh);
+            Arrays.fill(
