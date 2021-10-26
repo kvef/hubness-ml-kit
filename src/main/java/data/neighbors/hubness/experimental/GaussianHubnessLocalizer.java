@@ -196,4 +196,75 @@ public class GaussianHubnessLocalizer {
         resultsManh.data = new ArrayList<>(maxInst - minInst);
         for (int i = minInst; i < maxInst; i++) {
             instance = new DataInstance(resultsManh);
-            Arrays.fill(
+            Arrays.fill(instance.fAttr, 0);
+            resultsManh.addDataInstance(instance);
+        }
+        // Now the Euclidean distance.
+        DataSet resultsEuc = new DataSet();
+        resultsEuc.fAttrNames = new String[2 + 10 * maxK];
+        // Relative contrast and relative variance do not depend on neighborhood
+        // size.
+        resultsEuc.fAttrNames[0] = "relativeContrast";
+        resultsEuc.fAttrNames[1] = "relativeVariance";
+        for (int kIndex = 0; kIndex < maxK; kIndex++) {
+            // Ratio between the hub and medoid distance.
+            resultsEuc.fAttrNames[2 + 10 * kIndex] =
+                    "hDist/mDist_ratio" + (kIndex + 1);
+            // Hub to medoid distance.
+            resultsEuc.fAttrNames[3 + 10 * kIndex] = "hmDist" + (kIndex + 1);
+            // Normalized hub to medoid distance.
+            resultsEuc.fAttrNames[4 + 10 * kIndex] =
+                    "hmDist/avgDist_ratio" + (kIndex + 1);
+            // Hub distance.
+            resultsEuc.fAttrNames[5 + 10 * kIndex] = "hDist" + (kIndex + 1);
+            // Correlation between hubness and norm.
+            resultsEuc.fAttrNames[6 + 10 * kIndex] =
+                    "normHubnessCorr" + (kIndex + 1);
+            // Correlation between hubness and density.
+            resultsEuc.fAttrNames[7 + 10 * kIndex] =
+                    "densityHubnessCorr" + (kIndex + 1);
+            // Correlation between norm and density.
+            resultsEuc.fAttrNames[8 + 10 * kIndex] =
+                    "densityNormCorr" + (kIndex + 1);
+            // Distance correlation between hubness and norm.
+            resultsEuc.fAttrNames[9 + 10 * kIndex] =
+                    "normHubnessDistCorr" + (kIndex + 1);
+            // Distance correlation between hubness and density.
+            resultsEuc.fAttrNames[10 + 10 * kIndex] =
+                    "densityHubnessDistCorr" + (kIndex + 1);
+            // Distance correlation between density and norm.
+            resultsEuc.fAttrNames[11 + 10 * kIndex] =
+                    "densityNormDistCorr" + (kIndex + 1);
+        }
+        resultsEuc.data = new ArrayList<>(maxInst - minInst);
+        for (int i = minInst; i < maxInst; i++) {
+            instance = new DataInstance(resultsEuc);
+            Arrays.fill(instance.fAttr, 0);
+            resultsEuc.addDataInstance(instance);
+        }
+        // Now the fractional distances.
+        DataSet resultsFrac = new DataSet();
+        resultsFrac.fAttrNames = new String[2 + 10 * maxK];
+        // Relative contrast and relative variance do not depend on neighborhood
+        // size.
+        resultsFrac.fAttrNames[0] = "relativeContrast";
+        resultsFrac.fAttrNames[1] = "relativeVariance";
+        for (int kIndex = 0; kIndex < maxK; kIndex++) {
+            // Ratio between the hub and medoid distance.
+            resultsFrac.fAttrNames[2 + 10 * kIndex] =
+                    "hDist/mDist_ratio" + (kIndex + 1);
+            // Hub to medoid distance.
+            resultsFrac.fAttrNames[3 + 10 * kIndex] = "hmDist" + (kIndex + 1);
+            // Normalized hub to medoid distance.
+            resultsFrac.fAttrNames[4 + 10 * kIndex] =
+                    "hmDist/avgDist_ratio" + (kIndex + 1);
+            // Hub distance.
+            resultsFrac.fAttrNames[5 + 10 * kIndex] = "hDist" + (kIndex + 1);
+            // Correlation between hubness and norm.
+            resultsFrac.fAttrNames[6 + 10 * kIndex] =
+                    "normHubnessCorr" + (kIndex + 1);
+            // Correlation between hubness and density.
+            resultsFrac.fAttrNames[7 + 10 * kIndex] =
+                    "densityHubnessCorr" + (kIndex + 1);
+            // Correlation between norm and density.
+     
