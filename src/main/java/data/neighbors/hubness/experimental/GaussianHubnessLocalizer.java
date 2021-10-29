@@ -346,3 +346,72 @@ public class GaussianHubnessLocalizer {
                         }
                     } else {
                         if (distancesMan[i][j]
+                                < kdistancesMan[i][kcurrLenMan[i] - 1]) {
+                            // Search and insert.
+                            l = kcurrLenMan[i] - 1;
+                            kdistancesMan[i][kcurrLenMan[i]] =
+                                    kdistancesMan[i][kcurrLenMan[i] - 1];
+                            kneighborsMan[i][kcurrLenMan[i]] =
+                                    kneighborsMan[i][kcurrLenMan[i] - 1];
+                            while ((l >= 1) && distancesMan[i][j]
+                                    < kdistancesMan[i][l - 1]) {
+                                kdistancesMan[i][l] = kdistancesMan[i][l - 1];
+                                kneighborsMan[i][l] = kneighborsMan[i][l - 1];
+                                l--;
+                            }
+                            kdistancesMan[i][l] = distancesMan[i][j];
+                            kneighborsMan[i][l] = i + j + 1;
+                            kcurrLenMan[i]++;
+                        } else {
+                            kdistancesMan[i][kcurrLenMan[i]] =
+                                    distancesMan[i][j];
+                            kneighborsMan[i][kcurrLenMan[i]] = i + j + 1;
+                            kcurrLenMan[i]++;
+                        }
+                    }
+                } else {
+                    kdistancesMan[i][0] = distancesMan[i][j];
+                    kneighborsMan[i][0] = i + j + 1;
+                    kcurrLenMan[i] = 1;
+                }
+
+                if (kcurrLenMan[other] > 0) {
+                    if (kcurrLenMan[other] == maxK) {
+                        if (distancesMan[i][j] < kdistancesMan[other][
+                                kcurrLenMan[other] - 1]) {
+                            // Search and insert.
+                            l = maxK - 1;
+                            while ((l >= 1) && distancesMan[i][j]
+                                    < kdistancesMan[other][l - 1]) {
+                                kdistancesMan[other][l] =
+                                        kdistancesMan[other][l - 1];
+                                kneighborsMan[other][l] =
+                                        kneighborsMan[other][l - 1];
+                                l--;
+                            }
+                            kdistancesMan[other][l] = distancesMan[i][j];
+                            kneighborsMan[other][l] = i;
+                        }
+                    } else {
+                        if (distancesMan[i][j]
+                                < kdistancesMan[other][
+                                kcurrLenMan[other] - 1]) {
+                            // Search and insert.
+                            l = kcurrLenMan[other] - 1;
+                            kdistancesMan[other][kcurrLenMan[other]] =
+                                    kdistancesMan[other][
+                                    kcurrLenMan[other] - 1];
+                            kneighborsMan[other][kcurrLenMan[other]] =
+                                    kneighborsMan[other][
+                                    kcurrLenMan[other] - 1];
+                            while ((l >= 1) && distancesMan[i][j]
+                                    < kdistancesMan[other][l - 1]) {
+                                kdistancesMan[other][l] =
+                                        kdistancesMan[other][l - 1];
+                                kneighborsMan[other][l] =
+                                        kneighborsMan[other][l - 1];
+                                l--;
+                            }
+                            kdistancesMan[other][l] = distancesMan[i][j];
+                            kneighborsMan[other][l] = i;
+                       
