@@ -267,4 +267,82 @@ public class GaussianHubnessLocalizer {
             resultsFrac.fAttrNames[7 + 10 * kIndex] =
                     "densityHubnessCorr" + (kIndex + 1);
             // Correlation between norm and density.
-     
+            resultsFrac.fAttrNames[8 + 10 * kIndex] =
+                    "densityNormCorr" + (kIndex + 1);
+            // Distance correlation between hubness and norm.
+            resultsFrac.fAttrNames[9 + 10 * kIndex] =
+                    "normHubnessDistCorr" + (kIndex + 1);
+            // Distance correlation between hubness and density.
+            resultsFrac.fAttrNames[10 + 10 * kIndex] =
+                    "densityHubnessDistCorr" + (kIndex + 1);
+            // Distance correlation between density and norm.
+            resultsFrac.fAttrNames[11 + 10 * kIndex] =
+                    "densityNormDistCorr" + (kIndex + 1);
+        }
+        resultsFrac.data = new ArrayList<>(maxInst - minInst);
+        for (int i = minInst; i < maxInst; i++) {
+            instance = new DataInstance(resultsFrac);
+            Arrays.fill(instance.fAttr, 0);
+            resultsFrac.addDataInstance(instance);
+        }
+        // Initialize the zero-centered centroid.
+        DataInstance centroid = new DataInstance(dset);
+        Arrays.fill(centroid.fAttr, 0);
+        // Initialize all the arrays.
+        medoidsMan = new DataInstance[maxInst];
+        medoidsEuc = new DataInstance[maxInst];
+        medoidsFrac = new DataInstance[maxInst];
+        kneighborsMan = new int[dset.size()][maxK];
+        kdistancesMan = new float[dset.size()][maxK];
+        kcurrLenMan = new int[dset.size()];
+        kneighborsEuc = new int[dset.size()][maxK];
+        kdistancesEuc = new float[dset.size()][maxK];
+        kcurrLenEuc = new int[dset.size()];
+        kneighborsFrac = new int[dset.size()][maxK];
+        kdistancesFrac = new float[dset.size()][maxK];
+        kcurrLenFrac = new int[dset.size()];
+        // Initialize the norms and the densities.
+        double[] normsMan = new double[maxInst];
+        double[] normsEuc = new double[maxInst];
+        double[] normsFrac = new double[maxInst];
+
+        double[] densitiesMan;
+        double[] densitiesEuc;
+        double[] densitiesFrac;
+        // Calculate all the data instance norms.
+        for (int i = 0; i < maxInst; i++) {
+            instance = dset.data.get(i);
+            normsMan[i] = cmetMan.dist(instance, centroid);
+            normsEuc[i] = cmetEuc.dist(instance, centroid);
+            normsFrac[i] = cmetFrac.dist(instance, centroid);
+        }
+        // First generate partial stats until minInst is reached.
+        for (int index = 1; index < minInst; index++) {
+            medoidsMan[index] =
+                    dset.getMedoidUpUntilIdex(centroid, cmetMan, index + 1);
+            medoidsEuc[index] =
+                    dset.getMedoidUpUntilIdex(centroid, cmetEuc, index + 1);
+            medoidsFrac[index] =
+                    dset.getMedoidUpUntilIdex(centroid, cmetFrac, index + 1);
+
+            int l;
+            for (int i = 0; i < index; i++) {
+                int j = index - i - 1;
+                int other = index;
+                if (kcurrLenMan[i] > 0) {
+                    if (kcurrLenMan[i] == maxK) {
+                        if (distancesMan[i][j] < kdistancesMan[i][
+                                kcurrLenMan[i] - 1]) {
+                            // Search and insert.
+                            l = maxK - 1;
+                            while ((l >= 1) && distancesMan[i][j]
+                                    < kdistancesMan[i][l - 1]) {
+                                kdistancesMan[i][l] = kdistancesMan[i][l - 1];
+                                kneighborsMan[i][l] = kneighborsMan[i][l - 1];
+                                l--;
+                            }
+                            kdistancesMan[i][l] = distancesMan[i][j];
+                            kneighborsMan[i][l] = i + j + 1;
+                        }
+                    } else {
+                        if (distancesMan[i][j]
