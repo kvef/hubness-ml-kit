@@ -559,4 +559,76 @@ public class GaussianHubnessLocalizer {
                                     kdistancesFrac[i][kcurrLenFrac[i] - 1];
                             kneighborsFrac[i][kcurrLenFrac[i]] =
                                     kneighborsFrac[i][kcurrLenFrac[i] - 1];
-                            while 
+                            while ((l >= 1) && distancesFrac[i][j]
+                                    < kdistancesFrac[i][l - 1]) {
+                                kdistancesFrac[i][l] = kdistancesFrac[i][l - 1];
+                                kneighborsFrac[i][l] = kneighborsFrac[i][l - 1];
+                                l--;
+                            }
+                            kdistancesFrac[i][l] = distancesFrac[i][j];
+                            kneighborsFrac[i][l] = i + j + 1;
+                            kcurrLenFrac[i]++;
+                        } else {
+                            kdistancesFrac[i][kcurrLenFrac[i]] =
+                                    distancesFrac[i][j];
+                            kneighborsFrac[i][kcurrLenFrac[i]] = i + j + 1;
+                            kcurrLenFrac[i]++;
+                        }
+                    }
+                } else {
+                    kdistancesFrac[i][0] = distancesFrac[i][j];
+                    kneighborsFrac[i][0] = i + j + 1;
+                    kcurrLenFrac[i] = 1;
+                }
+
+                if (kcurrLenFrac[other] > 0) {
+                    if (kcurrLenFrac[other] == maxK) {
+                        if (distancesFrac[i][j]
+                                < kdistancesFrac[other][
+                                kcurrLenFrac[other] - 1]) {
+                            // Search and insert.
+                            l = maxK - 1;
+                            while ((l >= 1) && distancesFrac[i][j]
+                                    < kdistancesFrac[other][l - 1]) {
+                                kdistancesFrac[other][l] =
+                                        kdistancesFrac[other][l - 1];
+                                kneighborsFrac[other][l] =
+                                        kneighborsFrac[other][l - 1];
+                                l--;
+                            }
+                            kdistancesFrac[other][l] = distancesFrac[i][j];
+                            kneighborsFrac[other][l] = i;
+                        }
+                    } else {
+                        if (distancesFrac[i][j]
+                                < kdistancesFrac[other][
+                                kcurrLenFrac[other] - 1]) {
+                            // Search and insert.
+                            l = kcurrLenFrac[other] - 1;
+                            kdistancesFrac[other][kcurrLenFrac[other]] =
+                                    kdistancesFrac[other][
+                                    kcurrLenFrac[other] - 1];
+                            kneighborsFrac[other][kcurrLenFrac[other]] =
+                                    kneighborsFrac[other][
+                                    kcurrLenFrac[other] - 1];
+                            while ((l >= 1) && distancesFrac[i][j]
+                                    < kdistancesFrac[other][l - 1]) {
+                                kdistancesFrac[other][l] =
+                                        kdistancesFrac[other][l - 1];
+                                kneighborsFrac[other][l] =
+                                        kneighborsFrac[other][l - 1];
+                                l--;
+                            }
+                            kdistancesFrac[other][l] = distancesFrac[i][j];
+                            kneighborsFrac[other][l] = i;
+                            kcurrLenFrac[other]++;
+                        } else {
+                            kdistancesFrac[other][kcurrLenFrac[other]] =
+                                    distancesFrac[i][j];
+                            kneighborsFrac[other][kcurrLenFrac[other]] = i;
+                            kcurrLenFrac[other]++;
+                        }
+                    }
+                } else {
+                    kdistancesFrac[other][0] = distancesFrac[i][j];
+          
