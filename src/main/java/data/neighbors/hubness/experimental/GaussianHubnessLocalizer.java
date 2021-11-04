@@ -631,4 +631,75 @@ public class GaussianHubnessLocalizer {
                     }
                 } else {
                     kdistancesFrac[other][0] = distancesFrac[i][j];
-          
+                    kneighborsFrac[other][0] = i;
+                    kcurrLenFrac[other] = 1;
+                }
+            }
+
+        }
+        // Now we move to the next operating mode, where full stats are
+        // calculated after each and every insertion.
+        DataInstance currInstanceMan;
+        DataInstance currInstanceEuc;
+        DataInstance currInstanceFrac;
+        for (int index = minInst; index < maxInst; index++) {
+            // Get the current instances.
+            currInstanceMan = resultsManh.data.get(index - minInst);
+            currInstanceEuc = resultsEuc.data.get(index - minInst);
+            currInstanceFrac = resultsFrac.data.get(index - minInst);
+            // Get the current medoids.
+            medoidsMan[index] = dset.getMedoidUpUntilIdex(centroid, cmetMan,
+                    index + 1);
+            medoidsEuc[index] = dset.getMedoidUpUntilIdex(centroid, cmetEuc,
+                    index + 1);
+            medoidsFrac[index] = dset.getMedoidUpUntilIdex(centroid, cmetFrac,
+                    index + 1);
+            // Calculate the relative contrast and variance for distance
+            // concentration.
+            ConcentrationCalculator ccMan =
+                    new ConcentrationCalculator(dset, distancesMan);
+            ConcentrationCalculator ccEuc =
+                    new ConcentrationCalculator(dset, distancesEuc);
+            ConcentrationCalculator ccFrac =
+                    new ConcentrationCalculator(dset, distancesFrac);
+            ccMan.calculateMeasures(index + 1);
+            currInstanceMan.fAttr[0] = (float) ccMan.getRelativeContrast();
+            currInstanceMan.fAttr[1] = (float) ccMan.getRelativeVariance();
+            ccEuc.calculateMeasures(index + 1);
+            currInstanceEuc.fAttr[0] = (float) ccEuc.getRelativeContrast();
+            currInstanceEuc.fAttr[1] = (float) ccEuc.getRelativeVariance();
+            ccFrac.calculateMeasures(index + 1);
+            currInstanceFrac.fAttr[0] = (float) ccFrac.getRelativeContrast();
+            currInstanceFrac.fAttr[1] = (float) ccFrac.getRelativeVariance();
+            // Update the average distance.
+            float avgDistMan = (float) ccMan.getMeanDist();
+            float avgDistEuc = (float) ccEuc.getMeanDist();
+            float avgDistFrac = (float) ccFrac.getMeanDist();
+            // Update the k-nearest neighbor sets for all distance measures.
+            int l;
+            for (int i = 0; i < index; i++) {
+                int j = index - i - 1;
+                int other = index;
+                if (kcurrLenMan[i] > 0) {
+                    if (kcurrLenMan[i] == maxK) {
+                        if (distancesMan[i][j]
+                                < kdistancesMan[i][kcurrLenMan[i] - 1]) {
+                            // Search and insert.
+                            l = maxK - 1;
+                            while ((l >= 1) && distancesMan[i][j]
+                                    < kdistancesMan[i][l - 1]) {
+                                kdistancesMan[i][l] = kdistancesMan[i][l - 1];
+                                kneighborsMan[i][l] = kneighborsMan[i][l - 1];
+                                l--;
+                            }
+                            kdistancesMan[i][l] = distancesMan[i][j];
+                            kneighborsMan[i][l] = i + j + 1;
+                        }
+                    } else {
+                        if (distancesMan[i][j] < kdistancesMan[i][
+                                kcurrLenMan[i] - 1]) {
+                            // Search and insert.
+                            l = kcurrLenMan[i] - 1;
+                            kdistancesMan[i][kcurrLenMan[i]] =
+                                    kdistancesMan[i][kcurrLenMan[i] - 1];
+  
