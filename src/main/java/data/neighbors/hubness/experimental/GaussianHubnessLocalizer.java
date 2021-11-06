@@ -770,4 +770,83 @@ public class GaussianHubnessLocalizer {
                         } else {
                             kdistancesMan[other][kcurrLenMan[other]] =
                                     distancesMan[i][j];
-                            kneighborsMan[other][kcurrLenMan[other]] = i
+                            kneighborsMan[other][kcurrLenMan[other]] = i;
+                            kcurrLenMan[other]++;
+                        }
+                    }
+                } else {
+                    kdistancesMan[other][0] = distancesMan[i][j];
+                    kneighborsMan[other][0] = i;
+                    kcurrLenMan[other] = 1;
+                }
+            }
+
+            for (int i = 0; i < index; i++) {
+                int j = index - i - 1;
+                int other = index;
+                if (kcurrLenEuc[i] > 0) {
+                    if (kcurrLenEuc[i] == maxK) {
+                        if (distancesEuc[i][j]
+                                < kdistancesEuc[i][kcurrLenEuc[i] - 1]) {
+                            // Search and insert.
+                            l = maxK - 1;
+                            while ((l >= 1) && distancesEuc[i][j]
+                                    < kdistancesEuc[i][l - 1]) {
+                                kdistancesEuc[i][l] = kdistancesEuc[i][l - 1];
+                                kneighborsEuc[i][l] = kneighborsEuc[i][l - 1];
+                                l--;
+                            }
+                            kdistancesEuc[i][l] = distancesEuc[i][j];
+                            kneighborsEuc[i][l] = i + j + 1;
+                        }
+                    } else {
+                        if (distancesEuc[i][j]
+                                < kdistancesEuc[i][kcurrLenEuc[i] - 1]) {
+                            // Search and insert.
+                            l = kcurrLenEuc[i] - 1;
+                            kdistancesEuc[i][kcurrLenEuc[i]] =
+                                    kdistancesEuc[i][kcurrLenEuc[i] - 1];
+                            kneighborsEuc[i][kcurrLenEuc[i]] =
+                                    kneighborsEuc[i][kcurrLenEuc[i] - 1];
+                            while ((l >= 1) && distancesEuc[i][j]
+                                    < kdistancesEuc[i][l - 1]) {
+                                kdistancesEuc[i][l] = kdistancesEuc[i][l - 1];
+                                kneighborsEuc[i][l] = kneighborsEuc[i][l - 1];
+                                l--;
+                            }
+                            kdistancesEuc[i][l] = distancesEuc[i][j];
+                            kneighborsEuc[i][l] = i + j + 1;
+                            kcurrLenEuc[i]++;
+                        } else {
+                            kdistancesEuc[i][kcurrLenEuc[i]] =
+                                    distancesEuc[i][j];
+                            kneighborsEuc[i][kcurrLenEuc[i]] = i + j + 1;
+                            kcurrLenEuc[i]++;
+                        }
+                    }
+                } else {
+                    kdistancesEuc[i][0] = distancesEuc[i][j];
+                    kneighborsEuc[i][0] = i + j + 1;
+                    kcurrLenEuc[i] = 1;
+                }
+
+                if (kcurrLenEuc[other] > 0) {
+                    if (kcurrLenEuc[other] == maxK) {
+                        if (distancesEuc[i][j]
+                                < kdistancesEuc[other][
+                                kcurrLenEuc[other] - 1]) {
+                            // Search and insert.
+                            l = maxK - 1;
+                            while ((l >= 1) && distancesEuc[i][j]
+                                    < kdistancesEuc[other][l - 1]) {
+                                kdistancesEuc[other][l] =
+                                        kdistancesEuc[other][l - 1];
+                                kneighborsEuc[other][l] =
+                                        kneighborsEuc[other][l - 1];
+                                l--;
+                            }
+                            kdistancesEuc[other][l] = distancesEuc[i][j];
+                            kneighborsEuc[other][l] = i;
+                        }
+                    } else {
+                        if (distancesEuc[i][
