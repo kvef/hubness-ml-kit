@@ -991,4 +991,69 @@ public class GaussianHubnessLocalizer {
             // Now calculate the neihbor occurrence frequencies for all the
             // monitored k-values.
             kneighborFrequenciesMan = new float[index + 1];
-            kneighborFrequenciesEuc = new floa
+            kneighborFrequenciesEuc = new float[index + 1];
+            kneighborFrequenciesFrac = new float[index + 1];
+            for (int k = 1; k <= maxK; k++) {
+                for (int i = 0; i <= index; i++) {
+                    kneighborFrequenciesMan[kneighborsMan[i][k - 1]]++;
+                    kneighborFrequenciesEuc[kneighborsEuc[i][k - 1]]++;
+                    kneighborFrequenciesFrac[kneighborsFrac[i][k - 1]]++;
+                }
+                // Determine which points are the major hubs for each of the
+                // tested distance measures.
+                int hubManIndex = 0;
+                int hubEucIndex = 0;
+                int hubFracIndex = 0;
+                float maxManHubness = 0;
+                float maxEucHubness = 0;
+                float maxFracHubness = 0;
+                for (int i = 0; i <= index; i++) {
+                    if (kneighborFrequenciesMan[i] > maxManHubness) {
+                        hubManIndex = i;
+                        maxManHubness = kneighborFrequenciesMan[i];
+                    }
+                    if (kneighborFrequenciesEuc[i] > maxEucHubness) {
+                        hubEucIndex = i;
+                        maxEucHubness = kneighborFrequenciesEuc[i];
+                    }
+                    if (kneighborFrequenciesFrac[i] > maxFracHubness) {
+                        hubFracIndex = i;
+                        maxFracHubness = kneighborFrequenciesFrac[i];
+                    }
+                }
+                // Calculate all the monitored distance measures and
+                // correlations.
+                // First the Manhattan distance case.
+                float mDistMan = cmetMan.dist(medoidsMan[index], centroid);
+                float hDistMan = cmetMan.dist(dset.data.get(hubManIndex),
+                        centroid);
+                float hmDistMan = cmetMan.dist(dset.data.get(hubManIndex),
+                        medoidsMan[index]);
+                currInstanceMan.fAttr[2 + 10 * (k - 1)] = hDistMan / mDistMan;
+                currInstanceMan.fAttr[3 + 10 * (k - 1)] = hmDistMan;
+                currInstanceMan.fAttr[4 + 10 * (k - 1)] =
+                        hmDistMan / avgDistMan;
+                currInstanceMan.fAttr[5 + 10 * (k - 1)] = hDistMan;
+                currInstanceMan.fAttr[6 + 10 * (k - 1)] =
+                        PearsonCorrelation.correlation(kneighborFrequenciesMan,
+                        normsMan);
+                densitiesMan = NeighborSetFinder.
+                        getDataDensitiesByNormalizedRadiusForElementsUntil(
+                        dset, cmetMan, k, kneighborsMan, index + 1);
+                currInstanceMan.fAttr[7 + 10 * (k - 1)] = PearsonCorrelation.
+                        correlation(kneighborFrequenciesMan, densitiesMan);
+                currInstanceMan.fAttr[8 + 10 * (k - 1)] = PearsonCorrelation.
+                        correlation(densitiesMan, normsMan);
+                currInstanceMan.fAttr[9 + 10 * (k - 1)] = DistanceCorrelation.
+                        correlation(kneighborFrequenciesMan, normsMan);
+                currInstanceMan.fAttr[10 + 10 * (k - 1)] = DistanceCorrelation.
+                        correlation(kneighborFrequenciesMan, densitiesMan);
+                currInstanceMan.fAttr[11 + 10 * (k - 1)] =
+                        (float) DistanceCorrelation.correlation(densitiesMan,
+                        normsMan);
+                // The Euclidean case.
+                float mDistEuc = cmetEuc.dist(medoidsEuc[index], centroid);
+                float hDistEuc = cmetEuc.dist(dset.data.get(hubEucIndex),
+                        centroid);
+                float hmDistEuc = cmetEuc.dist(dset.data.get(hubEucIndex),
+                        medoi
