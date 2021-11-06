@@ -849,4 +849,74 @@ public class GaussianHubnessLocalizer {
                             kneighborsEuc[other][l] = i;
                         }
                     } else {
-                        if (distancesEuc[i][
+                        if (distancesEuc[i][j]
+                                < kdistancesEuc[other][
+                                kcurrLenEuc[other] - 1]) {
+                            // Search and insert.
+                            l = kcurrLenEuc[other] - 1;
+                            kdistancesEuc[other][kcurrLenEuc[other]] =
+                                    kdistancesEuc[other][
+                                    kcurrLenEuc[other] - 1];
+                            kneighborsEuc[other][kcurrLenEuc[other]] =
+                                    kneighborsEuc[other][
+                                    kcurrLenEuc[other] - 1];
+                            while ((l >= 1) && distancesEuc[i][j]
+                                    < kdistancesEuc[other][l - 1]) {
+                                kdistancesEuc[other][l] =
+                                        kdistancesEuc[other][l - 1];
+                                kneighborsEuc[other][l] =
+                                        kneighborsEuc[other][l - 1];
+                                l--;
+                            }
+                            kdistancesEuc[other][l] = distancesEuc[i][j];
+                            kneighborsEuc[other][l] = i;
+                            kcurrLenEuc[other]++;
+                        } else {
+                            kdistancesEuc[other][kcurrLenEuc[other]] =
+                                    distancesEuc[i][j];
+                            kneighborsEuc[other][kcurrLenEuc[other]] = i;
+                            kcurrLenEuc[other]++;
+                        }
+                    }
+                } else {
+                    kdistancesEuc[other][0] = distancesEuc[i][j];
+                    kneighborsEuc[other][0] = i;
+                    kcurrLenEuc[other] = 1;
+                }
+            }
+
+            for (int i = 0; i < index; i++) {
+                int j = index - i - 1;
+                int other = index;
+                if (kcurrLenFrac[i] > 0) {
+                    if (kcurrLenFrac[i] == maxK) {
+                        if (distancesFrac[i][j]
+                                < kdistancesFrac[i][kcurrLenFrac[i] - 1]) {
+                            // Search and insert.
+                            l = maxK - 1;
+                            while ((l >= 1) && distancesFrac[i][j]
+                                    < kdistancesFrac[i][l - 1]) {
+                                kdistancesFrac[i][l] = kdistancesFrac[i][l - 1];
+                                kneighborsFrac[i][l] = kneighborsFrac[i][l - 1];
+                                l--;
+                            }
+                            kdistancesFrac[i][l] = distancesFrac[i][j];
+                            kneighborsFrac[i][l] = i + j + 1;
+                        }
+                    } else {
+                        if (distancesFrac[i][j]
+                                < kdistancesFrac[i][kcurrLenFrac[i] - 1]) {
+                            // Search and insert.
+                            l = kcurrLenFrac[i] - 1;
+                            kdistancesFrac[i][kcurrLenFrac[i]] =
+                                    kdistancesFrac[i][kcurrLenFrac[i] - 1];
+                            kneighborsFrac[i][kcurrLenFrac[i]] =
+                                    kneighborsFrac[i][kcurrLenFrac[i] - 1];
+                            while ((l >= 1) && distancesFrac[i][j]
+                                    < kdistancesFrac[i][l - 1]) {
+                                kdistancesFrac[i][l] = kdistancesFrac[i][l - 1];
+                                kneighborsFrac[i][l] = kneighborsFrac[i][l - 1];
+                                l--;
+                            }
+                            kdistancesFrac[i][l] = distancesFrac[i][j];
+                            kneighborsFrac[i][l] = i + j +
