@@ -1056,4 +1056,64 @@ public class GaussianHubnessLocalizer {
                 float hDistEuc = cmetEuc.dist(dset.data.get(hubEucIndex),
                         centroid);
                 float hmDistEuc = cmetEuc.dist(dset.data.get(hubEucIndex),
-                        medoi
+                        medoidsEuc[index]);
+                currInstanceEuc.fAttr[2 + 10 * (k - 1)] = hDistEuc / mDistEuc;
+                currInstanceEuc.fAttr[3 + 10 * (k - 1)] = hmDistEuc;
+                currInstanceEuc.fAttr[4 + 10 * (k - 1)] =
+                        hmDistEuc / avgDistEuc;
+                currInstanceEuc.fAttr[5 + 10 * (k - 1)] = hDistEuc;
+                currInstanceEuc.fAttr[6 + 10 * (k - 1)] =
+                        PearsonCorrelation.correlation(kneighborFrequenciesEuc,
+                        normsEuc);
+                densitiesEuc = NeighborSetFinder.
+                        getDataDensitiesByNormalizedRadiusForElementsUntil(
+                        dset, cmetEuc, k, kneighborsEuc, index + 1);
+                currInstanceEuc.fAttr[7 + 10 * (k - 1)] = PearsonCorrelation.
+                        correlation(kneighborFrequenciesEuc, densitiesEuc);
+                currInstanceEuc.fAttr[8 + 10 * (k - 1)] = PearsonCorrelation.
+                        correlation(densitiesEuc, normsEuc);
+                currInstanceEuc.fAttr[9 + 10 * (k - 1)] = DistanceCorrelation.
+                        correlation(kneighborFrequenciesEuc, normsEuc);
+                currInstanceEuc.fAttr[10 + 10 * (k - 1)] = DistanceCorrelation.
+                        correlation(kneighborFrequenciesEuc, densitiesEuc);
+                currInstanceEuc.fAttr[11 + 10 * (k - 1)] =
+                        (float) DistanceCorrelation.correlation(
+                        densitiesEuc, normsEuc);
+                // Finally, the fractional distance case.
+                float mDistFrac = cmetFrac.dist(medoidsFrac[index], centroid);
+                float hDistFrac = cmetFrac.dist(dset.data.get(hubFracIndex),
+                        centroid);
+                float hmDistFrac = cmetFrac.dist(dset.data.get(hubFracIndex),
+                        medoidsFrac[index]);
+                currInstanceFrac.fAttr[2 + 10 * (k - 1)] =
+                        hDistFrac / mDistFrac;
+                currInstanceFrac.fAttr[3 + 10 * (k - 1)] = hmDistFrac;
+                currInstanceFrac.fAttr[4 + 10 * (k - 1)] =
+                        hmDistFrac / avgDistFrac;
+                currInstanceFrac.fAttr[5 + 10 * (k - 1)] = hDistFrac;
+                currInstanceFrac.fAttr[6 + 10 * (k - 1)] = PearsonCorrelation.
+                        correlation(kneighborFrequenciesFrac, normsFrac);
+                densitiesFrac = NeighborSetFinder.
+                        getDataDensitiesByNormalizedRadiusForElementsUntil(
+                        dset, cmetFrac, k, kneighborsFrac, index + 1);
+                currInstanceFrac.fAttr[7 + 10 * (k - 1)] = PearsonCorrelation.
+                        correlation(kneighborFrequenciesFrac, densitiesFrac);
+                currInstanceFrac.fAttr[8 + 10 * (k - 1)] = PearsonCorrelation.
+                        correlation(densitiesFrac, normsFrac);
+                currInstanceFrac.fAttr[9 + 10 * (k - 1)] = DistanceCorrelation.
+                        correlation(kneighborFrequenciesFrac, normsFrac);
+                currInstanceFrac.fAttr[10 + 10 * (k - 1)] = DistanceCorrelation.
+                        correlation(kneighborFrequenciesFrac, densitiesFrac);
+                currInstanceFrac.fAttr[11 + 10 * (k - 1)] =
+                        (float) DistanceCorrelation.correlation(
+                        densitiesFrac, normsFrac);
+            }
+            System.out.println("Finished with the instance " + index);
+        }
+        // Persist the results.
+        File outManFile = new File(outDir, "resultsMan_allK.arff");
+        FileUtil.createFile(outManFile);
+        System.out.println("Writing results file " + outManFile.getPath());
+        pers.save(resultsManh, outManFile.getPath(), null);
+        File outEucFile = new File(outDir, "resultsEuc_allK.arff");
+        FileUtil.createFile(outEucFi
