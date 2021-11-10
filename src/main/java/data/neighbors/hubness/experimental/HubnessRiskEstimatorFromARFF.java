@@ -43,4 +43,90 @@ import util.CommandLineParser;
 import util.SOPLUtil;
 
 /**
- * This class is
+ * This class is meant to empirically estimate the distribution of the neighbor
+ * occurrence skewness in synthetic data of controlled dimensionality under
+ * standard metrics. It subsamples a loaded dataset and measures the hubness
+ * stats. Additionally, it trains several kNN models and attempts classification
+ * on a hold-out sample, measuring its robustness and stability.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class HubnessRiskEstimatorFromARFF {
+    
+    private File outFile;
+    private int k = 5;
+    private int kForSecondary = 50;
+    private int numRepetitions = 500;
+    private int sampleSize = 1000;
+    private CombinedMetric cmet = CombinedMetric.EUCLIDEAN;
+    private StatsLogger primaryLogger, nicdmLogger, simcosLogger, simhubLogger,
+            mpLogger;
+    private DataSet dsetTrain;
+    private DataSet dsetTrainSub;
+    private DataSet dsetTest;
+    private float[][] dMatPrimaryTrainSub, dMatSecondaryTrainSub;
+    private float[][] pointDistancesPrimary, pointDistancesSecondary;
+    private int[][] pointNeighborsPrimary, pointNeighborsSecondary,
+            pointNeighborsSecondaryK;
+    private NeighborSetFinder nsfPrimary, nsfSecondary;
+    public static final int NUM_THREADS = 8;
+    
+    /**
+     * This method generates a new data subsample.
+     * 
+     * @return DataSet that is the subsample of the training data. 
+     */
+    private DataSet getSample() throws Exception {
+        if (dsetTrain == null) {
+            return null;
+        }
+        UniformSampler sampler = new UniformSampler(false);
+        DataSet sampleData = sampler.getSample(dsetTrain, sampleSize);
+        return sampleData;
+    }
+    
+    /**
+     * This method runs the script that examines the risk of hubness in
+     * synthetic high-dimensional data.
+     */
+    private void performAllTests() throws Exception {
+        primaryLogger = new StatsLogger("Euclidean");
+        nicdmLogger = new StatsLogger("NICDM");
+        simcosLogger = new StatsLogger("Simcos");
+        simhubLogger = new StatsLogger("Simhub");
+        mpLogger = new StatsLogger("MP");
+        KNN knnClassifier;
+        NHBNN nhbnnClassifier;
+        HIKNN hiknnClassifier;
+        HFNN hfnnClassifier;
+        float accKNN, accNHBNN, accHIKNN, accHFNN;
+        ClassificationEstimator clEstimator;
+        int kPrimMax = Math.max(k, kForSecondary);
+        DataInstance firstInstance, secondInstance;
+        ArrayList<Integer> unitIndexesTest = new ArrayList<>(dsetTest.size());
+        for (int i = 0; i < dsetTest.size(); i++) {
+            unitIndexesTest.add(i);
+        }
+        int[] testLabels = dsetTest.obtainLabelArray();
+        int numClasses = dsetTest.countCategories();
+        for (int iteration = 0; iteration < numRepetitions; iteration++) {
+            System.out.println("Starting iteration: " + iteration);
+            do {
+                dsetTrainSub = getSample();
+            } while (dsetTrainSub.countCategories() !=
+                    dsetTrain.countCategories());
+            dsetTrainSub.orderInstancesByClasses();
+            ArrayList<Integer> unitIndexes =
+                    new ArrayList<>(dsetTrainSub.size());
+            for (int i = 0; i < dsetTrainSub.size(); i++) {
+                unitIndexes.add(i);
+            }
+            dMatPrimaryTrainSub =
+                    dsetTrainSub.calculateDistMatrixMultThr(cmet, NUM_THREADS);
+            pointDistancesPrimary = new float[dsetTest.size()][
+                    dsetTrainSub.size()];
+            for (int i = 0; i < dsetTest.size(); i++) {
+                for (int j = 0; j < dsetTrainSub.size(); j++) {
+                    firstInstance = dsetTest.getInstance(i);
+                    secondInstance = dsetTrainSub.getInstance(j);
+                    pointDis
