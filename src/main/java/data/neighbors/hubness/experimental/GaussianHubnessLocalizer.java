@@ -1116,4 +1116,44 @@ public class GaussianHubnessLocalizer {
         System.out.println("Writing results file " + outManFile.getPath());
         pers.save(resultsManh, outManFile.getPath(), null);
         File outEucFile = new File(outDir, "resultsEuc_allK.arff");
-        FileUtil.createFile(outEucFi
+        FileUtil.createFile(outEucFile);
+        System.out.println("Writing results file " + outEucFile.getPath());
+        pers.save(resultsEuc, outEucFile.getPath(), null);
+        File outFracFile = new File(outDir, "resultsFrac_allK.arff");
+        FileUtil.createFile(outFracFile);
+        System.out.println("Writing results file " + outFracFile.getPath());
+        pers.save(resultsFrac, outFracFile.getPath(), null);
+
+    }
+
+    /**
+     * This method runs the script for hubness localization in intrinsically
+     * high-dimensional Gaussian data.
+     *
+     * @param args Command line parameters, as specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-outDir", "Path to the output directory.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-maxK", "Maximal neighborhood size to consider.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-minInst", "Minimal number of instances.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-maxInst", "Maximal number of instances..",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-dim", "Synthetic data dimensionality.",
+                CommandLineParser.INTEGER, true, false);
+        clp.parseLine(args);
+        File outDir = new File((String) clp.getParamValues("-outDir").get(0));
+        int maxK = (Integer) clp.getParamValues("-maxK").get(0);
+        int minInst = (Integer) clp.getParamValues("-minInst").get(0);
+        int maxInst = (Integer) clp.getParamValues("-maxInst").get(0);
+        int dim = (Integer) clp.getParamValues("-dim").get(0);
+        // Run the experiment.
+        GaussianHubnessLocalizer ghl = new GaussianHubnessLocalizer(
+                outDir, dim, minInst, maxInst, maxK);
+        ghl.runHubnessLocalizationExperiment();
+    }
+}
