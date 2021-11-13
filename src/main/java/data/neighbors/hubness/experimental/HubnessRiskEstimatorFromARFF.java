@@ -264,4 +264,70 @@ public class HubnessRiskEstimatorFromARFF {
                         pointDistancesPrimary[index]);
             }
             for (int indexFirst = 0; indexFirst < dsetTest.size();
-      
+                    indexFirst++) {
+                for (int indexSecond = 0; indexSecond < dsetTrainSub.size();
+                        indexSecond++) {
+                    firstInstance = dsetTest.getInstance(indexFirst);
+                    secondInstance = dsetTrainSub.getInstance(indexSecond);
+                    pointDistancesSecondary[indexFirst][indexSecond] =
+                            snc.dist(firstInstance, secondInstance,
+                            pointNeighborsSecondaryK[indexFirst],
+                            nsfPrimary.getKNeighbors()[indexSecond]);
+                }
+            }
+            pointNeighborsSecondary =
+                    NeighborSetFinder.getIndexesOfNeighbors(dsetTrainSub,
+                    dsetTest, k, pointDistancesSecondary);
+            // Initialize the classifiers.
+            knnClassifier = new KNN(k, snc);
+            nhbnnClassifier = new NHBNN(k, snc, numClasses);
+            hiknnClassifier = new HIKNN(k, snc, numClasses);
+            hfnnClassifier = new HFNN(k, snc, numClasses);
+            // Set the data.
+            knnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            nhbnnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            hiknnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            hfnnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            // Set the distances and the kNN sets.
+            nhbnnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            nhbnnClassifier.setNSF(nsfSecondary);
+            hiknnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            hiknnClassifier.setNSF(nsfSecondary);
+            hfnnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            hfnnClassifier.setNSF(nsfSecondary);
+            // Train the models.
+            knnClassifier.train();
+            nhbnnClassifier.train();
+            hiknnClassifier.train();
+            hfnnClassifier.train();
+            // Test the classifiers.
+            clEstimator = knnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accKNN = clEstimator.getAccuracy();
+            clEstimator = nhbnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accNHBNN = clEstimator.getAccuracy();
+            clEstimator = hiknnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHIKNN = clEstimator.getAccuracy();
+            clEstimator = hfnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHFNN = clEstimator.getAccuracy();
+            simcosLogger.updateByClassifierAccuracies(accKNN, accNHBNN,
+                    accHIKNN, accHFNN);
+            // Calculate the secondary Simhub distances. These are actually the
+            // simhub^inf variant, since there are not classes in the data.
+            snf = new SharedNeighborFinder(nsfPrimary, k);
+            snf.setNumClasses(numClasses);
+            snf.obtainWeightsFromHubnessInformation();
+            snf.countSharedNeighborsMultiThread(NUM_THREADS);
+            // First fetch the similarities.
+            dMatSecondaryTrainSub = snf.getSharedNeighborCounts();
+            // Then transform them into distances.
+            for (int indexFirst = 0; indexFirst < dMatSecondaryTrainSub.length;
+                    indexFirst++) {
+              
