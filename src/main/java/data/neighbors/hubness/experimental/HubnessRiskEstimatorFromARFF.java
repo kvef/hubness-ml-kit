@@ -195,3 +195,73 @@ public class HubnessRiskEstimatorFromARFF {
             // Set the distances and the kNN sets.
             nhbnnClassifier.setDistMatrix(dMatSecondaryTrainSub);
             nhbnnClassifier.setNSF(nsfSecondary);
+            hiknnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            hiknnClassifier.setNSF(nsfSecondary);
+            hfnnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            hfnnClassifier.setNSF(nsfSecondary);
+            // Train the models.
+            knnClassifier.train();
+            nhbnnClassifier.train();
+            hiknnClassifier.train();
+            hfnnClassifier.train();
+            // Test the classifiers.
+            clEstimator = knnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accKNN = clEstimator.getAccuracy();
+            clEstimator = nhbnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accNHBNN = clEstimator.getAccuracy();
+            clEstimator = hiknnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHIKNN = clEstimator.getAccuracy();
+            clEstimator = hfnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHFNN = clEstimator.getAccuracy();
+            nicdmLogger.updateByClassifierAccuracies(accKNN, accNHBNN, accHIKNN,
+                    accHFNN);
+            // Calculate the secondary Simcos distances.
+            SharedNeighborFinder snf =
+                    new SharedNeighborFinder(nsfPrimary, k);
+            snf.setNumClasses(numClasses);
+            snf.countSharedNeighborsMultiThread(NUM_THREADS);
+            // First fetch the similarities.
+            dMatSecondaryTrainSub = snf.getSharedNeighborCounts();
+            // Then transform them into distances.
+            for (int indexFirst = 0; indexFirst < dMatSecondaryTrainSub.length;
+                    indexFirst++) {
+                for (int indexSecond = 0; indexSecond <
+                        dMatSecondaryTrainSub[indexFirst].length;
+                        indexSecond++) {
+                    dMatSecondaryTrainSub[indexFirst][indexSecond] =
+                            kForSecondary -
+                            dMatSecondaryTrainSub[indexFirst][indexSecond];
+                }
+            }
+            SharedNeighborCalculator snc =
+                    new SharedNeighborCalculator(snf,SharedNeighborCalculator.
+                    WeightingType.NONE);
+            nsfSecondary = new NeighborSetFinder(dsetTrainSub,
+                    dMatSecondaryTrainSub, snc);
+            nsfSecondary.calculateNeighborSets(k);
+            simcosLogger.updateByObservedFreqs(
+                    nsfSecondary.getNeighborFrequencies());
+            simcosLogger.updateLabelMismatchPercentages(
+                    nsfSecondary.getKNeighbors());
+            // Calculate the test-to-training point distances.
+            pointDistancesSecondary = new float[dsetTest.size()][
+                    dsetTrainSub.size()];
+            pointNeighborsSecondary = new int[dsetTest.size()][k];
+            pointNeighborsSecondaryK = new int[dsetTest.size()][kForSecondary];
+            for (int index = 0; index < dsetTest.size(); index++) {
+                firstInstance = dsetTest.getInstance(index);
+                pointNeighborsSecondaryK[index] =
+                        NeighborSetFinder.getIndexesOfNeighbors(
+                        dsetTrainSub, firstInstance, kForSecondary,
+                        pointDistancesPrimary[index]);
+            }
+            for (int indexFirst = 0; indexFirst < dsetTest.size();
+      
