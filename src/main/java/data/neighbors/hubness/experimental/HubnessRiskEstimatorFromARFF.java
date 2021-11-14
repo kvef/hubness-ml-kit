@@ -530,4 +530,89 @@ public class HubnessRiskEstimatorFromARFF {
             hfnnClassifier.setNSF(nsfPrimary);
             // Train the models.
             knnClassifier.train();
-         
+            nhbnnClassifier.train();
+            hiknnClassifier.train();
+            hfnnClassifier.train();
+            // Test the classifiers.
+            clEstimator = knnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesPrimary,
+                    pointNeighborsPrimary);
+            accKNN = clEstimator.getAccuracy();
+            clEstimator = nhbnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesPrimary,
+                    pointNeighborsPrimary);
+            accNHBNN = clEstimator.getAccuracy();
+            clEstimator = hiknnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesPrimary,
+                    pointNeighborsPrimary);
+            accHIKNN = clEstimator.getAccuracy();
+            clEstimator = hfnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesPrimary,
+                    pointNeighborsPrimary);
+            accHFNN = clEstimator.getAccuracy();
+            primaryLogger.updateByClassifierAccuracies(accKNN, accNHBNN,
+                    accHIKNN, accHFNN);
+            // Try some garbage collection.
+            System.gc();
+        }
+        // Print out the results.
+        FileUtil.createFile(outFile);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(outFile))) {
+            primaryLogger.printLoggerToStream(pw);
+            pw.println();
+            nicdmLogger.printLoggerToStream(pw);
+            pw.println();
+            simcosLogger.printLoggerToStream(pw);
+            pw.println();
+            simhubLogger.printLoggerToStream(pw);
+            pw.println();
+            mpLogger.printLoggerToStream(pw);
+            pw.println();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    private class StatsLogger {
+        
+        // Name of the distance that this logger is logging for.
+        private String distName;
+        
+        private ArrayList<Float> skewValues;
+        private ArrayList<Float> labelMismatchPercs;
+        private ArrayList<Float> kurtosisValues;
+        private ArrayList<Float> knnAccuracies;
+        private ArrayList<Float> nhbnnAccuracies;
+        private ArrayList<Float> hiknnAccuracies;
+        private ArrayList<Float> hfnnAccuracies;
+        
+        /**
+         * Initialization.
+         */
+        public StatsLogger(String distName) {
+            this.distName = distName;
+            skewValues = new ArrayList<>(numRepetitions);
+            labelMismatchPercs = new ArrayList<>(numRepetitions);
+            kurtosisValues = new ArrayList<>(numRepetitions);
+            knnAccuracies = new ArrayList<>(numRepetitions);
+            nhbnnAccuracies = new ArrayList<>(numRepetitions);
+            hiknnAccuracies = new ArrayList<>(numRepetitions);
+            hfnnAccuracies = new ArrayList<>(numRepetitions);
+        }
+        
+        /**
+         * This method inserts the calculated classifier accuracies from the
+         * current iteration into the log.
+         * 
+         * @param knnAccuracy Float value that is the kNN classification
+         * accuracy.
+         * @param nhbnnAccuracy Float value that is the NHBNN classification
+         * accuracy.
+         * @param hiknnAccuracy Float value that is the HIKNN classification
+         * accuracy.
+         * @param hfnnAccuracy Float value that is the hFNN classification
+         * accuracy.
+         */
+        public void updateByClassifierAccuracies(float knnAccuracy,
+                float nhbnnAccuracy, float hiknnAccuracy, float hfnnAccuracy) {
+            knnAcc
