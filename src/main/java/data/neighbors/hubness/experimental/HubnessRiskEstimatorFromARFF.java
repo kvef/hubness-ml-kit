@@ -398,4 +398,68 @@ public class HubnessRiskEstimatorFromARFF {
             // Test the classifiers.
             clEstimator = knnClassifier.test(unitIndexesTest, dsetTest,
                     testLabels, numClasses, pointDistancesSecondary,
-      
+                    pointNeighborsSecondary);
+            accKNN = clEstimator.getAccuracy();
+            clEstimator = nhbnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accNHBNN = clEstimator.getAccuracy();
+            clEstimator = hiknnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHIKNN = clEstimator.getAccuracy();
+            clEstimator = hfnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHFNN = clEstimator.getAccuracy();
+            simhubLogger.updateByClassifierAccuracies(accKNN, accNHBNN,
+                    accHIKNN, accHFNN);
+            // Calculate the secondary Mutual Proximity distances.
+            MutualProximityCalculator calc =
+                    new MutualProximityCalculator(nsfPrimary.getDistances(),
+                    nsfPrimary.getDataSet(), nsfPrimary.getCombinedMetric());
+            dMatSecondaryTrainSub = calc.calculateSecondaryDistMatrixMultThr(
+                    nsfPrimary, 8);
+            nsfSecondary = new NeighborSetFinder(dsetTrainSub,
+                    dMatSecondaryTrainSub, calc);
+            nsfSecondary.calculateNeighborSets(k);
+            mpLogger.updateByObservedFreqs(
+                    nsfSecondary.getNeighborFrequencies());
+            mpLogger.updateLabelMismatchPercentages(
+                    nsfSecondary.getKNeighbors());
+            pointDistancesSecondary = new float[dsetTest.size()][
+                    dsetTrainSub.size()];
+            pointNeighborsSecondary = new int[dsetTest.size()][k];
+            pointNeighborsSecondaryK = new int[dsetTest.size()][kForSecondary];
+            for (int index = 0; index < dsetTest.size(); index++) {
+                firstInstance = dsetTest.getInstance(index);
+                pointNeighborsSecondaryK[index] =
+                        NeighborSetFinder.getIndexesOfNeighbors(
+                        dsetTrainSub, firstInstance, kForSecondary,
+                        pointDistancesPrimary[index]);
+            }
+            for (int indexFirst = 0; indexFirst < dsetTest.size();
+                    indexFirst++) {
+                for (int indexSecond = 0; indexSecond < dsetTrainSub.size();
+                        indexSecond++) {
+                    firstInstance = dsetTest.getInstance(indexFirst);
+                    secondInstance = dsetTrainSub.getInstance(indexSecond);
+                    int[] firstNeighbors = pointNeighborsSecondaryK[
+                            indexFirst];
+                    float[] kDistsFirst = new float[kForSecondary];
+                    float[] kDistsSecond =
+                            nsfPrimary.getKDistances()[indexSecond];
+                    for (int kInd = 0; kInd < kForSecondary; kInd++) {
+                        kDistsFirst[kInd] = pointDistancesPrimary[indexFirst][
+                                firstNeighbors[kInd]];
+                    }
+                    pointDistancesSecondary[indexFirst][indexSecond] =
+                            calc.dist(firstInstance, secondInstance,
+                            kDistsFirst, kDistsSecond);
+                }
+            }
+            pointNeighborsSecondary =
+                    NeighborSetFinder.getIndexesOfNeighbors(dsetTrainSub,
+                    dsetTest, k, pointDistancesSecondary);
+            // Initialize the classifiers.
+           
