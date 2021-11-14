@@ -462,4 +462,72 @@ public class HubnessRiskEstimatorFromARFF {
                     NeighborSetFinder.getIndexesOfNeighbors(dsetTrainSub,
                     dsetTest, k, pointDistancesSecondary);
             // Initialize the classifiers.
-           
+            knnClassifier = new KNN(k, calc);
+            nhbnnClassifier = new NHBNN(k, calc, numClasses);
+            hiknnClassifier = new HIKNN(k, calc, numClasses);
+            hfnnClassifier = new HFNN(k, calc, numClasses);
+            // Set the data.
+            knnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            nhbnnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            hiknnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            hfnnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            // Set the distances and the kNN sets.
+            nhbnnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            nhbnnClassifier.setNSF(nsfSecondary);
+            hiknnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            hiknnClassifier.setNSF(nsfSecondary);
+            hfnnClassifier.setDistMatrix(dMatSecondaryTrainSub);
+            hfnnClassifier.setNSF(nsfSecondary);
+            // Train the models.
+            knnClassifier.train();
+            nhbnnClassifier.train();
+            hiknnClassifier.train();
+            hfnnClassifier.train();
+            // Test the classifiers.
+            clEstimator = knnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accKNN = clEstimator.getAccuracy();
+            clEstimator = nhbnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accNHBNN = clEstimator.getAccuracy();
+            clEstimator = hiknnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHIKNN = clEstimator.getAccuracy();
+            clEstimator = hfnnClassifier.test(unitIndexesTest, dsetTest,
+                    testLabels, numClasses, pointDistancesSecondary,
+                    pointNeighborsSecondary);
+            accHFNN = clEstimator.getAccuracy();
+            mpLogger.updateByClassifierAccuracies(accKNN, accNHBNN, accHIKNN,
+                    accHFNN);
+            // Finally the primary distances.
+            nsfPrimary = nsfPrimary.getSubNSF(k);
+            primaryLogger.updateByObservedFreqs(
+                    nsfPrimary.getNeighborFrequencies());
+            primaryLogger.updateLabelMismatchPercentages(
+                    nsfPrimary.getKNeighbors());
+            pointNeighborsPrimary =
+                    NeighborSetFinder.getIndexesOfNeighbors(dsetTrainSub,
+                    dsetTest, k, pointDistancesPrimary);
+            // Initialize the classifiers.
+            knnClassifier = new KNN(k, nsc);
+            nhbnnClassifier = new NHBNN(k, nsc, numClasses);
+            hiknnClassifier = new HIKNN(k, nsc, numClasses);
+            hfnnClassifier = new HFNN(k, nsc, numClasses);
+            // Set the data.
+            knnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            nhbnnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            hiknnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            hfnnClassifier.setDataIndexes(unitIndexes, dsetTrainSub);
+            // Set the distances and the kNN sets.
+            nhbnnClassifier.setDistMatrix(dMatPrimaryTrainSub);
+            nhbnnClassifier.setNSF(nsfPrimary);
+            hiknnClassifier.setDistMatrix(dMatPrimaryTrainSub);
+            hiknnClassifier.setNSF(nsfPrimary);
+            hfnnClassifier.setDistMatrix(dMatPrimaryTrainSub);
+            hfnnClassifier.setNSF(nsfPrimary);
+            // Train the models.
+            knnClassifier.train();
+         
