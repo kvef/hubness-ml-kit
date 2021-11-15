@@ -756,4 +756,83 @@ public class HubnessRiskEstimatorFromARFF {
             pw.println(cMean + "," + cStDev + "," + cSkew + "," + cKurtosis);
             pw.println("Accuracy histogram: ");
             SOPLUtil.printArrayListToStream(getHistogram(hiknnAccuracies,
-                    0.005f), pw
+                    0.005f), pw, ",");
+            pw.println("hFNN classification accuracy");
+            SOPLUtil.printArrayListToStream(hfnnAccuracies, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            cMean = HigherMoments.calculateArrayListMean(hfnnAccuracies);
+            cStDev = HigherMoments.calculateArrayListStDev(cMean,
+                    hfnnAccuracies);
+            cSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    hfnnAccuracies);
+            cKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    hfnnAccuracies);
+            pw.println(cMean + "," + cStDev + "," + cSkew + "," + cKurtosis);
+            pw.println("Accuracy histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(hfnnAccuracies,
+                    0.005f), pw, ",");
+        }
+        
+        /**
+         * This method obtains a histogram from the measurements.
+         * 
+         * @param values ArrayList<Float> representing the values to get the
+         * histogram for.
+         * @param bucketWidth Integer that is the histogram bucket width.
+         * @return ArrayList<Integer> that is the histogram for the provided
+         * values.
+         */
+        private ArrayList<Integer> getHistogram(ArrayList<Float> values,
+                float bucketWidth) {
+            int maxValue = (int) (ArrayUtil.maxOfFloatList(values) + 1);
+            int minValue = (int) Math.floor(ArrayUtil.minOfFloatList(values));
+            if (minValue >= 0) {
+                minValue = 0;
+            }
+            int numBuckets = (int) (((maxValue - minValue) / bucketWidth) + 1)
+                    + 1;
+            ArrayList<Integer> counts = new ArrayList<>(numBuckets);
+            for (int i = 0; i < numBuckets; i++) {
+                counts.add(new Integer(0));
+            }
+            int buckIndex;
+            for (int i = 0; i < values.size(); i++) {
+                if (values.get(i) < minValue) {
+                    System.out.println(values.get(i) + " " + minValue);
+                }
+                buckIndex = (int) ((values.get(i) - minValue) / bucketWidth);
+                counts.set(buckIndex, counts.get(buckIndex) + 1);
+            }
+            return counts;
+        }
+        
+    }
+
+    /**
+     * This method runs the script.
+     *
+     * @param args Command line parameters, as specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-sampleSize", "Number of samples to draw in each"
+                + " iteration.", CommandLineParser.INTEGER, true, false);
+        clp.addParam("-testSize", "Number of test samples to use.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-numRepetitions", "Number of repetitions.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-k", "The neighborhood size.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-outFile", "Output file path.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-inFile", "Input arff data file path.",
+                CommandLineParser.STRING, true, false);
+        clp.parseLine(args);
+        HubnessRiskEstimatorFromARFF experimenter =
+                new HubnessRiskEstimatorFromARFF();
+        experimenter.outFile = new File(
+                (String)(clp.getParamValues("-outFile").get(0)));
+        experimenter.k = (Integer) clp.getParamValues("-k").get(0);
+        experimenter.sampleSize = (Integer) clp.getParamValues(
+               
