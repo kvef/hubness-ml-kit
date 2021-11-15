@@ -615,4 +615,83 @@ public class HubnessRiskEstimatorFromARFF {
          */
         public void updateByClassifierAccuracies(float knnAccuracy,
                 float nhbnnAccuracy, float hiknnAccuracy, float hfnnAccuracy) {
-            knnAcc
+            knnAccuracies.add(knnAccuracy);
+            nhbnnAccuracies.add(nhbnnAccuracy);
+            hiknnAccuracies.add(hiknnAccuracy);
+            hfnnAccuracies.add(hfnnAccuracy);
+        }
+        
+        /**
+         * This method calculates and updates the list of label mismatch 
+         * percentages in kNN sets on the data.
+         * 
+         * @param kNeighbors int[][] representing the k-nearest neighbors. 
+         */
+        public void updateLabelMismatchPercentages(int[][] kNeighbors) {
+            if (kNeighbors != null && kNeighbors.length > 0 &&
+                    dsetTrainSub != null && dsetTest != null) {
+                int[] testLabels = dsetTest.obtainLabelArray();
+                int[] trainingLabels = dsetTrainSub.obtainLabelArray();
+                float totalMismatches = 0;
+                for (int i = 0; i < dsetTest.size(); i++) {
+                    for (int kInd = 0; kInd < k; kInd++) {
+                        if (trainingLabels[kNeighbors[i][kInd]] !=
+                                testLabels[i]) {
+                            totalMismatches++;
+                        }
+                    }
+                }
+                float mismatchPerc = totalMismatches / (k * dsetTest.size());
+                labelMismatchPercs.add(mismatchPerc);
+            }
+        }
+        
+        /**
+         * This method looks at the neighbor occurrence frequencies, calculates
+         * the skewness and kurtosis and updates the stats logger object.
+         * 
+         * @param occFreqs int[] representing the neighbor occurrence
+         * frequencies.
+         */
+        public void updateByObservedFreqs(int[] occFreqs) {
+            float skew = HigherMoments.calculateSkewForSampleArray(occFreqs);
+            float kurtosis =
+                    HigherMoments.calculateKurtosisForSampleArray(occFreqs);
+            skewValues.add(skew);
+            kurtosisValues.add(kurtosis);
+        }
+        
+        /**
+         * This method prints the contents of the current logger to stream.
+         * 
+         * @param pw PrintWriter to print the logger to.
+         */
+        public void printLoggerToStream(PrintWriter pw) {
+            // Label micmatch percentages.
+            pw.println("Sampled label mismatch percentages for: " + distName);
+            SOPLUtil.printArrayListToStream(labelMismatchPercs, pw, ",");
+            pw.println("Label mismatch percs historgram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(labelMismatchPercs,
+                    0.01f), pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            float bhMean = HigherMoments.calculateArrayListMean(
+                    labelMismatchPercs);
+            float bhStDev = HigherMoments.calculateArrayListStDev(bhMean,
+                    labelMismatchPercs);
+            float bhSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    labelMismatchPercs);
+            float bhKurtosis =
+                    HigherMoments.calculateKurtosisForSampleArrayList(
+                    labelMismatchPercs);
+            pw.println(bhMean + "," + bhStDev + "," + bhSkew + "," +
+                    bhKurtosis);
+            // The hubness meta-skews and kurtosis.
+            pw.println("Sampled hubnesses for: " + distName);
+            SOPLUtil.printArrayListToStream(skewValues, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            float sMean = HigherMoments.calculateArrayListMean(skewValues);
+            float sStDev = HigherMoments.calculateArrayListStDev(sMean,
+                    skewValues);
+            float sSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    skewValues);
+            float sKurtosis = HigherMo
