@@ -694,4 +694,66 @@ public class HubnessRiskEstimatorFromARFF {
                     skewValues);
             float sSkew = HigherMoments.calculateSkewForSampleArrayList(
                     skewValues);
-            float sKurtosis = HigherMo
+            float sKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    skewValues);
+            pw.println(sMean + "," + sStDev + "," + sSkew + "," + sKurtosis);
+            pw.println("Skew histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(skewValues, 0.1f),
+                    pw, ",");
+            pw.println("Samples occ. kurtosis for: " + distName);
+            SOPLUtil.printArrayListToStream(kurtosisValues, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            float kMean = HigherMoments.calculateArrayListMean(kurtosisValues);
+            float kStDev = HigherMoments.calculateArrayListStDev(kMean,
+                    kurtosisValues);
+            float kSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    kurtosisValues);
+            float kKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    kurtosisValues);
+            pw.println(kMean + "," + kStDev + "," + kSkew + "," + kKurtosis);
+            pw.println("Kurtosis histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(kurtosisValues, 0.1f),
+                    pw, ",");
+            // Then the classification accuracies.
+            pw.println("kNN classification accuracy");
+            SOPLUtil.printArrayListToStream(knnAccuracies, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            float cMean = HigherMoments.calculateArrayListMean(knnAccuracies);
+            float cStDev = HigherMoments.calculateArrayListStDev(cMean,
+                    knnAccuracies);
+            float cSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    knnAccuracies);
+            float cKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    knnAccuracies);
+            pw.println(cMean + "," + cStDev + "," + cSkew + "," + cKurtosis);
+            pw.println("Accuracy histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(knnAccuracies, 0.005f),
+                    pw, ",");
+            pw.println("NHBNN classification accuracy");
+            SOPLUtil.printArrayListToStream(nhbnnAccuracies, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            cMean = HigherMoments.calculateArrayListMean(nhbnnAccuracies);
+            cStDev = HigherMoments.calculateArrayListStDev(cMean,
+                    nhbnnAccuracies);
+            cSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    nhbnnAccuracies);
+            cKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    nhbnnAccuracies);
+            pw.println(cMean + "," + cStDev + "," + cSkew + "," + cKurtosis);
+            pw.println("Accuracy histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(nhbnnAccuracies,
+                    0.005f), pw, ",");
+            pw.println("HIKNN classification accuracy");
+            SOPLUtil.printArrayListToStream(hiknnAccuracies, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            cMean = HigherMoments.calculateArrayListMean(hiknnAccuracies);
+            cStDev = HigherMoments.calculateArrayListStDev(cMean,
+                    hiknnAccuracies);
+            cSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    hiknnAccuracies);
+            cKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    hiknnAccuracies);
+            pw.println(cMean + "," + cStDev + "," + cSkew + "," + cKurtosis);
+            pw.println("Accuracy histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(hiknnAccuracies,
+                    0.005f), pw
