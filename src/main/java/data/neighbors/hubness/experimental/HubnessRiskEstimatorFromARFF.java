@@ -835,4 +835,46 @@ public class HubnessRiskEstimatorFromARFF {
                 (String)(clp.getParamValues("-outFile").get(0)));
         experimenter.k = (Integer) clp.getParamValues("-k").get(0);
         experimenter.sampleSize = (Integer) clp.getParamValues(
-               
+                "-sampleSize").get(0);
+        int testSize = (Integer) clp.getParamValues("-sampleSize").get(0);
+        experimenter.numRepetitions = (Integer) clp.getParamValues(
+                "-numRepetitions").get(0);
+        File inFile = new File((String)(clp.getParamValues("-inFile").get(0)));
+        DataSet dsetAll = SupervisedLoader.loadData(inFile, false);
+        dsetAll.normalizeFloats();
+        boolean classRepresentationCondition;
+        do {
+            int[] testIndexes = UniformSampler.getSample(dsetAll.size(),
+                    testSize);
+            DataSet dsetTrain = dsetAll.cloneDefinition();
+            DataSet dsetTest = dsetAll.cloneDefinition();
+            dsetTrain.data = new ArrayList<>(dsetAll.size());
+            dsetTest.data = new ArrayList<>(testIndexes.length);
+            HashMap<Integer, Integer> testMap =
+                    new HashMap<>(testIndexes.length);
+            for (int i = 0; i < testIndexes.length; i++) {
+                testMap.put(testIndexes[i], i);
+                DataInstance instance =
+                        dsetAll.getInstance(testIndexes[i]).copy();
+                instance.embedInDataset(dsetTest);
+                dsetTest.addDataInstance(instance);
+            }
+            experimenter.dsetTest = dsetTest;
+            for (int i = 0; i < dsetAll.size(); i++) {
+                if (!testMap.containsKey(i)) {
+                    DataInstance instance = dsetAll.getInstance(i).copy();
+                    instance.embedInDataset(dsetTrain);
+                    dsetTrain.addDataInstance(instance);
+                }
+            }
+            dsetTrain.orderInstancesByClasses();
+            experimenter.dsetTrain = dsetTrain;
+            classRepresentationCondition =
+                    (dsetTrain.countCategories() == dsetAll.countCategories())
+                    && (dsetTest.countCategories() ==
+                    dsetAll.countCategories());
+        } while (!classRepresentationCondition);
+        experimenter.performAllTests();
+    }
+    
+}
