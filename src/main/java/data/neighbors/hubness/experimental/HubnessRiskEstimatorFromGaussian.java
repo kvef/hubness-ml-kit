@@ -207,4 +207,80 @@ public class HubnessRiskEstimatorFromGaussian {
         public StatsLogger(String distName) {
             this.distName = distName;
             skewValues = new ArrayList<>(numRepetitions);
-            kurtosisValues = new ArrayList<>(numRepet
+            kurtosisValues = new ArrayList<>(numRepetitions);
+        }
+
+        private ArrayList<Float> skewValues;
+        private ArrayList<Float> kurtosisValues;
+        
+        /**
+         * This method looks at the neighbor occurrence frequencies, calculates
+         * the skewness and kurtosis and updates the stats logger object.
+         * 
+         * @param occFreqs int[] representing the neighbor occurrence
+         * frequencies.
+         */
+        public void updateByObservedFreqs(int[] occFreqs) {
+            float skew = HigherMoments.calculateSkewForSampleArray(occFreqs);
+            float kurtosis =
+                    HigherMoments.calculateKurtosisForSampleArray(occFreqs);
+            skewValues.add(skew);
+            kurtosisValues.add(kurtosis);
+        }
+        
+        /**
+         * This method prints the contents of the current logger to stream.
+         * 
+         * @param pw PrintWriter to print the logger to.
+         */
+        public void printLoggerToStream(PrintWriter pw) {
+            pw.println("Sampled hubnesses for: " + distName);
+            SOPLUtil.printArrayListToStream(skewValues, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            float sMean = HigherMoments.calculateArrayListMean(skewValues);
+            float sStDev = HigherMoments.calculateArrayListStDev(sMean,
+                    skewValues);
+            float sSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    skewValues);
+            float sKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    skewValues);
+            pw.println(sMean + "," + sStDev + "," + sSkew + "," + sKurtosis);
+            pw.println("Skew histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(skewValues, 0.1f),
+                    pw, ",");
+            pw.println("Samples occ. kurtosis for: " + distName);
+            SOPLUtil.printArrayListToStream(kurtosisValues, pw, ",");
+            pw.println("Calculated moments (mean, stdev, skew, kurtosis):");
+            float kMean = HigherMoments.calculateArrayListMean(kurtosisValues);
+            float kStDev = HigherMoments.calculateArrayListStDev(kMean,
+                    kurtosisValues);
+            float kSkew = HigherMoments.calculateSkewForSampleArrayList(
+                    kurtosisValues);
+            float kKurtosis = HigherMoments.calculateKurtosisForSampleArrayList(
+                    kurtosisValues);
+            pw.println(kMean + "," + kStDev + "," + kSkew + "," + kKurtosis);
+            pw.println("Kurtosis histogram: ");
+            SOPLUtil.printArrayListToStream(getHistogram(kurtosisValues, 0.1f),
+                    pw, ",");
+        }
+        
+        /**
+         * This method obtains a histogram from the measurements.
+         * 
+         * @param values ArrayList<Float> representing the values to get the
+         * histogram for.
+         * @param bucketWidth Integer that is the histogram bucket width.
+         * @return ArrayList<Integer> that is the histogram for the provided
+         * values.
+         */
+        private ArrayList<Integer> getHistogram(ArrayList<Float> values,
+                float bucketWidth) {
+            int maxValue = (int) (ArrayUtil.maxOfFloatList(values) + 1);
+            int minValue = (int) Math.floor(ArrayUtil.minOfFloatList(values));
+            if (minValue >= 0) {
+                minValue = 0;
+            }
+            int numBuckets = (int) (((maxValue - minValue) / bucketWidth) + 1)
+                    + 1;
+            ArrayList<Integer> counts = new ArrayList<>(numBuckets);
+            for (int i 
