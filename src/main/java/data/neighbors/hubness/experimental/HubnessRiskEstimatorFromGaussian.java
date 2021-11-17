@@ -126,4 +126,85 @@ public class HubnessRiskEstimatorFromGaussian {
                     indexFirst++) {
                 for (int indexSecond = 0; indexSecond <
                         dMatSecondary[indexFirst].length; indexSecond++) {
-                    dMatSecondary[indexFirst][ind
+                    dMatSecondary[indexFirst][indexSecond] = kForSecondary -
+                            dMatSecondary[indexFirst][indexSecond];
+                }
+            }
+            SharedNeighborCalculator snc =
+                    new SharedNeighborCalculator(snf,SharedNeighborCalculator.
+                    WeightingType.NONE);
+            nsfSecondary = new NeighborSetFinder(dset, dMatSecondary, snc);
+            nsfSecondary.calculateNeighborSets(k);
+            simcosLogger.updateByObservedFreqs(
+                    nsfSecondary.getNeighborFrequencies());
+            // Calculate the secondary Simhub distances. These are actually the
+            // simhub^inf variant, since there are not classes in the data.
+            snf = new SharedNeighborFinder(nsfPrimary, k);
+            snf.setNumClasses(1);
+            snf.obtainWeightsFromGeneralHubness();
+            snf.countSharedNeighborsMultiThread(NUM_THREADS);
+            // First fetch the similarities.
+            dMatSecondary = snf.getSharedNeighborCounts();
+            // Then transform them into distances.
+            for (int indexFirst = 0; indexFirst < dMatSecondary.length;
+                    indexFirst++) {
+                for (int indexSecond = 0; indexSecond <
+                        dMatSecondary[indexFirst].length; indexSecond++) {
+                    dMatSecondary[indexFirst][indexSecond] = kForSecondary -
+                            dMatSecondary[indexFirst][indexSecond];
+                }
+            }
+            // Calculate the test-to-training point distances.
+            snc = new SharedNeighborCalculator(snf,SharedNeighborCalculator.
+                    WeightingType.HUBNESS);
+            nsfSecondary = new NeighborSetFinder(dset, dMatSecondary, snc);
+            nsfSecondary.calculateNeighborSets(k);
+            simhubLogger.updateByObservedFreqs(
+                    nsfSecondary.getNeighborFrequencies());
+            // Calculate the secondary Mutual Proximity distances.
+            MutualProximityCalculator calc =
+                    new MutualProximityCalculator(nsfPrimary.getDistances(),
+                    nsfPrimary.getDataSet(), nsfPrimary.getCombinedMetric());
+            dMatSecondary = calc.calculateSecondaryDistMatrixMultThr(
+                    nsfPrimary, 8);
+            nsfSecondary = new NeighborSetFinder(dset, dMatSecondary, calc);
+            nsfSecondary.calculateNeighborSets(k);
+            mpLogger.updateByObservedFreqs(
+                    nsfSecondary.getNeighborFrequencies());
+            // Finally the primary distances.
+            nsfPrimary = nsfPrimary.getSubNSF(k);
+            primaryLogger.updateByObservedFreqs(
+                    nsfPrimary.getNeighborFrequencies());
+            // Try some garbage collection.
+            System.gc();
+        }
+        // Print out the results.
+        FileUtil.createFile(outFile);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(outFile))) {
+            primaryLogger.printLoggerToStream(pw);
+            pw.println();
+            nicdmLogger.printLoggerToStream(pw);
+            pw.println();
+            simcosLogger.printLoggerToStream(pw);
+            pw.println();
+            simhubLogger.printLoggerToStream(pw);
+            pw.println();
+            mpLogger.printLoggerToStream(pw);
+            pw.println();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    private class StatsLogger {
+        
+        // Name of the distance that this logger is logging for.
+        private String distName;
+        
+        /**
+         * Initialization.
+         */
+        public StatsLogger(String distName) {
+            this.distName = distName;
+            skewValues = new ArrayList<>(numRepetitions);
+            kurtosisValues = new ArrayList<>(numRepet
