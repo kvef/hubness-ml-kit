@@ -283,4 +283,73 @@ public class HubnessRiskEstimatorFromGaussian {
             int numBuckets = (int) (((maxValue - minValue) / bucketWidth) + 1)
                     + 1;
             ArrayList<Integer> counts = new ArrayList<>(numBuckets);
-            for (int i 
+            for (int i = 0; i < numBuckets; i++) {
+                counts.add(new Integer(0));
+            }
+            int buckIndex;
+            for (int i = 0; i < values.size(); i++) {
+                if (values.get(i) < minValue) {
+                    System.out.println(values.get(i) + " " + minValue);
+                }
+                buckIndex = (int) ((values.get(i) - minValue) / bucketWidth);
+                counts.set(buckIndex, counts.get(buckIndex) + 1);
+            }
+            return counts;
+        }
+        
+    }
+
+    /**
+     * This method runs the script.
+     *
+     * @param args Command line parameters, as specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-numDimensions", "Number of dimensions to generate.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-numInstances", "Number of instances to generate.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-numRepetitions", "Number of repetitions.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-k", "The neighborhood size.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-kSecondary", "The neighborhood size for secondary "
+                + "distances.", CommandLineParser.INTEGER, true, false);
+        clp.addParam("-gaussian", "True if Gaussian, false if uniform.",
+                CommandLineParser.BOOLEAN, true, false);
+        clp.addParam("-outFile", "Output arff file path.",
+                CommandLineParser.STRING, true, false);
+        clp.parseLine(args);
+        HubnessRiskEstimatorFromGaussian experimenter =
+                new HubnessRiskEstimatorFromGaussian();
+        experimenter.outFile = new File(
+                (String)(clp.getParamValues("-outFile").get(0)));
+        experimenter.k = (Integer) clp.getParamValues("-k").get(0);
+        experimenter.kForSecondary = (Integer) clp.getParamValues(
+                "-kSecondary").get(0);
+        experimenter.dim = (Integer) clp.getParamValues(
+                "-numDimensions").get(0);
+        experimenter.numRepetitions = (Integer) clp.getParamValues(
+                "-numRepetitions").get(0);
+        experimenter.dataSize = (Integer) clp.getParamValues(
+                "-numInstances").get(0);
+        // For this experiment to be repeatable, the mean/stDev values for the
+        // generating distribution are fixed and symmetrical.
+        float[] distMeans = new float[experimenter.dim];
+        float[] distStDevs = new float[experimenter.dim];
+        Arrays.fill(distStDevs, 1);
+        float[] lowerBounds = new float[experimenter.dim];
+        Arrays.fill(lowerBounds, -100);
+        float[] upperBounds = new float[experimenter.dim];
+        Arrays.fill(upperBounds, 100);
+        if ((Boolean) clp.getParamValues("-gaussian").get(0)) {
+            experimenter.gen = new MultiDimensionalSphericGaussianGenerator(
+                    distMeans, distStDevs, lowerBounds, upperBounds);
+        } else {
+            experimenter.gen = new UniformGenerator(lowerBounds, upperBounds);
+        }
+        experimenter.performAllTests();
+    }
+}
