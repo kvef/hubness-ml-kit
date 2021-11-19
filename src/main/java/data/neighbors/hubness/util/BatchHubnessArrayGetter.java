@@ -125,3 +125,17 @@ public class BatchHubnessArrayGetter {
             NeighborSetFinder nsf = new NeighborSetFinder(dset, dmat, cmet);
             nsf.calculateNeighborSets(k);
             File outHubnessFile = new File(outDir, dsFile.getName().substring(
+                    0, dsFile.getName().lastIndexOf(".")) + "Hubness.txt");
+            FileUtil.createFile(outHubnessFile);
+            // Write the neighbor occurrence frequencies to a file.
+            try (PrintWriter pw = new PrintWriter(
+                    new FileWriter(outHubnessFile));) {
+                SOPLUtil.printArrayToStream(nsf.getNeighborFrequencies(), pw);
+                SOPLUtil.printArrayToStream(nsf.getGoodFrequencies(), pw);
+                SOPLUtil.printArrayToStream(nsf.getBadFrequencies(), pw);
+            } catch (Exception e) {
+                throw e;
+            }
+        }
+    }
+}
