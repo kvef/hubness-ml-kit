@@ -81,4 +81,97 @@ public class DefaultGBHubnessArraysGetter {
                 secondaryDistanceOption = 0;
                 break;
             case "simcos":
-                secondaryDistanceOption = 1
+                secondaryDistanceOption = 1;
+                break;
+            case "simhub":
+                secondaryDistanceOption = 2;
+                break;
+        }
+        getGBHubnessesFromDir(inDir, outDir, k);
+    }
+
+    /**
+     * This method processes a directory of data files, extracts the good and
+     * bad neighbor occurrence frequencies in the specified context and writes
+     * the output to the target output directory.
+     *
+     * @param inDir Input directory.
+     * @param outDir Output directory.
+     * @param k Integer that is the neighborhood size.
+     * @throws Exception
+     */
+    public static void getGBHubnessesFromDir(File inDir, File outDir, int k)
+            throws Exception {
+        File[] children = inDir.listFiles();
+        File tmpOut;
+        for (File child : children) {
+            if (child.isFile()) {
+                tmpOut = new File(outDir, child.getName().substring(
+                        0, child.getName().lastIndexOf(".")) + "GBH.csv");
+                getGBHubnessFromFile(child, tmpOut, k);
+            }
+        }
+    }
+
+    /**
+     * Calculate and print the good and bad neighbor occurrence frequency arrays
+     * for the specified context for the specified dataset.
+     *
+     * @param inFile Input file.
+     * @param outFile Output file.
+     * @param kInteger that is the neighborhood size.
+     * @throws Exception
+     */
+    public static void getGBHubnessFromFile(File inFile, File outFile, int k)
+            throws Exception {
+        DataSet dset;
+        File dsFile = inFile;
+        String dsPath = dsFile.getPath();
+        CombinedMetric cmet;
+        // This code should automatically detect whether the data is in the
+        // dense or sparse format and set the CombinedMetric object accordingly
+        // as well.
+        if (dsPath.endsWith(".csv")) {
+            IOCSV reader = new IOCSV(true, ",");
+            dset = reader.readData(dsFile);
+            cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                    CombinedMetric.DEFAULT);
+        } else if (dsPath.endsWith(".arff")) {
+            try {
+                IOARFF persister = new IOARFF();
+                dset = persister.load(dsPath);
+                cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                        CombinedMetric.DEFAULT);
+            } catch (Exception e) {
+                IOARFF persister = new IOARFF();
+                dset = persister.loadSparse(dsPath);
+                cmet = new SparseCombinedMetric(null, null,
+                        new SparseCosineMetric(), CombinedMetric.DEFAULT);
+            }
+        } else {
+            System.out.println("Error, could not read from: " + dsPath);
+            return;
+        }
+        // Apply TF-IDF, if specified.
+        if (tfidfMode) {
+            if (dset instanceof BOWDataSet) {
+                TFIDF.filterWords((BOWDataSet) dset);
+            } else {
+                TFIDF.filterFloats(dset);
+            }
+        }
+        // Calculate the primary distance matrix.
+        float[][] dMat = dset.calculateDistMatrixMultThr(cmet, 8);
+        NeighborSetFinder nsf = new NeighborSetFinder(dset, dMat, cmet);
+        // If in the secondary distance mode.
+        if (secondaryDistanceOption != 0) {
+            nsf.calculateNeighborSetsMultiThr(kSND, 8);
+            boolean hubnessAware = (secondaryDistanceOption == 2);
+            SharedNeighborFinder snf = new SharedNeighborFinder(nsf);
+            if (hubnessAware) {
+                snf.obtainWeightsFromHubnessInformation(0);
+            }
+            snf.countSharedNeighbors();
+            // Get the similarity matrix.
+            float[][] simMat = snf.getSharedNeighborCounts();
+            // Transform similariti
