@@ -174,4 +174,44 @@ public class DefaultGBHubnessArraysGetter {
             snf.countSharedNeighbors();
             // Get the similarity matrix.
             float[][] simMat = snf.getSharedNeighborCounts();
-            // Transform similariti
+            // Transform similarities into distances.
+            dMat = new float[simMat.length][];
+            for (int i = 0; i < dMat.length; i++) {
+                dMat[i] = new float[simMat[i].length];
+                for (int j = 0; j < dMat[i].length; j++) {
+                    dMat[i][j] = kSND - simMat[i][j];
+                }
+            }
+            // Make the secondary calculator.
+            SharedNeighborCalculator snc;
+            if (hubnessAware) {
+                snc = new SharedNeighborCalculator(snf,
+                        SharedNeighborCalculator.WeightingType.
+                        HUBNESS_INFORMATION);
+            } else {
+                snc = new SharedNeighborCalculator(snf,
+                        SharedNeighborCalculator.WeightingType.NONE);
+            }
+            nsf = new NeighborSetFinder(dset, dMat, snc);
+            nsf.calculateNeighborSetsMultiThr(k, 6);
+        } else {
+            nsf.calculateNeighborSetsMultiThr(k, 8);
+        }
+        int[] kFreq = nsf.getNeighborFrequencies();
+        int[] kBadFreq = nsf.getBadFrequencies();
+        int[] kGoodFreq = nsf.getGoodFrequencies();
+        FileUtil.createFile(outFile);
+        PrintWriter pw = new PrintWriter(new FileWriter(outFile));
+        try {
+            // Total, bad and good k-occurrence frequencies.
+            pw.println("Nk,BNk,GNk");
+            for (int i = 0; i < kFreq.length; i++) {
+                pw.println(kFreq[i] + "," + kBadFreq[i] + "," + kGoodFreq[i]);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            pw.close();
+        }
+    }
+}
