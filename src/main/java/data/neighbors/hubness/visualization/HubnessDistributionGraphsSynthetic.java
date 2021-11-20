@@ -115,4 +115,90 @@ public class HubnessDistributionGraphsSynthetic {
                     max = Math.max(kneighbors[i][kInd1], kneighbors[i][kInd2]);
                     concat = (max << 32) | (min & 0XFFFFFFFFL);
                     if (!coDependencyMaps.containsKey(concat)) {
-          
+                        coDependencyMaps.put(concat, 1);
+                        coOccurringPairs.add(new Point(min, (int) max));
+                        numCoocPointsArray[kneighbors[i][kInd1]]++;
+                        numCoocPointsArray[kneighbors[i][kInd2]]++;
+                    } else {
+                        currFreq = coDependencyMaps.get(concat);
+                        coDependencyMaps.remove(concat);
+                        coDependencyMaps.put(concat, currFreq + 1);
+                    }
+                }
+            }
+        }
+
+        // Go through all the pairs and look up their frequencies.
+        pairOccurrences = new int[coOccurringPairs.size()];
+
+        for (int i = 0; i < coOccurringPairs.size(); i++) {
+            min = (int) (coOccurringPairs.get(i).getX());
+            max = (int) (coOccurringPairs.get(i).getY());
+            concat = (max << 32) | (min & 0XFFFFFFFFL);
+            pairOccurrences[i] = coDependencyMaps.get(concat);
+
+        }
+    }
+
+    /**
+     * This script generates the neighbor occurrence and co-occurrence frequency
+     * chart data from synthetic Gaussian mixtures of specified data
+     * dimensionality.
+     *
+     * @param args Command line parameters, as specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-k", "Neighborhood size.", CommandLineParser.INTEGER,
+                true, false);
+        clp.addParam("-dim", "Dimensionality.", CommandLineParser.INTEGER,
+                true, false);
+        clp.addParam("-outFile", "Path to the output directory.",
+                CommandLineParser.STRING, true, false);
+        clp.parseLine(args);
+        File outFile = new File((String) clp.getParamValues("-outFile").get(0));
+        k = (Integer) clp.getParamValues("-k").get(0);
+        int dim = (Integer) clp.getParamValues("-dim").get(0);
+        int graphLimit = 60;
+        int[] hubnessArray;
+        int[] numCoocPointsArray;
+        int[] pairOccurrences;
+        // Distribution arrays with an upper limit on the frequency.
+        float[] distributionHubness = new float[graphLimit];
+        float[] distributionNumCoHubs = new float[graphLimit];
+        float[] distributionCoFreqs = new float[graphLimit];
+        double numPairs = 0;
+        for (int r = 0; r < REPETITIONS; r++) {
+            // Generate the data and calculate the frequencies for each point
+            // and pair.
+            HubnessDistributionGraphsSynthetic dataGen =
+                    new HubnessDistributionGraphsSynthetic();
+            dataGen.generateResults(DATA_SIZE, dim);
+            // Fetch the results.
+            hubnessArray = dataGen.hubnessArray;
+            numCoocPointsArray = dataGen.numCoocPointsArray;
+            pairOccurrences = dataGen.pairOccurrences;
+            numPairs += pairOccurrences.length;
+            // Calculate the distribution.
+            for (int i = 0; i < hubnessArray.length; i++) {
+                if (hubnessArray[i] < graphLimit) {
+                    distributionHubness[hubnessArray[i]]++;
+                }
+            }
+            for (int i = 0; i < numCoocPointsArray.length; i++) {
+                if (numCoocPointsArray[i] < graphLimit) {
+                    distributionNumCoHubs[numCoocPointsArray[i]]++;
+                }
+            }
+            for (int i = 0; i < pairOccurrences.length; i++) {
+                if (pairOccurrences[i] < graphLimit) {
+                    distributionCoFreqs[pairOccurrences[i]]++;
+                }
+            }
+            distributionCoFreqs[0] = (DATA_SIZE * (DATA_SIZE - 1) / 2)
+                    - pairOccurrences.length;
+            System.out.print("|");
+        }
+        System.out.println();
+  
