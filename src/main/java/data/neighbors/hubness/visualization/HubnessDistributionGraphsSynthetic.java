@@ -201,4 +201,41 @@ public class HubnessDistributionGraphsSynthetic {
             System.out.print("|");
         }
         System.out.println();
-  
+        // Normalize
+        for (int i = 0; i < graphLimit; i++) {
+            distributionHubness[i] /= REPETITIONS;
+            distributionNumCoHubs[i] /= REPETITIONS;
+            distributionCoFreqs[i] /= REPETITIONS;
+        }
+        numPairs /= REPETITIONS;
+        FileUtil.createFile(outFile);
+        // Print out the results.
+        PrintWriter pw = new PrintWriter(new FileWriter(outFile));
+        try {
+            pw.println("Hubnesses");
+            pw.print(distributionHubness[0]);
+            for (int i = 1; i < distributionHubness.length; i++) {
+                pw.print("," + distributionHubness[i]);
+            }
+            pw.println();
+            pw.println("Num Co-occ Neighbors");
+            pw.print(distributionNumCoHubs[0]);
+            for (int i = 1; i < distributionNumCoHubs.length; i++) {
+                pw.print("," + distributionNumCoHubs[i]);
+            }
+            pw.println();
+            pw.println("Num Pair Occurrences");
+            pw.print(distributionCoFreqs[0]);
+            for (int i = 1; i < distributionCoFreqs.length; i++) {
+                pw.print("," + distributionCoFreqs[i]);
+            }
+            pw.println();
+            pw.println("AVG num Co-occ Pairs");
+            pw.println("d=" + dim + " " + numPairs);
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            pw.close();
+        }
+    }
+}
