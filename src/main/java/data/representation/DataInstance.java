@@ -156,4 +156,135 @@ public class DataInstance implements Serializable {
     }
 
     /**
-     * @return The number of nominal fea
+     * @return The number of nominal features of this instance.
+     */
+    public int getNumNAtt() {
+        if (sAttr == null) {
+            return 0;
+        } else {
+            return sAttr.length;
+        }
+    }
+
+    /**
+     * Generates a comma-separated String that encodes all the float feature
+     * values of this instance.
+     *
+     * @return
+     */
+    public String floatsToCSVString() {
+        if (!hasFloatAtt()) {
+            return "";
+        }
+        StringBuffer sb = new StringBuffer(160);
+        sb.append(fAttr[0]);
+        for (int i = 1; i < fAttr.length; i++) {
+            sb.append(",");
+            sb.append(fAttr[i]);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Make a shallow data copy.
+     *
+     * @return DataInstance that is a shallow copy of the current instance.
+     */
+    public DataInstance makeArrayReferencedCopy() {
+        DataInstance result = new DataInstance();
+        result.embedInDataset(dataContext);
+        result.setCategory(category);
+        result.iAttr = iAttr;
+        result.fAttr = fAttr;
+        result.sAttr = sAttr;
+        result.fuzzyLabels = fuzzyLabels;
+        if (identifier != null) {
+            result.setIdentifier(identifier.makeArrayReferencedCopy());
+        }
+        return result;
+    }
+
+    public DataInstance() {
+    }
+
+    /**
+     * @param dataContext DataSet that contains the data definition for this
+     * instance. This is used to instantiate feature value arrays.
+     */
+    public DataInstance(DataSet dataContext) {
+        if (dataContext != null) {
+            if (dataContext.hasIntAttr()) {
+                iAttr = new int[dataContext.iAttrNames.length];
+            }
+            if (dataContext.hasFloatAttr()) {
+                fAttr = new float[dataContext.fAttrNames.length];
+            }
+            if (dataContext.hasNominalAttr()) {
+                sAttr = new String[dataContext.sAttrNames.length];
+            }
+            identifier = null;
+            this.dataContext = dataContext;
+        }
+    }
+
+    /**
+     * @param identifier DataInstance holder for the identification info.
+     * @param dataContext Data definition to implement in the instance.
+     */
+    public DataInstance(DataInstance identifier, DataSet dataContext) {
+        this.identifier = identifier;
+        this.dataContext = dataContext;
+        if (dataContext != null) {
+            if (dataContext.hasIntAttr()) {
+                iAttr = new int[dataContext.iAttrNames.length];
+            }
+            if (dataContext.hasFloatAttr()) {
+                fAttr = new float[dataContext.fAttrNames.length];
+            }
+            if (dataContext.hasNominalAttr()) {
+                sAttr = new String[dataContext.sAttrNames.length];
+            }
+        }
+    }
+
+    /**
+     * @return Category index.
+     */
+    public int getCategory() {
+        return category;
+    }
+
+    /**
+     * @param category Category index.
+     */
+    public void setCategory(int category) {
+        this.category = category;
+    }
+
+    /**
+     * @param identifier Data instance containing identifier data.
+     */
+    public void setIdentifier(DataInstance identifier) {
+        this.identifier = identifier;
+    }
+
+    /**
+     * @return The DataInstance containing the identification info on this
+     * instance.
+     */
+    public DataInstance getIdentifier() {
+        return this.identifier;
+    }
+
+    /**
+     * @param dataContext DataSet to embed this instance in. A data definition
+     * and a container.
+     */
+    public void embedInDataset(DataSet dataContext) {
+        this.dataContext = dataContext;
+    }
+
+    /**
+     * @return DataSet embedding this instance
+     */
+    public DataS
