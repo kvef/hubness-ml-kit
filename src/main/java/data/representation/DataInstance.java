@@ -287,4 +287,129 @@ public class DataInstance implements Serializable {
     /**
      * @return DataSet embedding this instance
      */
-    public DataS
+    public DataSet getEmbeddingDataset() {
+        return this.dataContext;
+    }
+
+    /**
+     * Checks if an instance belongs to a context that matches a certain data
+     * definition.
+     *
+     * @param dset DataSet to match the definition of.
+     * @return True if the contexts are essentially the same, false otherwise.
+     */
+    public boolean contextMatchesDataDefinition(DataSet dset) {
+        return (dataContext == dset
+                || dataContext.equalsInFeatureDefinition(dset));
+    }
+
+    /**
+     * Make a copy of the current instance, but without identification data and
+     * without class affiliation data.
+     *
+     * @return A copy of the current instance, without the identifier and
+     * without the class label.
+     * @throws Exception
+     */
+    public DataInstance copyContent() throws Exception {
+        DataInstance instanceCopy = new DataInstance(dataContext);
+        if (hasIntAtt()) {
+            instanceCopy.iAttr = Arrays.copyOf(iAttr, iAttr.length);
+        }
+        if (hasFloatAtt()) {
+            instanceCopy.fAttr = Arrays.copyOf(fAttr, fAttr.length);
+        }
+        if (hasNomAtt()) {
+            instanceCopy.sAttr = Arrays.copyOf(sAttr, sAttr.length);
+        }
+        return instanceCopy;
+    }
+    
+    /**
+     * This method generates a copy of the identifier of the current instance.
+     * 
+     * @return DataInstance that is the copy of the identifier of the current
+     * instance.
+     */
+    public DataInstance copyIdentifier() {
+        if (identifier == null) {
+            return null;
+        } else {
+            try {
+                return identifier.copy();
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * A full copy method.
+     *
+     * @return DataInstance that is a copy of the current DataInstance.
+     * @throws Exception
+     */
+    public DataInstance copy() throws Exception {
+        DataInstance instanceCopy;
+        try {
+            instanceCopy = this.copyContent();
+        } catch (Exception e) {
+            instanceCopy = null;
+            throw e;
+        }
+        instanceCopy.setCategory(getCategory());
+        if (fuzzyLabels != null) {
+            instanceCopy.fuzzyLabels = Arrays.copyOf(fuzzyLabels,
+                    fuzzyLabels.length);
+        }
+        if (this.identifier != null) {
+            DataInstance identifierCopy = this.identifier.copyContent();
+            instanceCopy.setIdentifier(identifierCopy);
+        }
+        return instanceCopy;
+    }
+
+    /**
+     * Tests for equality.
+     *
+     * @param instance DataInstance to compare with.
+     * @return True if equal, false otherwise.
+     */
+    public boolean equals(DataInstance instance) {
+        return (identifier.equalsByContent(instance.getIdentifier()))
+                && (this.equalsByContent(instance)
+                && category == instance.getCategory());
+    }
+
+    /**
+     * Tests for equality of feature values.
+     *
+     * @param instance DataInstance to compare with.
+     * @return True if equal, false otherwise.
+     */
+    public boolean equalsByContent(DataInstance instance) {
+        for (int i = 0; i < getNumIAtt(); i++) {
+            if (instance.iAttr[i] != iAttr[i]) {
+                return false;
+            }
+        }
+        for (int i = 0; i < getNumFAtt(); i++) {
+            if (instance.fAttr[i] != fAttr[i]) {
+                return false;
+            }
+        }
+        for (int i = 0; i < getNumNAtt(); i++) {
+            if (!instance.sAttr[i].equals(sAttr[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer s;
+        try {
+            s = new StringBuffer("");
+            if (identifier != null) {
+     
