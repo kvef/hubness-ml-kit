@@ -412,4 +412,108 @@ public class DataInstance implements Serializable {
         try {
             s = new StringBuffer("");
             if (identifier != null) {
-     
+                s.append("<Identifier>");
+                s.append(identifier.toString());
+                s.append("</Identifier>");
+            }
+            s.append("<Instance>");
+            s.append("<Label>");
+            s.append(new Integer(category).toString());
+            s.append("</Label>");
+            for (int i = 0; i < getNumIAtt(); i++) {
+                if (dataContext != null) {
+                    s.append(dataContext.iAttrNames[i]);
+                } else {
+                    s.append("I_");
+                    s.append(i);
+                }
+                s.append(":");
+                if (DataMineConstants.isAcceptableInt(iAttr[i])) {
+                    s.append(new Integer(iAttr[i]).toString());
+                } else {
+                    s.append("Unknown.");
+                }
+            }
+            for (int i = 0; i < getNumFAtt(); i++) {
+                if (dataContext != null) {
+                    s.append(dataContext.fAttrNames[i]);
+                } else {
+                    s.append("F_");
+                    s.append(i);
+                }
+                s.append(":");
+                if (DataMineConstants.isAcceptableFloat(fAttr[i])) {
+                    s.append(new Float(fAttr[i]).toString());
+                } else {
+                    s.append("Unknown.");
+                }
+            }
+            for (int i = 0; i < getNumNAtt(); i++) {
+                if (dataContext != null) {
+                    s.append(dataContext.sAttrNames[i]);
+                } else {
+                    s.append("S_");
+                    s.append(i);
+                }
+                s.append(":");
+                s.append(sAttr[i]);
+            }
+            s.append("</Instance>");
+            return s.toString();
+        } catch (Exception e) {
+            return e.toString();
+        }
+    }
+
+    /**
+     * Checks if there are some missing values in the instance value arrays.
+     *
+     * @return True if some values are marked as missing, false otherwise.
+     * @throws Exception
+     */
+    public boolean hasMissingValues() throws Exception {
+        for (int i = 0; i < getNumIAtt(); i++) {
+            if (!DataMineConstants.isAcceptableInt(iAttr[i])) {
+                return true;
+            }
+        }
+        for (int i = 0; i < getNumFAtt(); i++) {
+            if (!DataMineConstants.isAcceptableFloat(fAttr[i])) {
+                return true;
+            }
+        }
+        for (int i = 0; i < getNumNAtt(); i++) {
+            if (sAttr[i] == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Multiply a DataInstance by a scalar value.
+     *
+     * @param alpha Scalar value, a float.
+     * @param instance DataInstance.
+     * @return A new, multiplied DataInstance.
+     * @throws Exception
+     */
+    public static DataInstance multiplyByFactor(
+            float alpha, DataInstance instance) throws Exception {
+        if (instance == null) {
+            throw new NullPointerException("Cannot multiply null instance.");
+        }
+        if (!DataMineConstants.isAcceptableFloat(alpha)) {
+            throw new Exception("Invalid scalar: " + alpha);
+        }
+        DataInstance multipliedInstance = instance.copy();
+        for (int i = 0; i < instance.getNumIAtt(); i++) {
+            if (!DataMineConstants.isAcceptableInt(instance.iAttr[i])) {
+                multipliedInstance.iAttr[i] = Integer.MAX_VALUE;
+            } else {
+                multipliedInstance.iAttr[i] = Math.round(
+                        instance.iAttr[i] * alpha);
+            }
+        }
+        for (int i = 0; i < instance.getNumFAtt(); i++) {
+            if (!DataMineConstants.isAcceptableFloat(instance
