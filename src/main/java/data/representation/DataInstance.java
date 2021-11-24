@@ -516,4 +516,114 @@ public class DataInstance implements Serializable {
             }
         }
         for (int i = 0; i < instance.getNumFAtt(); i++) {
-            if (!DataMineConstants.isAcceptableFloat(instance
+            if (!DataMineConstants.isAcceptableFloat(instance.fAttr[i])) {
+                multipliedInstance.fAttr[i] = Float.MAX_VALUE;
+            } else {
+                multipliedInstance.fAttr[i] = instance.fAttr[i] * alpha;
+            }
+        }
+        return multipliedInstance;
+    }
+
+    /**
+     * Sums a list of DataInstance objects by summing up individual feature
+     * values.
+     *
+     * @param instances ArrayList of DataInstance objects.
+     * @return DataInstance representing the sum.
+     */
+    public static DataInstance sum(ArrayList<DataInstance> instances) {
+        if (instances == null || instances.isEmpty()) {
+            return null;
+        }
+        DataSet context = instances.get(0).dataContext;
+        DataInstance sumInstance;
+        if (context != null) {
+            sumInstance = new DataInstance(context);
+        } else {
+            sumInstance = new DataInstance();
+            sumInstance.fAttr = new float[instances.get(0).getNumFAtt()];
+            sumInstance.iAttr = new int[instances.get(0).getNumIAtt()];
+            sumInstance.sAttr = new String[instances.get(0).getNumNAtt()];
+        }
+        for (DataInstance instance : instances) {
+            sumInstance.add(instance);
+        }
+        return sumInstance;
+    }
+
+    /**
+     * Calculate the average of instances into an instance.
+     *
+     * @param instances An ArrayList of DataInstances.
+     * @return DataInstance representing the average for all features.
+     * @throws Exception
+     */
+    public static DataInstance average(ArrayList<DataInstance> instances)
+            throws Exception {
+        if (instances == null || instances.isEmpty()) {
+            return null;
+        }
+        DataInstance result = sum(instances);
+        DataInstance multRes = DataInstance.multiplyByFactor(
+                1f / ((float) instances.size()), result);
+        return multRes;
+    }
+
+    /**
+     * Add a data instance values to the values of the current instance.
+     *
+     * @param instance DataInstance to add the values of.
+     */
+    public void add(DataInstance instance) {
+        if (instance == null) {
+            return;
+        }
+        for (int i = 0; i < getNumIAtt(); i++) {
+            if (!DataMineConstants.isAcceptableInt(instance.iAttr[i])) {
+                continue;
+            } else {
+                iAttr[i] += instance.iAttr[i];
+            }
+        }
+        for (int i = 0; i < getNumFAtt(); i++) {
+            if (!DataMineConstants.isAcceptableFloat(instance.fAttr[i])) {
+                continue;
+            } else {
+                fAttr[i] += instance.fAttr[i];
+            }
+        }
+    }
+    
+    /**
+     * Add two DataInstance object values and return the result in another
+     * DataInstance object.
+     *
+     * @param first DataInstance object.
+     * @param second DataInstance object.
+     * @return The sum of the two DataInstance objects, for all integer and
+     * float feature values.
+     */
+    public static DataInstance add(DataInstance first, DataInstance second) {
+        DataInstance result = new DataInstance(first.getEmbeddingDataset());
+        result.add(first);
+        result.add(second);
+        return result;
+    }
+
+    /**
+     * Subtract two DataInstance object values and return the result in another
+     * DataInstance object.
+     *
+     * @param first DataInstance object.
+     * @param second DataInstance object.
+     * @return The difference of the two DataInstance objects, for all integer
+     * and float feature values.
+     */
+    public static DataInstance subtract(DataInstance first,
+            DataInstance second) throws Exception {
+        DataInstance result = new DataInstance(first.getEmbeddingDataset());
+        result.add(second);
+        result = DataInstance.multiplyByFactor(-1, result);
+        result.add(first);
+        retur
