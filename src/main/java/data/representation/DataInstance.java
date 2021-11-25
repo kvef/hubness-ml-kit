@@ -626,4 +626,56 @@ public class DataInstance implements Serializable {
         result.add(second);
         result = DataInstance.multiplyByFactor(-1, result);
         result.add(first);
-        retur
+        return result;
+    }
+
+    /**
+     * Tests for equality by comparing float feature values.
+     *
+     * @param instance DataInstance object.
+     * @return
+     */
+    public boolean equalsByFloatValue(DataInstance instance) {
+        if (fAttr == null && instance.fAttr == null) {
+            return true;
+        }
+        if (fAttr.length == 0 && instance.fAttr.length == 0) {
+            return true;
+        }
+        if (fAttr.length != instance.fAttr.length) {
+            return false;
+        }
+        int i = -1;
+        while (++i < fAttr.length) {
+            if ((fAttr[i] - instance.fAttr[i]) > DataMineConstants.EPSILON) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Tests for equality by comparing integer feature values.
+     *
+     * @param instance DataInstance object.
+     * @return
+     */
+    public boolean equalsByIntegerValue(DataInstance instance) {
+        if (iAttr == null && instance.iAttr == null) {
+            return true;
+        }
+        if (iAttr.length == 0 && instance.iAttr.length == 0) {
+            return true;
+        }
+        if (iAttr.length != instance.iAttr.length) {
+            return false;
+        }
+        int i = -1;
+        while (++i < iAttr.length) {
+            if (iAttr[i] != instance.iAttr[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
