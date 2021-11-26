@@ -14,4 +14,82 @@
 * You should have received a copy of the GNU General Public License along with
 * this program. If not, see <http://www.gnu.org/licenses/>.
 */
-package data.rep
+package data.representation.images.quantized;
+
+import data.representation.DataInstance;
+import data.representation.DataSet;
+import java.util.Arrays;
+
+/**
+ * Data holder for representing quantized image histograms as integer counts.
+ * This class does not implement any special or additional structures and
+ * methods, but is rather used for dynamic typing.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class QuantizedImageHistogram extends DataInstance {
+
+    private String imagePath;
+
+    /**
+     * @param imagePath String that is the image path.
+     */
+    public void setPath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    /**
+     * @return String that is the image path.
+     */
+    public String getPath() {
+        return imagePath;
+    }
+
+    /**
+     * @param dset DataSet object to initialize the data context.
+     */
+    public QuantizedImageHistogram(DataSet dset) {
+        super(dset);
+    }
+
+    /**
+     * @param instance DataInstance object to initialize the histograms with.
+     */
+    public QuantizedImageHistogram(DataInstance instance) {
+        super(instance.getEmbeddingDataset());
+        this.fAttr = instance.fAttr;
+        this.iAttr = instance.iAttr;
+        this.sAttr = instance.sAttr;
+        this.setCategory(instance.getCategory());
+        this.fuzzyLabels = instance.fuzzyLabels;
+    }
+
+    @Override
+    public QuantizedImageHistogram copyContent() throws Exception {
+        QuantizedImageHistogram instanceCopy =
+                new QuantizedImageHistogram(getEmbeddingDataset());
+        instanceCopy.embedInDataset(getEmbeddingDataset());
+        if (hasIntAtt()) {
+            instanceCopy.iAttr = Arrays.copyOf(iAttr, iAttr.length);
+        }
+        if (hasFloatAtt()) {
+            instanceCopy.fAttr = Arrays.copyOf(fAttr, fAttr.length);
+        }
+        if (hasNomAtt()) {
+            instanceCopy.sAttr = Arrays.copyOf(sAttr, sAttr.length);
+        }
+        return instanceCopy;
+    }
+
+    @Override
+    public QuantizedImageHistogram copy() throws Exception {
+        QuantizedImageHistogram instanceCopy;
+        try {
+            instanceCopy = this.copyContent();
+        } catch (Exception e) {
+            instanceCopy = null;
+            throw e;
+        }
+        return instanceCopy;
+    }
+}
