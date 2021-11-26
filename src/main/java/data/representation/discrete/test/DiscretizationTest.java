@@ -73,4 +73,14 @@ public class DiscretizationTest {
             IOARFFDiscretized dpersister = new IOARFFDiscretized();
             IOARFF persister = new IOARFF();
             System.out.println("Persisting...");
-            persis
+            persister.save(dset, args[2], null);
+            dpersister.saveLabeled(dsetDisc, new File(args[0]),
+                    args[2]);
+            System.out.println("Loading...");
+            dsetDisc = dpersister.loadLabeled(new File(args[0]), dset);
+            System.out.println("Persisting...");
+            dpersister.saveLabeled(dsetDisc, new File(args[1]),
+                    args[2]);
+        }
+    }
+}
