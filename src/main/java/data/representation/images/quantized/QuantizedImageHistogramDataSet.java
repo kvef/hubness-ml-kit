@@ -34,4 +34,25 @@ public class QuantizedImageHistogramDataSet extends DataSet {
      */
     public QuantizedImageHistogramDataSet(int codebookSize) {
         if (codebookSize < 0 || !DataMineConstants.isAcceptableInt(
-                codebookSize
+                codebookSize)) {
+            iAttrNames = null;
+        }
+        iAttrNames = new String[codebookSize];
+        for (int i = 0; i < codebookSize; i++) {
+            iAttrNames[i] = "codebook:" + i;
+        }
+    }
+
+    /**
+     * @param dset DataSet object to initialize the data definitions.
+     */
+    public QuantizedImageHistogramDataSet(DataSet dset) {
+        iAttrNames = dset.iAttrNames;
+        fAttrNames = dset.fAttrNames;
+        sAttrNames = dset.sAttrNames;
+        data = new ArrayList<>(dset.size());
+        for (int i = 0; i < dset.size(); i++) {
+            data.add(dset.getInstance(i));
+        }
+    }
+}
