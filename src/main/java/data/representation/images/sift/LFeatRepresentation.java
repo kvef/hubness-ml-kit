@@ -90,4 +90,50 @@ public class LFeatRepresentation extends DataSet {
         fAttrNames[2] = "Scale";
         fAttrNames[3] = "Angle";
         for (int i = 0; i < 128; i++) {
-            fAttrNames[i + 4] = "desc" + i
+            fAttrNames[i + 4] = "desc" + i;
+        }
+        data = new ArrayList<>(initsize);
+    }
+
+    /**
+     * Initializes the representation from a DataSet object.
+     *
+     * @param dset DataSet object containing the SIFTRepresentation data.
+     */
+    public LFeatRepresentation(DataSet dset) {
+        super();
+        data = dset.data;
+        identifiers = dset.identifiers;
+        fAttrNames = dset.fAttrNames;
+        iAttrNames = dset.iAttrNames;
+        sAttrNames = dset.sAttrNames;
+    }
+
+    /**
+     * Calculates the X, Y coordinates of the SIFT centroid of a cluster. Used
+     * in SIFT quantization during codebook generation.
+     *
+     * @param clust Cluster object containing SIFTVector instances.
+     * @return A Point2D object containing the spatial centroid.
+     * @throws Exception
+     */
+    public static Point2D getSIFTClusterSpatialCentroid(Cluster clust)
+            throws Exception {
+        if (clust == null || clust.isEmpty()) {
+            return null;
+        }
+        Point2D.Double spatialCentroid = new Point2D.Double();
+        // Coordinate sums.
+        double x_sum = 0.;
+        double y_sum = 0.;
+        LFeatVector featureVector;
+        for (int i = 0; i < clust.size(); i++) {
+            featureVector = ((LFeatVector) (clust.getInstance(i)));
+            x_sum += featureVector.getX();
+            y_sum += featureVector.getY();
+        }
+        spatialCentroid.x = x_sum / clust.size();
+        spatialCentroid.y = y_sum / clust.size();
+        return spatialCentroid;
+    }
+}
