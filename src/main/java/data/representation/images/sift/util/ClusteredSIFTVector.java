@@ -54,4 +54,32 @@ public class ClusteredSIFTVector extends LFeatVector {
     }
 
     @Override
-    public ClusteredSIFTVector cop
+    public ClusteredSIFTVector copyContent() throws Exception {
+        ClusteredSIFTVector instanceCopy =
+                new ClusteredSIFTVector(
+                (ClusteredSIFTRepresentation) getEmbeddingDataset());
+        instanceCopy.embedInDataset(getEmbeddingDataset());
+        if (hasIntAtt()) {
+            instanceCopy.iAttr = Arrays.copyOf(iAttr, iAttr.length);
+        }
+        if (hasFloatAtt()) {
+            instanceCopy.fAttr = Arrays.copyOf(fAttr, fAttr.length);
+        }
+        if (hasNomAtt()) {
+            instanceCopy.sAttr = Arrays.copyOf(sAttr, sAttr.length);
+        }
+        return instanceCopy;
+    }
+
+    @Override
+    public ClusteredSIFTVector copy() throws Exception {
+        ClusteredSIFTVector instanceCopy;
+        try {
+            instanceCopy = this.copyContent();
+        } catch (Exception e) {
+            instanceCopy = null;
+            throw e;
+        }
+        return instanceCopy;
+    }
+}
