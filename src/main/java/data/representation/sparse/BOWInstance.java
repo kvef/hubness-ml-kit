@@ -172,4 +172,122 @@ public class BOWInstance extends DataInstance {
      *
      * @param index Index of the word to add, from the corpus vocabulary.
      */
-    public 
+    public void addWord(int index) {
+        addWord(index, 1);
+    }
+
+    /**
+     * Inserts the word in the corpus if it doesn't already exist there and then
+     * inserts the appropriate index from the vocabulary to the internal map.
+     *
+     * @param word String that is the word to insert.
+     */
+    public void addWord(String word) {
+        addWord(corpus.insertWord(word));
+    }
+
+    /**
+     * Simply adds the count of occurrences of the index to the internal map.
+     *
+     * @param index Index of the word to add, from the corpus vocabulary.
+     * @param count Float count of the occurrences to add.
+     */
+    public void addWord(int index, float count) {
+        if (!wordIndexHash.containsKey(index)) {
+            wordIndexHash.put(index, count);
+        } else {
+            wordIndexHash.put(index, wordIndexHash.get(index) + count);
+        }
+    }
+
+    /**
+     * Overwrites any previous count entries for this word index.
+     *
+     * @param index Index of the word to set, from the corpus vocabulary.
+     * @param count Float count of the occurrences to set.
+     */
+    public void setWordWeight(int index, float count) {
+        if (!wordIndexHash.containsKey(index)) {
+            wordIndexHash.put(index, count);
+        } else {
+            wordIndexHash.remove(index);
+            wordIndexHash.put(index, count);
+        }
+    }
+
+    /**
+     * Inserts the word in the corpus if it doesn't already exist there and then
+     * inserts the appropriate index from the vocabulary to the internal map,
+     * followed by the provided count. If a count already exist, the two are
+     * summed.
+     *
+     * @param word String that is the word to insert.
+     * @param count Float count of the occurrences to add.
+     */
+    public void addWord(String word, int count) {
+        addWord(corpus.insertWord(word), count);
+    }
+
+    /**
+     * @param index Index of the word, from the corpus vocabulary.
+     * @return The occurrence count of the word in this sparse representation.
+     */
+    public float getWordFrequency(int index) {
+        return wordIndexHash.containsKey(index) ? wordIndexHash.get(index) : 0;
+    }
+
+    /**
+     * Removes the entry corresponding to that word index.
+     *
+     * @param index Index of the word, from the corpus vocabulary.
+     */
+    public void removeWord(int index) {
+        if (wordIndexHash.containsKey(index)) {
+            wordIndexHash.remove(index);
+        }
+    }
+
+    /**
+     * Removes the entry corresponding to that word.
+     *
+     * @param word String that is the word to remove.
+     */
+    public void removeWord(String word) {
+        int index = corpus.getIndexForWord(word);
+        if (index != -1) {
+            removeWord(index);
+        }
+    }
+
+    /**
+     * @param word String that is the word to check for.
+     * @return True if the word is represented in this BoW, false otherwise.
+     */
+    public boolean containsWord(String word) {
+        int index = corpus.getIndexForWord(word);
+        if (index == -1) {
+            return false;
+        } else {
+            return containsIndex(index);
+        }
+    }
+
+    /**
+     * @param index Index of the word, from the corpus vocabulary.
+     * @return True if the index is mapped in this BoW, false otherwise.
+     */
+    public boolean containsIndex(int index) {
+        return wordIndexHash.containsKey(index);
+    }
+
+    /**
+     * @return True if the map is empty, false otherwise.
+     */
+    public boolean isEmpty() {
+        return wordIndexHash == null || wordIndexHash.isEmpty();
+    }
+
+    /**
+     * @param wordIndexHash HashMap<Integer, Float> representing the BoW.
+     */
+    public void setWordIndexesHash(HashMap<Integer, Float> wordIndexHash) {
