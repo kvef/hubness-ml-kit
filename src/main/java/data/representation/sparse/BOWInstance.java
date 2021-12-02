@@ -291,3 +291,54 @@ public class BOWInstance extends DataInstance {
      * @param wordIndexHash HashMap<Integer, Float> representing the BoW.
      */
     public void setWordIndexesHash(HashMap<Integer, Float> wordIndexHash) {
+        this.wordIndexHash = wordIndexHash;
+    }
+
+    /**
+     * @return HashMap<Integer, Float> representing the BoW.
+     */
+    public HashMap<Integer, Float> getWordIndexesHash() {
+        return wordIndexHash;
+    }
+
+    @Override
+    public BOWInstance copy() throws Exception {
+        BOWInstance instanceCopy;
+        try {
+            instanceCopy = this.copyContent();
+        } catch (Exception e) {
+            instanceCopy = null;
+            throw e;
+        }
+        instanceCopy.setDocumentName(documentName);
+        return instanceCopy;
+    }
+
+    @Override
+    public BOWInstance copyContent() throws Exception {
+        BOWInstance instanceCopy = new BOWInstance(corpus);
+        instanceCopy.embedInDataset(getEmbeddingDataset());
+        if (hasIntAtt()) {
+            instanceCopy.iAttr = Arrays.copyOf(iAttr, iAttr.length);
+        }
+        if (hasFloatAtt()) {
+            instanceCopy.fAttr = Arrays.copyOf(fAttr, fAttr.length);
+        }
+        if (hasNomAtt()) {
+            instanceCopy.sAttr = Arrays.copyOf(sAttr, sAttr.length);
+        }
+        instanceCopy.setWordIndexesHash(wordIndexHash);
+        instanceCopy.setCategory(getCategory());
+        instanceCopy.corpus = corpus;
+        return instanceCopy;
+    }
+
+    @Override
+    public boolean equalsByContent(DataInstance other) {
+        boolean denseFeatureEquality = super.equalsByContent(other);
+        BOWInstance otherBow = (BOWInstance) other;
+        boolean sparseFeatureEquality = wordIndexHash.equals(
+                otherBow.getWordIndexesHash());
+        return denseFeatureEquality && sparseFeatureEquality;
+    }
+}
