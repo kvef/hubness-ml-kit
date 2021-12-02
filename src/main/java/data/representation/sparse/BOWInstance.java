@@ -59,4 +59,117 @@ public class BOWInstance extends DataInstance {
      * @param firstBow First bow representation.
      * @param secondBow Second bow representation.
      * @return BOWInstance that is the sum of the two.
-   
+     */
+    public static BOWInstance add(BOWInstance firstBow, BOWInstance secondBow) {
+        ArrayList<BOWInstance> pairList = new ArrayList<>(2);
+        pairList.add(firstBow);
+        pairList.add(secondBow);
+        return sumSparse(pairList);
+    }
+
+    /**
+     * Sums up a list of bow representations by summing up the word counts.
+     *
+     * @param instances ArrayList<BOWInstance> of sparse representations.
+     * @return BOWInstance that is the sum of the list.
+     */
+    public static BOWInstance sumSparse(ArrayList<BOWInstance> instances) {
+        if (instances == null || instances.isEmpty()) {
+            return null;
+        }
+        BOWInstance result = new BOWInstance(instances.get(0).corpus);
+        // Iterate through the maps.
+        for (BOWInstance instance : instances) {
+            HashMap<Integer, Float> instanceIndexHash =
+                    instance.getWordIndexesHash();
+            Set<Integer> keys = instanceIndexHash.keySet();
+            for (int index : keys) {
+                if (!result.getWordIndexesHash().containsKey(index)) {
+                    result.getWordIndexesHash().put(index,
+                            instanceIndexHash.get(index));
+                } else {
+                    result.getWordIndexesHash().put(index,
+                            result.getWordIndexesHash().get(index)
+                            + instanceIndexHash.get(index));
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Multiply the word counts by the scalar value.
+     *
+     * @param scalarValue Float value to be used in multiplication.
+     */
+    public void multiplyByScalar(float scalarValue) {
+        Set<Integer> keys = wordIndexHash.keySet();
+        for (int index : keys) {
+            wordIndexHash.put(index, wordIndexHash.get(index) * scalarValue);
+        }
+    }
+
+    /**
+     * Take an average of a list of sparse representations.
+     *
+     * @param instances ArrayList<BOWInstance> of sparse representations.
+     * @return BOWInstance that is the average of the list.
+     */
+    public static BOWInstance averageSparse(ArrayList<BOWInstance> instances) {
+        if (instances == null || instances.isEmpty()) {
+            return null;
+        }
+        BOWInstance result = sumSparse(instances);
+        result.multiplyByScalar(1f / ((float) instances.size()));
+        return result;
+    }
+
+    /**
+     * @return The number of different words this representation encodes.
+     */
+    public int getNumberOfDifferentWords() {
+        return wordIndexHash.isEmpty() ? 0 : wordIndexHash.keySet().size();
+    }
+
+    @Override
+    public DataSet getEmbeddingDataset() {
+        return corpus;
+    }
+
+    @Override
+    public void embedInDataset(DataSet dset) {
+        corpus = (BOWDataSet) dset;
+    }
+
+    /**
+     * @param documentName String that is the document name.
+     */
+    public void setDocumentName(String documentName) {
+        this.documentName = documentName;
+    }
+
+    /**
+     * @return String that is the document name.
+     */
+    public String getDocumentName() {
+        return documentName;
+    }
+
+    /**
+     * @return Float that is the sum of all the word frequencies.
+     */
+    public float getDocumentLength() {
+        float length = 0;
+        Set<Integer> keys = wordIndexHash.keySet();
+        for (int index : keys) {
+            length += wordIndexHash.get(index);
+        }
+        return length;
+    }
+
+    /**
+     * Simply adds another occurrence of the index to the internal map.
+     *
+     * @param index Index of the word to add, from the corpus vocabulary.
+     */
+    public 
