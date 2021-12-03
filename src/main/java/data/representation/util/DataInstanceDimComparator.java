@@ -47,4 +47,29 @@ public class DataInstanceDimComparator implements Comparator {
                     secondValue = 0;
                 }
                 tmpValue = firstValue - secondValue;
-                if (Data
+                if (DataMineConstants.isZero(tmpValue)) {
+                    return 0;
+                } else if (tmpValue > 0) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+            case DataMineConstants.INTEGER: {
+                int tmpValue = 0;
+                int firstValue = ((DataInstance) first).iAttr[featureIndex];
+                int secondValue = ((DataInstance) second).iAttr[featureIndex];
+                if (!DataMineConstants.isAcceptableInt(firstValue)) {
+                    firstValue = 0;
+                }
+                if (!DataMineConstants.isAcceptableInt(secondValue)) {
+                    secondValue = 0;
+                }
+                tmpValue = firstValue - secondValue;
+                return tmpValue;
+            }
+            default:
+                return 1;
+        }
+    }
+}
