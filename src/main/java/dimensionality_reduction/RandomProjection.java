@@ -137,4 +137,65 @@ public class RandomProjection implements TransformationInterface {
         float[][] projectionMatrix = generateRandomProjectionMatrix(numFAtt,
                 targetDimensionality);
         DataSet projectedDSet = new DataSet();
-        
+        // Generate dummy attribute names for the resulting projection.
+        String[] fAttNames = new String[targetDimensionality];
+        for (int d = 0; d < targetDimensionality; d++) {
+            fAttNames[d] = "fAtt" + d;
+        }
+        projectedDSet.fAttrNames = fAttNames;
+        // Initialize the data array for the result.
+        projectedDSet.data = new ArrayList<>(dset.size());
+        // Initialize zeroes data instances.
+        for (int i = 0; i < dset.size(); i++) {
+            // This constructor creates a zeroed float array, since it is
+            // specified in the projectedDSet context.
+            DataInstance instance = new DataInstance(projectedDSet);
+            instance.embedInDataset(projectedDSet);
+            projectedDSet.addDataInstance(instance);
+            instance.setCategory(dset.getLabelOf(i));
+            instance.setIdentifier(dset.getInstance(i).copyIdentifier());
+        }
+        // Now finally perform the random projection.
+        for (int i = 0; i < targetDimensionality; i++) {
+            for (int j = 0; j < dset.size(); j++) {
+                for (int k = 0; k < numFAtt; k++) {
+                    // Handling possible missing values or incorrect entries.
+                    float fVal = dset.getInstance(j).fAttr[k];
+                    if (DataMineConstants.isAcceptableFloat(fVal)) {
+                        projectedDSet.getInstance(j).fAttr[i] +=
+                                projectionMatrix[i][k] * fVal;
+                    }
+                }
+            }
+        }
+        return projectedDSet;
+    }
+    
+    /**
+     * Performs the random projection from the file specified by the user,
+     * reducing it to a specified number of dimensions and persisting the
+     * results to an output file.
+     *
+     * @param args
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-inFile", "Path to the input dataset",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-outFile", "Output path", CommandLineParser.STRING,
+                true, false);
+        clp.addParam("-dim", "Dimensionality of data projection",
+                CommandLineParser.INTEGER, true, false);
+        clp.parseLine(args);
+        File inFile = new File((String) (clp.getParamValues("-inFile").get(0)));
+        File outFile = new File((String) (clp.getParamValues(
+                "-outFile").get(0)));
+        int targetDim = (Integer) (clp.getParamValues("-dim").get(0));
+        DataSet inputSet = SupervisedLoader.loadData(inFile.getPath(), false);
+        RandomProjection rp = new RandomProjection(inputSet, targetDim);
+        DataSet output = rp.transformData();
+        IOARFF saver = new IOARFF();
+        saver.saveLabeled(output, outFile.getPath());
+    }
+}
