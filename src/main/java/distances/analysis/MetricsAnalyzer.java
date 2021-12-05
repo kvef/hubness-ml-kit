@@ -120,4 +120,30 @@ public class MetricsAnalyzer {
         Arrays.sort(interDists); //ascending sort
         intraIndex = 0;
         interIndex = 0;
-        int totalDists = numIntraDists + numInte
+        int totalDists = numIntraDists + numInterDists;
+        int totalPairs = numIntraDists * numInterDists;
+        // This is the sum of concordant and discordant pairs.
+        int Nc = 0; // Num concordant pairs.
+        int Nd = 0; // Num discordant pairs.
+        // We will only count the breaches.
+        do {
+            while (intraIndex < numIntraDists
+                    && intraDists[intraIndex] < interDists[interIndex]) {
+                intraIndex++;
+            }
+            if (intraIndex == numIntraDists) {
+                break;
+            }
+            // Then the interDists[interIndex] is disconcordant with all
+            // intraDists[i] for i >= intraIndex. There are numIntraDists -
+            //intraIndex of them
+            Nd += numIntraDists - intraIndex;
+            // The inter-distance at interIndex has been processed, so it is
+            // time to move on.
+            interIndex++;
+        } while (intraIndex < numIntraDists && interIndex < numInterDists);
+        Nc = totalPairs - Nd;
+        float gkIndex = (float) (Nc - Nd) / (float) (Nc + Nd);
+        return gkIndex;
+    }
+}
