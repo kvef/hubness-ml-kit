@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,12 +22,25 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
+ * The circular kernel is used in geostatic applications. It is an example of an
+ * isotropic stationary kernel and is positive definite in R2.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class ChiSquaredKernel extends Kernel {
+public class CircularKernel extends Kernel {
 
-    public ChiSquaredKernel() {
+    private float sigma = 1f;
+    // This should be carefully set, it really depends on the number of
+    // dimensions and normalization.
+
+    public CircularKernel() {
+    }
+
+    /**
+     * @param sigma Kernel width.
+     */
+    public CircularKernel(float sigma) {
+        this.sigma = sigma;
     }
 
     /**
@@ -34,7 +48,6 @@ public class ChiSquaredKernel extends Kernel {
      * @param y Feature value array.
      * @return
      */
-    @Override
     public float dot(float[] x, float[] y) {
         if ((x == null && y != null) || (x != null && y == null)) {
             return Float.MAX_VALUE;
@@ -45,15 +58,23 @@ public class ChiSquaredKernel extends Kernel {
         if (x.length != y.length) {
             return Float.MAX_VALUE;
         }
-        double result = 1;
+        double result = 0;
         for (int i = 0; i < x.length; i++) {
             if (!DataMineConstants.isAcceptableFloat(x[i])
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result -= 2 * (x[i] - y[i]) * (x[i] - y[i]) / (x[i] + y[i]);
+            result += (x[i] - y[i]) * (x[i] - y[i]);
         }
-        return (float) result;
+        result = Math.sqrt(result);
+        if (result < sigma) {
+            double sigQuot = result / sigma;
+            result = 2 / Math.PI * Math.acos(-sigQuot) - 2 / Math.PI * sigQuot
+                    * Math.sqrt(1 - sigQuot * sigQuot);
+            return (float) result;
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -80,14 +101,13 @@ public class ChiSquaredKernel extends Kernel {
                     if (DataMineConstants.isAcceptableFloat(x.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             y.get(index))) {
-                        result -= 2 * (x.get(index) - y.get(index))
-                                * (x.get(index) - y.get(index)) / (x.get(index)
-                                + y.get(index));
+                        result += (x.get(index) - y.get(index))
+                                * (x.get(index) - y.get(index));
                     }
                 } else {
                     if (DataMineConstants.isAcceptableFloat(
                             x.get(index))) {
-                        result -= 2 * x.get(index);
+                        result += x.get(index) * x.get(index);
                     }
                 }
             }
@@ -95,10 +115,18 @@ public class ChiSquaredKernel extends Kernel {
                 if (!x.containsKey(index)
                         && DataMineConstants.isAcceptableFloat(
                         y.get(index))) {
-                    result -= 2 * y.get(index);
+                    result += y.get(index) * y.get(index);
                 }
             }
-            return (float) result;
+            result = Math.sqrt(result);
+            if (result < sigma) {
+                double sigQuot = result / sigma;
+                result = 2 / Math.PI * Math.acos(-sigQuot) - 2 / Math.PI
+                        * sigQuot * Math.sqrt(1 - sigQuot * sigQuot);
+                return (float) result;
+            } else {
+                return 0;
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -24,16 +25,20 @@ import java.util.Set;
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class ChiSquaredKernel extends Kernel {
+public class GeneralizedTStudentKernel extends Kernel {
 
-    public ChiSquaredKernel() {
+    private float d = 1f;
+
+    public GeneralizedTStudentKernel() {
     }
 
     /**
-     * @param x Feature value array.
-     * @param y Feature value array.
-     * @return
+     * @param d Kernel degree.
      */
+    public GeneralizedTStudentKernel(float d) {
+        this.d = d;
+    }
+
     @Override
     public float dot(float[] x, float[] y) {
         if ((x == null && y != null) || (x != null && y == null)) {
@@ -45,14 +50,16 @@ public class ChiSquaredKernel extends Kernel {
         if (x.length != y.length) {
             return Float.MAX_VALUE;
         }
-        double result = 1;
+        double result = 0;
         for (int i = 0; i < x.length; i++) {
             if (!DataMineConstants.isAcceptableFloat(x[i])
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result -= 2 * (x[i] - y[i]) * (x[i] - y[i]) / (x[i] + y[i]);
+            result += (x[i] - y[i]) * (x[i] - y[i]);
         }
+        result = Math.sqrt(result);
+        result = 1 / (1 + Math.pow(result, d));
         return (float) result;
     }
 
@@ -61,6 +68,7 @@ public class ChiSquaredKernel extends Kernel {
      * @param y Feature value sparse vector.
      * @return
      */
+    @Override
     public float dot(HashMap<Integer, Float> x, HashMap<Integer, Float> y) {
         if ((x == null || x.isEmpty())
                 && (y == null || y.isEmpty())) {
@@ -80,14 +88,13 @@ public class ChiSquaredKernel extends Kernel {
                     if (DataMineConstants.isAcceptableFloat(x.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             y.get(index))) {
-                        result -= 2 * (x.get(index) - y.get(index))
-                                * (x.get(index) - y.get(index)) / (x.get(index)
-                                + y.get(index));
+                        result += (x.get(index) - y.get(index))
+                                * (x.get(index) - y.get(index));
                     }
                 } else {
                     if (DataMineConstants.isAcceptableFloat(
                             x.get(index))) {
-                        result -= 2 * x.get(index);
+                        result += x.get(index) * x.get(index);
                     }
                 }
             }
@@ -95,9 +102,11 @@ public class ChiSquaredKernel extends Kernel {
                 if (!x.containsKey(index)
                         && DataMineConstants.isAcceptableFloat(
                         y.get(index))) {
-                    result -= 2 * y.get(index);
+                    result += y.get(index) * y.get(index);
                 }
             }
+            result = Math.sqrt(result);
+            result = 1 / (1 + Math.pow(result, d));
             return (float) result;
         }
     }
