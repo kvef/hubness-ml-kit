@@ -67,4 +67,54 @@ public class CauchyKernel extends Kernel {
             }
             result += (x[i] - y[i]) * (x[i] - y[i]);
         }
-        result = 1 / (1 + (resul
+        result = 1 / (1 + (result / sigma));
+        return (float) result;
+    }
+
+    /**
+     * @param x Feature value sparse vector.
+     * @param y Feature value sparse vector.
+     * @return
+     */
+    @Override
+    public float dot(HashMap<Integer, Float> x, HashMap<Integer, Float> y) {
+        if ((x == null || x.isEmpty())
+                && (y == null || y.isEmpty())) {
+            return 0;
+        } else if ((x == null || x.isEmpty())
+                && (y != null && !y.isEmpty())) {
+            return Float.MAX_VALUE;
+        } else if ((y == null || y.isEmpty())
+                && (x != null && !x.isEmpty())) {
+            return Float.MAX_VALUE;
+        } else {
+            Set<Integer> keysX = x.keySet();
+            Set<Integer> keysY = y.keySet();
+            double result = 0;
+            for (int index : keysX) {
+                if (y.containsKey(index)) {
+                    if (DataMineConstants.isAcceptableFloat(x.get(index))
+                            && DataMineConstants.isAcceptableFloat(
+                            y.get(index))) {
+                        result += (x.get(index) - y.get(index))
+                                * (x.get(index) - y.get(index));
+                    }
+                } else {
+                    if (DataMineConstants.isAcceptableFloat(
+                            x.get(index))) {
+                        result += x.get(index) * x.get(index);
+                    }
+                }
+            }
+            for (int index : keysY) {
+                if (!x.containsKey(index)
+                        && DataMineConstants.isAcceptableFloat(
+                        y.get(index))) {
+                    result += y.get(index) * y.get(index);
+                }
+            }
+            result = 1 / (1 + (result / sigma));
+            return (float) result;
+        }
+    }
+}
