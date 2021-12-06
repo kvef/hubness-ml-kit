@@ -35,4 +35,42 @@ public abstract class Kernel {
      * @param y float[] that is the feature value array.
      * @return float value that is the dot product in the mapped space.
      */
-    public abstract float 
+    public abstract float dot(float[] x, float[] y);
+
+    /**
+     * The dot product in the mapped space.
+     * 
+     * @param x HashMap<Integer, Float> representing sparse feature values.
+     * @param y HashMap<Integer, Float> representing sparse feature values.
+     * @return float value that is the dot product in the mapped space.
+     */
+    public abstract float dot(HashMap<Integer, Float> x,
+            HashMap<Integer, Float> y);
+
+    /**
+     * The dot product in the mapped space.
+     * 
+     * @param firstInstance DataInstance that is the first instance.
+     * @param secondInstance DataInstance that is the second instance.
+     * @return float value that is the dot product in the mapped space.
+     */
+    public float dot(DataInstance firstInstance, DataInstance secondInstance) {
+        if (firstInstance instanceof BOWInstance &&
+                secondInstance instanceof BOWInstance) {
+            return dot(((BOWInstance) firstInstance).getWordIndexesHash(),
+                    ((BOWInstance) secondInstance).getWordIndexesHash());
+        } else {
+            return dot(firstInstance.fAttr, secondInstance.fAttr);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        Gson gson = new Gson();
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getCanonicalName());
+        sb.append(":");
+        sb.append(gson.toJson(this, this.getClass()));
+        return sb.toString();
+    }
+}
