@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,14 +22,24 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Histogram Intersection Kernel is also known as the Min Kernel and has
- * been proven useful in image classification.
+ * The Multiquadric kernel can be used in the same situations as the Rational
+ * Quadratic kernel. As is the case with the Sigmoid kernel, it is also an
+ * example of an non-positive definite kernel.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class MinKernel extends Kernel {
+public class MultiQuadraticKernel extends Kernel {
 
-    public MinKernel() {
+    private float c = 1f;
+
+    public MultiQuadraticKernel() {
+    }
+
+    /**
+     * @param Reg. constant.
+     */
+    public MultiQuadraticKernel(float c) {
+        this.c = c;
     }
 
     /**
@@ -53,8 +64,9 @@ public class MinKernel extends Kernel {
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result += Math.min(x[i], y[i]);
+            result += (x[i] - y[i]) * (x[i] - y[i]);
         }
+        result = Math.sqrt(result + c * c);
         return (float) result;
     }
 
@@ -76,16 +88,31 @@ public class MinKernel extends Kernel {
             return Float.MAX_VALUE;
         } else {
             Set<Integer> keysX = x.keySet();
+            Set<Integer> keysY = y.keySet();
             double result = 0;
             for (int index : keysX) {
                 if (y.containsKey(index)) {
                     if (DataMineConstants.isAcceptableFloat(x.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             y.get(index))) {
-                        result += Math.min(x.get(index), y.get(index));
+                        result += (x.get(index) - y.get(index))
+                                * (x.get(index) - y.get(index));
+                    }
+                } else {
+                    if (DataMineConstants.isAcceptableFloat(
+                            x.get(index))) {
+                        result += x.get(index) * x.get(index);
                     }
                 }
             }
+            for (int index : keysY) {
+                if (!x.containsKey(index)
+                        && DataMineConstants.isAcceptableFloat(
+                        y.get(index))) {
+                    result += y.get(index) * y.get(index);
+                }
+            }
+            result = Math.sqrt(result + c * c);
             return (float) result;
         }
     }

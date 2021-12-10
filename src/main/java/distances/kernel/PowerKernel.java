@@ -21,14 +21,24 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Histogram Intersection Kernel is also known as the Min Kernel and has
- * been proven useful in image classification.
+ * The Power kernel is also known as the (unrectified) triangular kernel. It is
+ * an example of scale-invariant kernel (Sahbi and Fleuret, 2004) and is also
+ * only conditionally positive definite.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class MinKernel extends Kernel {
+public class PowerKernel extends Kernel {
 
-    public MinKernel() {
+    private float d = 4;
+
+    public PowerKernel() {
+    }
+
+    /**
+     * @param d Degree.
+     */
+    public PowerKernel(float d) {
+        this.d = d;
     }
 
     /**
@@ -53,8 +63,10 @@ public class MinKernel extends Kernel {
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result += Math.min(x[i], y[i]);
+            result += (x[i] - y[i]) * (x[i] - y[i]);
         }
+        result = Math.sqrt(result);
+        result = -Math.pow(result, d);
         return (float) result;
     }
 
@@ -70,23 +82,4 @@ public class MinKernel extends Kernel {
             return 0;
         } else if ((x == null || x.isEmpty())
                 && (y != null && !y.isEmpty())) {
-            return Float.MAX_VALUE;
-        } else if ((y == null || y.isEmpty())
-                && (x != null && !x.isEmpty())) {
-            return Float.MAX_VALUE;
-        } else {
-            Set<Integer> keysX = x.keySet();
-            double result = 0;
-            for (int index : keysX) {
-                if (y.containsKey(index)) {
-                    if (DataMineConstants.isAcceptableFloat(x.get(index))
-                            && DataMineConstants.isAcceptableFloat(
-                            y.get(index))) {
-                        result += Math.min(x.get(index), y.get(index));
-                    }
-                }
-            }
-            return (float) result;
-        }
-    }
-}
+   

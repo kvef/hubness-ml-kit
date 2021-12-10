@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,14 +22,28 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Histogram Intersection Kernel is also known as the Min Kernel and has
- * been proven useful in image classification.
+ * K(x,y) = (slope * xTy + c)^d
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class MinKernel extends Kernel {
+public class PolynomialKernel extends Kernel {
 
-    public MinKernel() {
+    private float slope = 1f;
+    private float c = 0.5f;
+    private float d = 2f;
+
+    public PolynomialKernel() {
+    }
+
+    /**
+     * @param slope Slope.
+     * @param c Linear constant.
+     * @param d Degree.
+     */
+    public PolynomialKernel(float slope, float c, float d) {
+        this.slope = slope;
+        this.c = c;
+        this.d = d;
     }
 
     /**
@@ -36,7 +51,6 @@ public class MinKernel extends Kernel {
      * @param y Feature value array.
      * @return
      */
-    @Override
     public float dot(float[] x, float[] y) {
         if ((x == null && y != null) || (x != null && y == null)) {
             return Float.MAX_VALUE;
@@ -53,8 +67,11 @@ public class MinKernel extends Kernel {
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result += Math.min(x[i], y[i]);
+            result += x[i] * y[i];
         }
+        result *= slope;
+        result += c;
+        result = Math.pow(result, d);
         return (float) result;
     }
 
@@ -82,10 +99,13 @@ public class MinKernel extends Kernel {
                     if (DataMineConstants.isAcceptableFloat(x.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             y.get(index))) {
-                        result += Math.min(x.get(index), y.get(index));
+                        result += x.get(index) * y.get(index);
                     }
                 }
             }
+            result *= slope;
+            result += c;
+            result = Math.pow(result, d);
             return (float) result;
         }
     }
