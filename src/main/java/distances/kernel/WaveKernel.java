@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,14 +22,22 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Spline kernel is given as a piece-wise cubic polynomial, as derived in
- * the works by Gunn (1998).
+ * The Wave kernel is also symmetric positive semi-definite (Huang, 2008).
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class SplineKernel extends Kernel {
+public class WaveKernel extends Kernel {
 
-    public SplineKernel() {
+    private float theta = (float) Math.PI / 2;
+
+    public WaveKernel() {
+    }
+
+    /**
+     * @param theta Kernel parameter (see formula).
+     */
+    public WaveKernel(float theta) {
+        this.theta = theta;
     }
 
     /**
@@ -47,17 +56,16 @@ public class SplineKernel extends Kernel {
         if (x.length != y.length) {
             return Float.MAX_VALUE;
         }
-        double result = 1;
+        double result = 0;
         for (int i = 0; i < x.length; i++) {
             if (!DataMineConstants.isAcceptableFloat(x[i])
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result *= (1 + x[i] * y[i] + x[i] * y[i] * Math.min(x[i], y[i])
-                    - Math.min(x[i], y[i]) * Math.min(x[i],
-                    y[i]) * (x[i] + y[i]) / 2 + 1 / 3f * Math.min(x[i], y[i])
-                    * Math.min(x[i], y[i]) * Math.min(x[i], y[i]));
+            result += (x[i] - y[i]) * (x[i] - y[i]);
         }
+        result = Math.sqrt(result);
+        result = (theta / result) * Math.sin(result / theta);
         return (float) result;
     }
 
@@ -80,32 +88,19 @@ public class SplineKernel extends Kernel {
         } else {
             Set<Integer> keysX = x.keySet();
             Set<Integer> keysY = y.keySet();
-            double result = 1;
+            double result = 0;
             for (int index : keysX) {
                 if (y.containsKey(index)) {
                     if (DataMineConstants.isAcceptableFloat(x.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             y.get(index))) {
-                        result *= (1 + x.get(index)
-                                * y.get(index) + x.get(index)
-                                * y.get(index) * Math.min(
-                                x.get(index), y.get(index))
-                                - Math.min(x.get(index),
-                                y.get(index))
-                                * Math.min(x.get(index),
-                                y.get(index)) * (x.get(index)
-                                + y.get(index)) / 2 + 1 / 3f
-                                * Math.min(x.get(index),
-                                y.get(index)) * Math.min(
-                                x.get(index), y.get(index))
-                                * Math.min(x.get(index),
-                                y.get(index)));
+                        result += (x.get(index) - y.get(index))
+                                * (x.get(index) - y.get(index));
                     }
                 } else {
                     if (DataMineConstants.isAcceptableFloat(
                             x.get(index))) {
-                        result *= (1 - 1 / 6f * x.get(index) * x.get(index)
-                                * x.get(index));
+                        result += x.get(index) * x.get(index);
                     }
                 }
             }
@@ -113,10 +108,11 @@ public class SplineKernel extends Kernel {
                 if (!x.containsKey(index)
                         && DataMineConstants.isAcceptableFloat(
                         y.get(index))) {
-                    result *= (1 - 1 / 6f * y.get(index) * y.get(index)
-                            * y.get(index));
+                    result += y.get(index) * y.get(index);
                 }
             }
+            result = Math.sqrt(result);
+            result = (theta / result) * Math.sin(result / theta);
             return (float) result;
         }
     }

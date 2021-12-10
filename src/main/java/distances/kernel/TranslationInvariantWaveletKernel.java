@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,14 +22,30 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Spline kernel is given as a piece-wise cubic polynomial, as derived in
- * the works by Gunn (1998).
- *
+ * This class implements the translation invariant wavelet kernel.
+ * 
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class SplineKernel extends Kernel {
+public class TranslationInvariantWaveletKernel extends Kernel {
 
-    public SplineKernel() {
+    private double a = 1; //Wavelet dilatation constant.
+
+    public TranslationInvariantWaveletKernel() {
+    }
+
+    /**
+     * @param a Wavelet dilatation constant.
+     */
+    public TranslationInvariantWaveletKernel(double a) {
+        this.a = a;
+    }
+
+    /**
+     * @param x Double value.
+     * @return
+     */
+    private double h(double x) {
+        return Math.cos(1.75 * x) * Math.exp(-0.5 * x * x);
     }
 
     /**
@@ -53,10 +70,7 @@ public class SplineKernel extends Kernel {
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result *= (1 + x[i] * y[i] + x[i] * y[i] * Math.min(x[i], y[i])
-                    - Math.min(x[i], y[i]) * Math.min(x[i],
-                    y[i]) * (x[i] + y[i]) / 2 + 1 / 3f * Math.min(x[i], y[i])
-                    * Math.min(x[i], y[i]) * Math.min(x[i], y[i]));
+            result *= h((x[i] - y[i]) / a);
         }
         return (float) result;
     }
@@ -86,26 +100,12 @@ public class SplineKernel extends Kernel {
                     if (DataMineConstants.isAcceptableFloat(x.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             y.get(index))) {
-                        result *= (1 + x.get(index)
-                                * y.get(index) + x.get(index)
-                                * y.get(index) * Math.min(
-                                x.get(index), y.get(index))
-                                - Math.min(x.get(index),
-                                y.get(index))
-                                * Math.min(x.get(index),
-                                y.get(index)) * (x.get(index)
-                                + y.get(index)) / 2 + 1 / 3f
-                                * Math.min(x.get(index),
-                                y.get(index)) * Math.min(
-                                x.get(index), y.get(index))
-                                * Math.min(x.get(index),
-                                y.get(index)));
+                        result *= h((x.get(index) - y.get(index)) / a);
                     }
                 } else {
                     if (DataMineConstants.isAcceptableFloat(
                             x.get(index))) {
-                        result *= (1 - 1 / 6f * x.get(index) * x.get(index)
-                                * x.get(index));
+                        result *= h(x.get(index) / a);
                     }
                 }
             }
@@ -113,8 +113,7 @@ public class SplineKernel extends Kernel {
                 if (!x.containsKey(index)
                         && DataMineConstants.isAcceptableFloat(
                         y.get(index))) {
-                    result *= (1 - 1 / 6f * y.get(index) * y.get(index)
-                            * y.get(index));
+                    result *= h(y.get(index) / a);
                 }
             }
             return (float) result;
