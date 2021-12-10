@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,24 +22,22 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Power kernel is also known as the (unrectified) triangular kernel. It is
- * an example of scale-invariant kernel (Sahbi and Fleuret, 2004) and is also
- * only conditionally positive definite.
+ * e^(-gamma * |x-y|^2)
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class PowerKernel extends Kernel {
+public class RBF extends Kernel {
 
-    private float d = 4;
+    private float gamma = 0.0025f; // Kernel width should be carefully set.
 
-    public PowerKernel() {
+    public RBF() {
     }
 
     /**
-     * @param d Degree.
+     * @param sigma Kernel width.
      */
-    public PowerKernel(float d) {
-        this.d = d;
+    public RBF(float gamma) {
+        this.gamma = gamma;
     }
 
     /**
@@ -65,8 +64,9 @@ public class PowerKernel extends Kernel {
             }
             result += (x[i] - y[i]) * (x[i] - y[i]);
         }
-        result = Math.sqrt(result);
-        result = -Math.pow(result, d);
+        result = -result;
+        result *= gamma;
+        result = Math.exp(result);
         return (float) result;
     }
 
@@ -112,8 +112,9 @@ public class PowerKernel extends Kernel {
                     result += y.get(index) * y.get(index);
                 }
             }
-            result = Math.sqrt(result);
-            result = -Math.pow(result, d);
+            result = -result;
+            result *= gamma;
+            result = Math.exp(result);
             return (float) result;
         }
     }

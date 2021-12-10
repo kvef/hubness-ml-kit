@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,24 +22,24 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Power kernel is also known as the (unrectified) triangular kernel. It is
- * an example of scale-invariant kernel (Sahbi and Fleuret, 2004) and is also
- * only conditionally positive definite.
+ * The Rational Quadratic kernel is less computationally intensive than the
+ * Gaussian kernel and can be used as an alternative when using the Gaussian
+ * becomes too expensive.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class PowerKernel extends Kernel {
+public class RationalQuadraticKernel extends Kernel {
 
-    private float d = 4;
+    private float c = 1f;
 
-    public PowerKernel() {
+    public RationalQuadraticKernel() {
     }
 
     /**
-     * @param d Degree.
+     * @param c Linear divisive constant.
      */
-    public PowerKernel(float d) {
-        this.d = d;
+    public RationalQuadraticKernel(float c) {
+        this.c = c;
     }
 
     /**
@@ -65,8 +66,7 @@ public class PowerKernel extends Kernel {
             }
             result += (x[i] - y[i]) * (x[i] - y[i]);
         }
-        result = Math.sqrt(result);
-        result = -Math.pow(result, d);
+        result = 1 - (result / (result + c));
         return (float) result;
     }
 
@@ -112,8 +112,7 @@ public class PowerKernel extends Kernel {
                     result += y.get(index) * y.get(index);
                 }
             }
-            result = Math.sqrt(result);
-            result = -Math.pow(result, d);
+            result = 1 - (result / (result + c));
             return (float) result;
         }
     }

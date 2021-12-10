@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,24 +22,25 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Power kernel is also known as the (unrectified) triangular kernel. It is
- * an example of scale-invariant kernel (Sahbi and Fleuret, 2004) and is also
- * only conditionally positive definite.
+ * tanh(slope * xTy + c)
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class PowerKernel extends Kernel {
+public class SigmoidKernel extends Kernel {
 
-    private float d = 4;
+    private float slope = 1f;
+    private float c = 0.5f;
 
-    public PowerKernel() {
+    public SigmoidKernel() {
     }
 
     /**
-     * @param d Degree.
+     * @param slope Slope.
+     * @param c Linear constant.
      */
-    public PowerKernel(float d) {
-        this.d = d;
+    public SigmoidKernel(float slope, float c) {
+        this.slope = slope;
+        this.c = c;
     }
 
     /**
@@ -63,10 +65,11 @@ public class PowerKernel extends Kernel {
                     || !DataMineConstants.isAcceptableFloat(y[i])) {
                 continue;
             }
-            result += (x[i] - y[i]) * (x[i] - y[i]);
+            result += x[i] * y[i];
         }
-        result = Math.sqrt(result);
-        result = -Math.pow(result, d);
+        result *= slope;
+        result += c;
+        result = Math.tanh(result);
         return (float) result;
     }
 
@@ -88,32 +91,19 @@ public class PowerKernel extends Kernel {
             return Float.MAX_VALUE;
         } else {
             Set<Integer> keysX = x.keySet();
-            Set<Integer> keysY = y.keySet();
             double result = 0;
             for (int index : keysX) {
                 if (y.containsKey(index)) {
                     if (DataMineConstants.isAcceptableFloat(x.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             y.get(index))) {
-                        result += (x.get(index) - y.get(index))
-                                * (x.get(index) - y.get(index));
-                    }
-                } else {
-                    if (DataMineConstants.isAcceptableFloat(
-                            x.get(index))) {
-                        result += x.get(index) * x.get(index);
+                        result += x.get(index) * y.get(index);
                     }
                 }
             }
-            for (int index : keysY) {
-                if (!x.containsKey(index)
-                        && DataMineConstants.isAcceptableFloat(
-                        y.get(index))) {
-                    result += y.get(index) * y.get(index);
-                }
-            }
-            result = Math.sqrt(result);
-            result = -Math.pow(result, d);
+            result *= slope;
+            result += c;
+            result = Math.tanh(result);
             return (float) result;
         }
     }

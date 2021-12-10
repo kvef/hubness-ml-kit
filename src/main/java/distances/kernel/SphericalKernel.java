@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -21,24 +22,23 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * The Power kernel is also known as the (unrectified) triangular kernel. It is
- * an example of scale-invariant kernel (Sahbi and Fleuret, 2004) and is also
- * only conditionally positive definite.
+ * The spherical kernel is similar to the circular kernel, but is positive
+ * definite in R3.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class PowerKernel extends Kernel {
+public class SphericalKernel extends Kernel {
 
-    private float d = 4;
+    private float sigma = 1f; // Kernel width should be carefully set.
 
-    public PowerKernel() {
+    public SphericalKernel() {
     }
 
     /**
-     * @param d Degree.
+     * @param sigma Kernel width.
      */
-    public PowerKernel(float d) {
-        this.d = d;
+    public SphericalKernel(float sigma) {
+        this.sigma = sigma;
     }
 
     /**
@@ -66,8 +66,13 @@ public class PowerKernel extends Kernel {
             result += (x[i] - y[i]) * (x[i] - y[i]);
         }
         result = Math.sqrt(result);
-        result = -Math.pow(result, d);
-        return (float) result;
+        if (result < sigma) {
+            double sigQuot = result / sigma;
+            result = 1 - (1.5 * sigQuot) + (0.5 * sigQuot * sigQuot * sigQuot);
+            return (float) result;
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -75,7 +80,6 @@ public class PowerKernel extends Kernel {
      * @param y Feature value sparse vector.
      * @return
      */
-    @Override
     public float dot(HashMap<Integer, Float> x, HashMap<Integer, Float> y) {
         if ((x == null || x.isEmpty())
                 && (y == null || y.isEmpty())) {
@@ -113,8 +117,14 @@ public class PowerKernel extends Kernel {
                 }
             }
             result = Math.sqrt(result);
-            result = -Math.pow(result, d);
-            return (float) result;
+            if (result < sigma) {
+                double sigQuot = result / sigma;
+                result = 1 - (1.5 * sigQuot)
+                        + (0.5 * sigQuot * sigQuot * sigQuot);
+                return (float) result;
+            } else {
+                return 0;
+            }
         }
     }
 }
