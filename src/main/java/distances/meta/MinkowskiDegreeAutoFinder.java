@@ -308,4 +308,67 @@ public class MinkowskiDegreeAutoFinder {
                 minimalHubRate = hubRate;
                 if (selectionCriterion == DegreeSelectionCriterion.HUB) {
                     bestExponent = expVal;
-                    bestMatrix 
+                    bestMatrix = dMat;
+                }
+            }
+            System.gc();
+        }
+    }
+
+    /**
+     * A script that utilizes the implemented method to find the optimal
+     * Minkowski exponent on a specified dataset, for which the user provides a
+     * path from the command line. Users can also specify the exponent ranges,
+     * as well as the neighborhood size and the selection criterion.
+     *
+     * @param args String[] representing the command line parameters, as
+     * specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-inFile", "Path to the input dataset.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-k", "Neighborhood size.", CommandLineParser.INTEGER,
+                true, false);
+        clp.addParam("-selectionCriterion", "'hub' or 'antihub' (no quotes).",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-expMin", "Minimal exponent to try.",
+                CommandLineParser.FLOAT, true, false);
+        clp.addParam("-expMax", "Maximal exponent to try.",
+                CommandLineParser.FLOAT, true, false);
+        clp.addParam("-expStep", "Exponent step to use during search.",
+                CommandLineParser.FLOAT, true, false);
+        clp.parseLine(args);
+        DataSet dset = SupervisedLoader.loadData(
+                (String) (clp.getParamValues("-inFile").get(0)), false);
+        float expMin = (Float) (clp.getParamValues("-expMin").get(0));
+        float expMax = (Float) (clp.getParamValues("-expMax").get(0));
+        float expStep = (Float) (clp.getParamValues("-expStep").get(0));
+        MinkowskiDegreeAutoFinder finder =
+                new MinkowskiDegreeAutoFinder(dset, expMin, expMax, expStep);
+        int k = (Integer) (clp.getParamValues("-k").get(0));
+        String selCriterionString = (String) (clp.getParamValues(
+                "-selectionCriterion").get(0));
+        finder.setNeighborhoodSize(k);
+        if (selCriterionString.equalsIgnoreCase("hub")) {
+            finder.setSelectionCriterion(DegreeSelectionCriterion.HUB);
+        } else if (selCriterionString.equalsIgnoreCase("antihub")) {
+            finder.setSelectionCriterion(DegreeSelectionCriterion.ANTIHUB);
+        } else {
+            throw new Exception("Bad selection criterion specification. Must be"
+                    + " 'hub' or 'antihub' (no quotes). Provided string was: "
+                    + selCriterionString);
+        }
+        finder.setNumThreads(DEFAULT_NUM_THREADS);
+        finder.setVerboseMode(true);
+        finder.examineParameterRange();
+        System.out.println("Best exponent " + finder.getBestExponent());
+        System.out.println("Computed hub rates:");
+        SOPLUtil.printArrayList(finder.listHubRates());
+        System.out.println("Computed antihub rates:");
+        SOPLUtil.printArrayList(finder.listAntiHubRates());
+        System.out.println("List of tested exponent values:");
+        SOPLUtil.printArrayList(finder.listAllTestedExponents());
+    }
+}
