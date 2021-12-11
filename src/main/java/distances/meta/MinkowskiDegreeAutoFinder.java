@@ -102,4 +102,124 @@ public class MinkowskiDegreeAutoFinder {
             throw new IllegalArgumentException("DataSet must not be empty.");
         }
         this.dset = dset;
-        if (minExp > maxEx
+        if (minExp > maxExp) {
+            throw new IllegalArgumentException("Maximum exponent lower than "
+                    + "minimum exponent. Error.");
+        }
+        this.minExp = minExp;
+        this.maxExp = maxExp;
+        this.stepExp = stepExp;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet to learn the optimal Minkowski exponent for.
+     * @param selectionCriterion DegreeSelectionCriterion used for determining
+     * the optimal exponent.
+     */
+    public MinkowskiDegreeAutoFinder(DataSet dset,
+            DegreeSelectionCriterion selectionCriterion) {
+        if (dset == null || dset.isEmpty()) {
+            throw new IllegalArgumentException("DataSet must not be empty.");
+        }
+        this.dset = dset;
+        this.selectionCriterion = selectionCriterion;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet to learn the optimal Minkowski exponent for.
+     * @param minExp Float value that is the minimum exponent to try.
+     * @param maxExp Float value that is the maximum exponent to try.
+     * @param stepExp Float value that is the step for the exponent search.
+     * @param selectionCriterion DegreeSelectionCriterion used for determining
+     * the optimal exponent.
+     */
+    public MinkowskiDegreeAutoFinder(DataSet dset, float minExp, float maxExp,
+            float stepExp, DegreeSelectionCriterion selectionCriterion) {
+        if (dset == null || dset.isEmpty()) {
+            throw new IllegalArgumentException("DataSet must not be empty.");
+        }
+        this.dset = dset;
+        if (minExp > maxExp) {
+            throw new IllegalArgumentException("Maximum exponent lower than "
+                    + "minimum exponent. Error.");
+        }
+        this.minExp = minExp;
+        this.maxExp = maxExp;
+        this.stepExp = stepExp;
+        this.selectionCriterion = selectionCriterion;
+    }
+
+    /**
+     * @return ArrayList<Float> of all tested Minkowski exponents.
+     */
+    public ArrayList<Float> listAllTestedExponents() {
+        return testedExponents;
+    }
+
+    /**
+     * @return ArrayList<Float> of all computed anti-hub rates for the tested
+     * exponents.
+     */
+    public ArrayList<Float> listAntiHubRates() {
+        return antiHubRates;
+    }
+
+    /**
+     * @return ArrayList<Float> of all computed hub occurrence rates for the
+     * tested exponents.
+     */
+    public ArrayList<Float> listHubRates() {
+        return hubRates;
+    }
+
+    /**
+     * @param selectionCriterion DegreeSelectionCriterion used for determining
+     * the optimal exponent.
+     */
+    public void setSelectionCriterion(
+            DegreeSelectionCriterion selectionCriterion) {
+        this.selectionCriterion = selectionCriterion;
+    }
+
+    /**
+     * @param numThreads Integer that is the number of threads to use for
+     * distance calculations.
+     */
+    public void setNumThreads(int numThreads) {
+        this.numThreads = numThreads;
+    }
+
+    /**
+     * @param k Integer value representing the neighborhood size to use in the
+     * calculations.
+     */
+    public void setNeighborhoodSize(int k) {
+        if (k <= 0) {
+            throw new IllegalArgumentException("Neighborhood size must be "
+                    + "positive.");
+        }
+        this.k = k;
+    }
+
+    /**
+     * @return float[][] representing the upper triangular distance matrix that
+     * corresponds to the best calculated Minkowski exponent value.
+     */
+    public float[][] getBestDistanceMatrix() {
+        return bestMatrix;
+    }
+
+    /**
+     * @return Float value that was determined to be the best according to the
+     * selected hubness-aware criterion.
+     */
+    public float getBestExponent() {
+        return bestExponent;
+    }
+
+    /**
+     * @return Combi
