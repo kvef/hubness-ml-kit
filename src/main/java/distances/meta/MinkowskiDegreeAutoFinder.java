@@ -222,4 +222,90 @@ public class MinkowskiDegreeAutoFinder {
     }
 
     /**
-     * @return Combi
+     * @return CombinedMetric object corresponding to the best computed
+     * Minkowski exponent.
+     */
+    public CombinedMetric getBestMetricObject() {
+        MinkowskiMetric met = new MinkowskiMetric(bestExponent);
+        CombinedMetric cmet =
+                new CombinedMetric(met, met, CombinedMetric.Mixer.SUM);
+        return cmet;
+    }
+
+    /**
+     * @param verbose Boolean value indicating whether to print out which
+     * exponent is currently being tested during iterations. This is meant to be
+     * used for script executions of the evaluation and the default false value
+     * should be used when the code is invoked from other classes in some
+     * internal calculations.
+     */
+    public void setVerboseMode(boolean verbose) {
+        this.verbose = verbose;
+    }
+
+    /**
+     * This method calculates the hub and anti-hub rates for the specified
+     * Minkowski exponent range.
+     */
+    public void examineParameterRange() throws Exception {
+        CombinedMetric cmet;
+        MinkowskiMetric met;
+        NeighborSetFinder nsf;
+        float[][] dMat;
+        float minimalAntiHubRate = Float.MAX_VALUE;
+        float minimalHubRate = Float.MAX_VALUE;
+        // Initialize the result lists.
+        int rangeNum = (int) Math.ceil((maxExp - minExp) / stepExp) + 1;
+        testedExponents = new ArrayList<>(rangeNum);
+        antiHubRates = new ArrayList<>(rangeNum);
+        hubRates = new ArrayList<>(rangeNum);
+        // Iterate.
+        for (float expVal = minExp; DataMineConstants.isPositive(
+                (maxExp - expVal)); expVal += stepExp) {
+            if (verbose) {
+                System.out.println("Testing for exponent value: " + expVal);
+            }
+            // Initialize the metric objects.
+            met = new MinkowskiMetric(expVal);
+            cmet = new CombinedMetric(met, met, CombinedMetric.Mixer.SUM);
+            // Calculate the distance matrix.
+            dMat = dset.calculateDistMatrixMultThr(cmet, numThreads);
+            // Calculate the neighbor sets.
+            nsf = new NeighborSetFinder(dset, dMat, cmet);
+            nsf.calculateNeighborSetsMultiThr(k, numThreads);
+            // Get the neighbor occurrence frequencies.
+            int[] occFreqs = nsf.getNeighborFrequencies();
+            // As proposed in the paper, so we follow the same convention.
+            int hubThreshold = 2 * k;
+            // Again, following what was proposed in the paper.
+            int antiHubThreshold = 0;
+            float numAntiHubs = 0;
+            float sumHubOccurrences = 0;
+            for (int i = 0; i < dset.size(); i++) {
+                if (occFreqs[i] >= hubThreshold) {
+                    sumHubOccurrences += occFreqs[i];
+                }
+                if (occFreqs[i] <= antiHubThreshold) {
+                    numAntiHubs++;
+                }
+            }
+            // Calculate the hub rate and anti-hub rate.
+            float antiHubRate = numAntiHubs / dset.size();
+            float hubRate = sumHubOccurrences / (dset.size() * k);
+            // Log the results.
+            testedExponents.add(expVal);
+            antiHubRates.add(antiHubRate);
+            hubRates.add(hubRate);
+            // Update the minimal hub and anti-hub rates.
+            if (antiHubRate < minimalAntiHubRate) {
+                minimalAntiHubRate = antiHubRate;
+                if (selectionCriterion == DegreeSelectionCriterion.ANTIHUB) {
+                    bestExponent = expVal;
+                    bestMatrix = dMat;
+                }
+            }
+            if (hubRate < minimalHubRate) {
+                minimalHubRate = hubRate;
+                if (selectionCriterion == DegreeSelectionCriterion.HUB) {
+                    bestExponent = expVal;
+                    bestMatrix 
