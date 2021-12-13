@@ -53,4 +53,41 @@ public class CosineMetric extends DistanceMeasure implements Serializable {
         MinkowskiMetric mm = new MinkowskiMetric(2);
         float normFirst = mm.norm(arrFirst);
         float normSecond = mm.norm(arrSecond);
-        if (DataMineConstants.isNonZe
+        if (DataMineConstants.isNonZero(normFirst)
+                && DataMineConstants.isNonZero(normSecond)) {
+            sum = sum / (normFirst * normSecond);
+        } else if (DataMineConstants.isZero(normFirst)
+                && DataMineConstants.isZero(normSecond)) {
+            sum = 1;
+        } else {
+            sum = -1;
+        }
+        return (1f - sum) * 0.5f;
+    }
+
+    @Override
+    public float dist(int[] arrFirst, int[] arrSecond) throws MetricException {
+        DistanceMeasure.assertArrays(arrFirst, arrSecond);
+        float sum = 0;
+        for (int i = 0; i < arrFirst.length; i++) {
+            if (!DataMineConstants.isAcceptableInt(arrFirst[i])
+                    || !DataMineConstants.isAcceptableInt(arrSecond[i])) {
+                continue;
+            }
+            sum += arrFirst[i] * arrSecond[i];
+        }
+        MinkowskiMetric mm = new MinkowskiMetric(2);
+        float normFirst = mm.norm(arrFirst);
+        float normSecond = mm.norm(arrSecond);
+        if (DataMineConstants.isNonZero(normFirst)
+                && DataMineConstants.isNonZero(normSecond)) {
+            sum = sum / (normFirst * normSecond);
+        } else if (DataMineConstants.isZero(normFirst)
+                && DataMineConstants.isZero(normSecond)) {
+            sum = 1;
+        } else {
+            sum = -1;
+        }
+        return (1f - sum) * 0.5f;
+    }
+}
