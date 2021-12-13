@@ -53,4 +53,16 @@ implements Serializable {
      * feature in the data instance identifiers that points towards the
      * corresponding matrix row/column index.
      */
-    public ImageMetricsFromClustering(
+    public ImageMetricsFromClustering(float[][] imageDistances,
+            int indexOfMatrixIndex) {
+        this.imageDistances = imageDistances;
+        this.indexOfMatrixIndex = indexOfMatrixIndex;
+    }
+
+    @Override
+    public float dist(DataInstance first, DataInstance second)
+            throws Exception {
+        return imageDistances[first.getIdentifier().iAttr[indexOfMatrixIndex]][
+                second.getIdentifier().iAttr[indexOfMatrixIndex]];
+    }
+}
