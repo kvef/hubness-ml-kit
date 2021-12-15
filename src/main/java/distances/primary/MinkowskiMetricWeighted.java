@@ -7,4 +7,120 @@
 * Foundation, either version 3 of the License, or (at your option) any later
 * version.
 * 
-* This program is distributed in the hope that it will be
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with
+* this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package distances.primary;
+
+import data.representation.DataInstance;
+import data.representation.util.DataMineConstants;
+import java.io.Serializable;
+
+/**
+ * Euclidean/Minkowski distance family.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class MinkowskiMetricWeighted extends DistanceMeasure
+implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
+
+    private float[] intWeights = null;
+    private float[] floatWeights = null;
+    private float p = 2;
+
+    /**
+     * @param intWeights Weights for ints.
+     * @param floatWeights Weights for floats.
+     * @constructor
+     */
+    public MinkowskiMetricWeighted(float[] intWeights, float[] floatWeights) {
+        this.intWeights = intWeights;
+        this.floatWeights = floatWeights;
+        this.p = 2;
+    }
+
+    /**
+     * @param p Defines the L_p Minkowski distance.
+     * @param intWeights Weights for ints.
+     * @param floatWeights Weights for floats
+     * @constructor
+     */
+    public MinkowskiMetricWeighted(int p, float[] intWeights,
+            float[] floatWeights) {
+        this.intWeights = intWeights;
+        this.floatWeights = floatWeights;
+        this.p = p;
+    }
+
+    @Override
+    public float dist(float[] arrFirst, float[] arrSecond)
+            throws MetricException {
+        DistanceMeasure.assertArrays(arrFirst, arrSecond);
+        float sum = 0;
+        for (int i = 0; i < arrFirst.length; i++) {
+            if (!DataMineConstants.isAcceptableFloat(arrFirst[i])
+                    || !DataMineConstants.isAcceptableFloat(arrSecond[i])) {
+                continue;
+            }
+            sum += floatWeights[i]
+                    * Math.pow(Math.abs(arrFirst[i] - arrSecond[i]), p);
+        }
+        sum = (float) Math.pow(sum, 1. / p);
+        return sum;
+    }
+
+    /**
+     * @param Float array.
+     * @return Norm of the given array.
+     */
+    public float norm(float[] fVector) {
+        if (fVector == null) {
+            return 0f;
+        }
+        float sum = 0f;
+        for (int i = 0; i < fVector.length; i++) {
+            if (!DataMineConstants.isAcceptableFloat(fVector[i])) {
+                continue;
+            }
+            sum += floatWeights[i] * Math.pow(Math.abs(fVector[i]), p);
+        }
+        sum = (float) Math.pow(sum, 1. / p);
+        return sum;
+    }
+
+    /**
+     * @param Integer array.
+     * @return Norm of the given array.
+     */
+    public float norm(int[] iVector) {
+        if (iVector == null) {
+            return 0f;
+        }
+        float sum = 0f;
+        for (int i = 0; i < iVector.length; i++) {
+            if (!DataMineConstants.isAcceptableFloat(iVector[i])) {
+                continue;
+            }
+            sum += intWeights[i] * Math.pow(Math.abs(iVector[i]), p);
+        }
+        sum = (float) Math.pow(sum, 1. / p);
+        return sum;
+    }
+
+    @Override
+    public float dist(int[] arrFirst, int[] arrSecond) throws MetricException {
+        DistanceMeasure.assertArrays(arrFirst, arrSecond);
+        float sum = 0;
+        for (int i = 0; i < arrFirst.length; i++) {
+            if (!DataMineConstants.isAcceptableFloat(arrFirst[i])
+                    || !DataMineConstants.isAcceptableFloat(arrSecond[i])) {
+                continue;
+            }
+            sum += intWeights[i]
+            
