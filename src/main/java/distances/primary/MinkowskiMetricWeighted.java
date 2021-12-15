@@ -123,4 +123,65 @@ implements Serializable {
                 continue;
             }
             sum += intWeights[i]
-            
+                    * Math.pow(Math.abs(arrFirst[i] - arrSecond[i]), p);
+        }
+        sum = (float) Math.pow(sum, 1. / p);
+        return sum;
+    }
+
+    /**
+     * @param first Data instance.
+     * @param second Data instance.
+     * @return Distance.
+     * @throws MetricException
+     */
+    public float dist(DataInstance first, DataInstance second)
+            throws MetricException {
+        DistanceMeasure.assertInstances(first, second);
+        float sum = 0f;
+        DistanceMeasure.assertInstances(first, second);
+        for (int i = 0; i < first.getNumFAtt(); i++) {
+            if (!DataMineConstants.isAcceptableFloat(first.fAttr[i])
+                    || !DataMineConstants.isAcceptableFloat(second.fAttr[i])) {
+                continue;
+            }
+            sum += floatWeights[i] * (float) Math.pow(Math.abs(
+                    (float) (first.fAttr[i] - second.fAttr[i])), p);
+        }
+        for (int i = 0; i < first.getNumIAtt(); i++) {
+            if (!DataMineConstants.isAcceptableInt(first.iAttr[i])
+                    || !DataMineConstants.isAcceptableInt(second.iAttr[i])) {
+                continue;
+            }
+            sum += intWeights[i] * (float) Math.pow(
+                    Math.abs((float) (first.iAttr[i] - second.iAttr[i])), p);
+        }
+        sum = (float) Math.pow(sum, 1. / p);
+        return sum;
+    }
+
+    /**
+     * @param instance Data instance.
+     * @return The norm.
+     */
+    public float norm(DataInstance instance) throws MetricException {
+        if (instance == null) {
+            return 0;
+        }
+        float sum = 0;
+        for (int i = 0; i < instance.getNumFAtt(); i++) {
+            if (!DataMineConstants.isAcceptableFloat(instance.fAttr[i])) {
+                continue;
+            }
+            sum += Math.pow(Math.abs((float) instance.fAttr[i]), p);
+        }
+        for (int i = 0; i < instance.getNumIAtt(); i++) {
+            if (!DataMineConstants.isAcceptableInt(instance.iAttr[i])) {
+                continue;
+            }
+            sum += Math.pow(Math.abs((float) instance.iAttr[i]), p);
+        }
+        sum = (float) Math.pow(sum, 1. / p);
+        return sum;
+    }
+}
