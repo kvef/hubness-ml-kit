@@ -23,4 +23,52 @@ import java.io.Serializable;
 /**
  * Maximal distance between some of the objects' features.
  *
- * @author Nenad 
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class MaxMetric extends DistanceMeasure implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public float dist(float[] arrFirst, float[] arrSecond)
+            throws MetricException {
+        DistanceMeasure.assertArrays(arrFirst, arrSecond);
+        float max = 0;
+        for (int i = 0; i < arrFirst.length; i++) {
+            if (!DataMineConstants.isAcceptableFloat(arrFirst[i])
+                    || !DataMineConstants.isAcceptableFloat(arrSecond[i])) {
+                continue;
+            }
+            max = (float) Math.max(max, Math.abs(arrFirst[i] - arrSecond[i]));
+        }
+        return max;
+    }
+
+    @Override
+    public float dist(int[] arrFirst, int[] arrSecond)
+            throws MetricException {
+        DistanceMeasure.assertArrays(arrFirst, arrSecond);
+        float max = 0;
+        for (int i = 0; i < arrFirst.length; i++) {
+            if (!DataMineConstants.isAcceptableFloat(arrFirst[i])
+                    || !DataMineConstants.isAcceptableFloat(arrSecond[i])) {
+                continue;
+            }
+            max = (float) Math.max(max, Math.abs(arrFirst[i] - arrSecond[i]));
+        }
+        return max;
+    }
+
+    public float dist(DataInstance first, DataInstance second)
+            throws MetricException {
+        DistanceMeasure.assertInstances(first, second);
+        float max = 0;
+        if (first.hasFloatAtt() && second.hasFloatAtt()) {
+            max = (float) Math.max(max, dist(first.fAttr, second.fAttr));
+        }
+        if (first.hasIntAtt() && second.hasIntAtt()) {
+            max = (float) Math.max(max, dist(first.iAttr, second.iAttr));
+        }
+        return max;
+    }
+}
