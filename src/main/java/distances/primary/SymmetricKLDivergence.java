@@ -100,4 +100,28 @@ implements Serializable {
         // non-zero values.
         float pc = ((float) (countNZ_Total - countNZ_P)
                 / (float) countNZ_P) * unknownPrior;
-        float qc = ((float) (c
+        float qc = ((float) (countNZ_Total - countNZ_Q)
+                / (float) countNZ_Q) * unknownPrior;
+        // Now let's calculate the final value.
+        float result = 0;
+        float pHelp, qHelp;
+        for (int i = beginIndex; i <= endIndex; i++) {
+            if (DataMineConstants.isPositive(p[i])) {
+                pHelp = Math.max((p[i] - pc), unknownPrior);
+            } else {
+                pHelp = unknownPrior;
+            }
+            if (DataMineConstants.isPositive(q[i])) {
+                qHelp = Math.max((q[i] - qc), unknownPrior);
+            } else {
+                qHelp = unknownPrior;
+            }
+            result += pHelp * Math.log(pHelp / qHelp);
+            result += qHelp * Math.log(qHelp / pHelp);
+        }
+        if (Float.isNaN(result)) {
+            result = Float.MAX_VALUE;
+        }
+        return (result / 2f);
+    }
+}
