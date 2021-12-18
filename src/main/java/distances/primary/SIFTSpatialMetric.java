@@ -35,4 +35,20 @@ public class SIFTSpatialMetric extends DistanceMeasure implements Serializable {
             throws MetricException {
         float result = 0;
         float factor = arrFirst[0] - arrSecond[0];
-        result +=
+        result += factor * factor;
+        factor = arrFirst[1] - arrSecond[1];
+        result += factor * factor;
+        return result;
+    }
+
+    /**
+     * @param first Data instance.
+     * @param second Data instance.
+     * @return Distance.
+     * @throws MetricException
+     */
+    public float dist(DataInstance first, DataInstance second)
+            throws MetricException {
+        return dist(first.fAttr, second.fAttr);
+    }
+}
