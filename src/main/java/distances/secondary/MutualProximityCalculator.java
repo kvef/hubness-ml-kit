@@ -241,4 +241,113 @@ implements Serializable {
          * @param cmet The CombinedMetric object used for primary distances.
          * @param nsf The NeighborSetFinder object.
          */
-        public DmCalculator(DataSe
+        public DmCalculator(DataSet dset, int startRow, int endRow,
+                float[][] distances, CombinedMetric cmet,
+                NeighborSetFinder nsf) {
+            this.startRow = startRow;
+            this.endRow = endRow;
+            this.distances = distances;
+            this.cmet = cmet;
+            this.dset = dset;
+            this.nsf = nsf;
+        }
+
+        @Override
+        public void run() {
+            try {
+                for (int i = startRow; i <= endRow; i++) {
+                    distances[i] = new float[dset.size() - i - 1];
+                    for (int j = i + 1; j < dset.size(); j++) {
+                        distances[i][j - i - 1] = dist(dset.data.get(i),
+                                dset.data.get(j), nsf.getKDistances()[i],
+                                nsf.getKDistances()[j]);
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    /**
+     * Worker class for multi-threaded calculations of the distance matrix.
+     */
+    class DmCalculatorFast implements Runnable {
+
+        int startRow;
+        int endRow;
+        float[][] distances;
+        CombinedMetric cmet;
+        DataSet dset;
+        NeighborSetFinder nsf;
+        int sampleSize;
+
+        /**
+         * The range is inclusive.
+         *
+         * @param dset DataSet object.
+         * @param startRow Index of the start row.
+         * @param endRow Index of the end row.
+         * @param distances The primary distance matrix.
+         * @param cmet The CombinedMetric object used for primary distances.
+         * @param nsf The NeighborSetFinder object.
+         * @param sampleSize Integer that is the sampling size.
+         */
+        public DmCalculatorFast(DataSet dset, int startRow, int endRow,
+                float[][] distances, CombinedMetric cmet,
+                int sampleSize) {
+            this.startRow = startRow;
+            this.endRow = endRow;
+            this.distances = distances;
+            this.cmet = cmet;
+            this.dset = dset;
+            this.sampleSize = sampleSize;
+        }
+
+        /**
+         * Gets a distance sample.
+         *
+         * @param index Integer index to get the distance sample for.
+         * @return float[] sample of distances.
+         */
+        private float[] sampleDists(int index) {
+            int size = dMatPrimary.length;
+            int[] sampleIndexes = null;
+            try {
+                sampleIndexes = UniformSampler.getSample(size, sampleSize);
+            } catch (Exception e) {
+            }
+            float[] dSample = new float[size];
+            for (int i = 0; i < sampleSize; i++) {
+                int maxIndex = Math.max(sampleIndexes[i], index);
+                int minIndex = Math.min(sampleIndexes[i], index);
+                if (maxIndex != minIndex) {
+                    dSample[i] = dMatPrimary[minIndex][maxIndex - minIndex - 1];
+                } else {
+                    dSample[i] = 0;
+                }
+            }
+            return dSample;
+        }
+
+        @Override
+        public void run() {
+            try {
+                for (int i = startRow; i <= endRow; i++) {
+                    distances[i] = new float[dset.size() - i - 1];
+                    for (int j = i + 1; j < dset.size(); j++) {
+                        distances[i][j - i - 1] = distFast(
+                                dMatPrimary[i][j - i - 1],
+                                sampleDists(i),
+                                sampleDists(j));
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    /**
+     * Calculate the secondary distance matrix. This method is single-threaded.
+     *
+     * @return The secondary distance matrix.
+  
