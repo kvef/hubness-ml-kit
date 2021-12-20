@@ -143,4 +143,102 @@ implements Serializable {
      * @param nsf NeighborSetFinder object.
      * @param numThreads Number of threads to use.
      * @return float[][] representing the upper triangular secondary MP distance
-     * matri
+     * matrix.
+     * @throws Exception
+     */
+    public float[][] calculateSecondaryDistMatrixMultThr(NeighborSetFinder nsf,
+            int numThreads) throws Exception {
+        if (dset.isEmpty()) {
+            return null;
+        } else {
+            float[][] distances = new float[dset.size()][];
+            int size = dset.size();
+            int chunkSize = size / numThreads;
+            Thread[] threads = new Thread[numThreads];
+            for (int i = 0; i < numThreads - 1; i++) {
+                threads[i] = new Thread(new DmCalculator(
+                        dset, i * chunkSize, (i + 1) * chunkSize - 1,
+                        distances, cmet, nsf));
+                threads[i].start();
+            }
+            threads[numThreads - 1] = new Thread(new DmCalculator(dset,
+                    (numThreads - 1) * chunkSize, size - 1,
+                    distances, cmet, nsf));
+            threads[numThreads - 1].start();
+            for (int i = 0; i < numThreads; i++) {
+                if (threads[i] != null) {
+                    try {
+                        threads[i].join();
+                    } catch (Throwable t) {
+                    }
+                }
+            }
+            return distances;
+        }
+    }
+
+    /**
+     * Calculate the secondary distance matrix on the data in a multi-threaded
+     * way, with sampling for speed-up.
+     *
+     * @param numThreads Integer that is the number of threads to use.
+     * @param samplingSize Integer that is the size of the sample.
+     * @return float[][] representing the upper triangular secondary MP distance
+     * matrix.
+     * @throws Exception
+     */
+    public float[][] calculateSecondaryDistMatrixMultThrFast(
+            int numThreads, int samplingSize) throws Exception {
+        if (dset.isEmpty()) {
+            return null;
+        } else {
+            samplingSize = Math.min(samplingSize, (int) (dset.size() * 0.8f));
+            float[][] distances = new float[dset.size()][];
+            int size = dset.size();
+            int chunkSize = size / numThreads;
+            Thread[] threads = new Thread[numThreads];
+            for (int i = 0; i < numThreads - 1; i++) {
+                threads[i] = new Thread(new DmCalculatorFast(
+                        dset, i * chunkSize, (i + 1) * chunkSize - 1,
+                        distances, cmet, samplingSize));
+                threads[i].start();
+            }
+            threads[numThreads - 1] = new Thread(new DmCalculatorFast(dset,
+                    (numThreads - 1) * chunkSize, size - 1,
+                    distances, cmet, samplingSize));
+            threads[numThreads - 1].start();
+            for (int i = 0; i < numThreads; i++) {
+                if (threads[i] != null) {
+                    try {
+                        threads[i].join();
+                    } catch (Throwable t) {
+                    }
+                }
+            }
+            return distances;
+        }
+    }
+
+    /**
+     * Worker class for multi-threaded calculations of the distance matrix.
+     */
+    class DmCalculator implements Runnable {
+
+        int startRow;
+        int endRow;
+        float[][] distances;
+        CombinedMetric cmet;
+        DataSet dset;
+        NeighborSetFinder nsf;
+
+        /**
+         * The range is inclusive.
+         *
+         * @param dset DataSet object.
+         * @param startRow Index of the start row.
+         * @param endRow Index of the end row.
+         * @param distances The primary distance matrix.
+         * @param cmet The CombinedMetric object used for primary distances.
+         * @param nsf The NeighborSetFinder object.
+         */
+        public DmCalculator(DataSe
