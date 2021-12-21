@@ -350,4 +350,83 @@ implements Serializable {
      * Calculate the secondary distance matrix. This method is single-threaded.
      *
      * @return The secondary distance matrix.
-  
+     */
+    public float[][] getTransformedDMat() {
+        float mp;
+        if (dMatPrimary != null && dMatPrimary.length > 0) {
+            float[][] dMatSecondary = new float[dMatPrimary.length][];
+            for (int i = 0; i < dMatPrimary.length; i++) {
+                dMatSecondary[i] = new float[dMatPrimary[i].length];
+                for (int j = 0; j < dMatSecondary[i].length; j++) {
+                    mp = (float) ((1
+                            - NormalDistributionCalculator.PhiCumulative(
+                            dMatPrimary[i][j], distMeans[i],
+                            distStDevs[i])) * (1
+                            - NormalDistributionCalculator.PhiCumulative(
+                            dMatPrimary[i][j], distMeans[i + j + 1],
+                            distStDevs[i + j + 1])));
+                    dMatSecondary[i][j] = 1 - mp;
+                }
+            }
+            return dMatSecondary;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a secondary similarity matrix where the entries are the mutual
+     * proximity scores between the points.
+     *
+     * @return The secondary similarity matrix.
+     */
+    public float[][] transformToSimilarityMat() {
+        float mp;
+        if (dMatPrimary != null && dMatPrimary.length > 0) {
+            float[][] sMatSecondary = new float[dMatPrimary.length][];
+            for (int i = 0; i < dMatPrimary.length; i++) {
+                sMatSecondary[i] = new float[dMatPrimary[i].length];
+                for (int j = 0; j < sMatSecondary[i].length; j++) {
+                    mp = (float) ((1
+                            - NormalDistributionCalculator.PhiCumulative(
+                            dMatPrimary[i][j], distMeans[i], distStDevs[i]))
+                            * (1 - NormalDistributionCalculator.PhiCumulative(
+                            dMatPrimary[i][j], distMeans[i + j + 1],
+                            distStDevs[i + j + 1])));
+                    sMatSecondary[i][j] = mp;
+                }
+            }
+            return sMatSecondary;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public float dist(DataInstance firstInstance,
+            DataInstance secondInstance) throws Exception {
+        if (dMatPrimary != null && dMatPrimary.length > 0 && cmet != null
+                && dset != null && !dset.isEmpty()) {
+            // First we get the basic distance statistics.
+            double distMeanFirst = 0;
+            double distMeanSecond = 0;
+            double distStDevFirst = 0;
+            double distStDevSecond = 0;
+            float[] distsFirst = new float[dMatPrimary.length];
+            float[] distsSecond = new float[dMatPrimary.length];
+            for (int i = 0; i < distsFirst.length; i++) {
+                distsFirst[i] = cmet.dist(firstInstance, dset.getInstance(i));
+                distMeanFirst = ((float) i / (float) (i + 1))
+                        * distMeanFirst + (1f / (float) (i + 1))
+                        * distsFirst[i];
+                distsSecond[i] = cmet.dist(secondInstance, dset.getInstance(i));
+                distMeanSecond = ((float) i / (float) (i + 1))
+                        * distMeanSecond + (1f / (float) (i + 1))
+                        * distsSecond[i];
+            }
+            for (int i = 0; i < distsFirst.length; i++) {
+                distStDevFirst = ((float) i / (float) (i + 1))
+                        * distStDevFirst + (1f / (float) (i + 1))
+                        * (distsFirst[i]
+                        - distMeanFirst) * (distsFirst[i] - distMeanFirst);
+                distStDevSecon
