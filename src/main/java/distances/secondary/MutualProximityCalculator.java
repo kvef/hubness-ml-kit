@@ -429,4 +429,85 @@ implements Serializable {
                         * distStDevFirst + (1f / (float) (i + 1))
                         * (distsFirst[i]
                         - distMeanFirst) * (distsFirst[i] - distMeanFirst);
-                distStDevSecon
+                distStDevSecond = ((float) i / (float) (i + 1))
+                        * distStDevSecond + (1f / (float) (i + 1))
+                        * (distsSecond[i] - distMeanSecond) * (distsSecond[i]
+                        - distMeanSecond);
+            }
+            distStDevFirst = Math.sqrt(distStDevFirst);
+            distStDevSecond = Math.sqrt(distStDevSecond);
+            float distFS = cmet.dist(firstInstance, secondInstance);
+            float mp = (float) ((1
+                    - NormalDistributionCalculator.PhiCumulative(
+                    distFS, distMeanFirst, distStDevFirst))
+                    * (1 - NormalDistributionCalculator.PhiCumulative(distFS,
+                    distMeanSecond, distStDevSecond)));
+            return 1 - mp;
+        } else {
+            return Float.MAX_VALUE;
+        }
+    }
+
+    /**
+     * Calculates the distance based on mutual proximity.
+     *
+     * @param firstInstance First DataInstance.
+     * @param secondInstance Second DataInstance.
+     * @param distsFirst Distances from the first point to other points in the
+     * data, used to build a distance model.
+     * @param distsSecond Distances from the second point to other points in the
+     * data, used to build a distance model.
+     * @return Float value that is the distance based on mutual proximity.
+     * @throws Exception
+     */
+    public float dist(DataInstance firstInstance, DataInstance secondInstance,
+            float[] distsFirst, float[] distsSecond) throws Exception {
+        if (dMatPrimary != null && dMatPrimary.length > 0 && cmet != null
+                && dset != null && !dset.isEmpty()) {
+            // First we get the basic distance statistics.
+            double distMeanFirst = 0;
+            double distMeanSecond = 0;
+            double distStDevFirst = 0;
+            double distStDevSecond = 0;
+            for (int i = 0; i < distsFirst.length; i++) {
+                distMeanFirst = ((float) i / (float) (i + 1))
+                        * distMeanFirst + (1f / (float) (i + 1))
+                        * distsFirst[i];
+            }
+            for (int i = 0; i < distsFirst.length; i++) {
+                distStDevFirst = ((float) i / (float) (i + 1))
+                        * distStDevFirst + (1f / (float) (i + 1))
+                        * (distsFirst[i]
+                        - distMeanFirst) * (distsFirst[i] - distMeanFirst);
+            }
+            for (int i = 0; i < distsSecond.length; i++) {
+                distMeanSecond = ((float) i / (float) (i + 1))
+                        * distMeanSecond + (1f / (float) (i + 1))
+                        * distsSecond[i];
+            }
+            for (int i = 0; i < distsSecond.length; i++) {
+                distStDevSecond = ((float) i / (float) (i + 1))
+                        * distStDevSecond + (1f / (float) (i + 1))
+                        * (distsSecond[i] - distMeanSecond) * (distsSecond[i]
+                        - distMeanSecond);
+            }
+            distStDevFirst = Math.sqrt(distStDevFirst);
+            distStDevSecond = Math.sqrt(distStDevSecond);
+            float distFS = cmet.dist(firstInstance, secondInstance);
+            float mp = (float) ((1 - NormalDistributionCalculator.PhiCumulative(
+                    distFS, distMeanFirst, distStDevFirst)) * (1
+                    - NormalDistributionCalculator.PhiCumulative(distFS,
+                    distMeanSecond, distStDevSecond)));
+            return 1 - mp;
+        } else {
+            return Float.MAX_VALUE;
+        }
+    }
+
+    /**
+     * Calculates the distance based on mutual proximity.
+     *
+     * @param distance Float that is the distance between the instances.
+     * @param distsFirst Distances from the first point to other points in the
+     * data, used to build a distance model.
+     * @param distsSecond Distances from the second point to other points in the
