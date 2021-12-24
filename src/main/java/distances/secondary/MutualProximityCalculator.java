@@ -511,3 +511,82 @@ implements Serializable {
      * @param distsFirst Distances from the first point to other points in the
      * data, used to build a distance model.
      * @param distsSecond Distances from the second point to other points in the
+     * data, used to build a distance model.
+     * @param Integer that is the sample size.
+     * @return Float value that is the distance based on mutual proximity.
+     * @throws Exception
+     */
+    public static float distFast(float distance, float[] distsFirst,
+            float[] distsSecond, int sampleSize) throws Exception {
+        // First we get the basic distance statistics.
+        double distMeanFirst = 0;
+        double distMeanSecond = 0;
+        double distStDevFirst = 0;
+        double distStDevSecond = 0;
+        int numFirstSample = Math.min(sampleSize, distsFirst.length);
+        int numSecondSample = Math.min(sampleSize, distsSecond.length);
+        int[] fSample = UniformSampler.getSample(distsFirst.length,
+                numFirstSample);
+        int[] sSample = UniformSampler.getSample(distsSecond.length,
+                numSecondSample);
+        for (int i = 0; i < numFirstSample; i++) {
+            distMeanFirst = ((float) i / (float) (i + 1))
+                    * distMeanFirst + (1f / (float) (i + 1)) * distsFirst[
+                    fSample[i]];
+        }
+        for (int i = 0; i < numFirstSample; i++) {
+            distStDevFirst = ((float) i / (float) (i + 1))
+                    * distStDevFirst + (1f / (float) (i + 1)) * (distsFirst[
+                    fSample[i]]
+                    - distMeanFirst) * (distsFirst[fSample[i]] - distMeanFirst);
+        }
+        for (int i = 0; i < numSecondSample; i++) {
+            distMeanSecond = ((float) i / (float) (i + 1))
+                    * distMeanSecond + (1f / (float) (i + 1)) * distsSecond[
+                    sSample[i]];
+        }
+        for (int i = 0; i < numSecondSample; i++) {
+            distStDevSecond = ((float) i / (float) (i + 1))
+                    * distStDevSecond + (1f / (float) (i + 1))
+                    * (distsSecond[sSample[i]] - distMeanSecond) * (distsSecond[
+                    sSample[i]] - distMeanSecond);
+        }
+        distStDevFirst = Math.sqrt(distStDevFirst);
+        distStDevSecond = Math.sqrt(distStDevSecond);
+        float mp = (float) ((1 - NormalDistributionCalculator.PhiCumulative(
+                distance, distMeanFirst, distStDevFirst)) * (1
+                - NormalDistributionCalculator.PhiCumulative(distance,
+                distMeanSecond, distStDevSecond)));
+        return 1 - mp;
+    }
+
+    /**
+     * Calculates the distance based on mutual proximity.
+     *
+     * @param distance Float that is the distance between the instances.
+     * @param distsFirst Distances from the first point to other points in the
+     * data, used to build a distance model.
+     * @param distsSecond Distances from the second point to other points in the
+     * data, used to build a distance model.
+     * @return Float value that is the distance based on mutual proximity.
+     * @throws Exception
+     */
+    public static float distFast(float distance, float[] distsFirst,
+            float[] distsSecond) throws Exception {
+        // First we get the basic distance statistics.
+        double distMeanFirst = 0;
+        double distMeanSecond = 0;
+        double distStDevFirst = 0;
+        double distStDevSecond = 0;
+        int sampleSize = Math.min(distsFirst.length, distsSecond.length);
+        for (int i = 0; i < sampleSize; i++) {
+            distMeanFirst += distsFirst[i];
+            distMeanSecond += distsSecond[i];
+        }
+        distMeanFirst /= sampleSize;
+        distMeanSecond /= sampleSize;
+        for (int i = 0; i < sampleSize; i++) {
+            distStDevFirst += (distsFirst[i] - distMeanFirst)
+                    * (distsFirst[i] - distMeanFirst);
+            distStDevSecond += (distsSecond[i] - distMeanSecond)
+                    * 
