@@ -589,4 +589,43 @@ implements Serializable {
             distStDevFirst += (distsFirst[i] - distMeanFirst)
                     * (distsFirst[i] - distMeanFirst);
             distStDevSecond += (distsSecond[i] - distMeanSecond)
-                    * 
+                    * (distsSecond[i] - distMeanSecond);
+        }
+        distStDevFirst /= sampleSize;
+        distStDevSecond /= sampleSize;
+        distStDevFirst = Math.sqrt(distStDevFirst);
+        distStDevSecond = Math.sqrt(distStDevSecond);
+        float mp = (float) ((1 - NormalDistributionCalculator.PhiCumulative(
+                distance, distMeanFirst, distStDevFirst)) * (1
+                - NormalDistributionCalculator.PhiCumulative(distance,
+                distMeanSecond, distStDevSecond)));
+        return 1 - mp;
+    }
+
+    /**
+     *
+     * @param firstInstance First DataInstance.
+     * @param secondInstance Second DataInstance.
+     * @param distMeanFirst Mean values of the distance from the first point.
+     * @param distMeanSecond Mean values of the distance from the second point.
+     * @param distStDevFirst Standard deviation of distances from the first
+     * point.
+     * @param distStDevSecond Standard deviation of distances from the second
+     * point.
+     * @return Float value that is the distance based on mutual proximity.
+     * @throws Exception
+     */
+    public float dist(DataInstance firstInstance, DataInstance secondInstance,
+            float distMeanFirst, float distMeanSecond, float distStDevFirst,
+            float distStDevSecond) throws Exception {
+        if (cmet == null) {
+            return Float.MAX_VALUE;
+        }
+        float distFS = cmet.dist(firstInstance, secondInstance);
+        float mp = (float) ((1 - NormalDistributionCalculator.PhiCumulative(
+                distFS, distMeanFirst, distStDevFirst)) * (1
+                - NormalDistributionCalculator.PhiCumulative(distFS,
+                distMeanSecond, distStDevSecond)));
+        return 1 - mp;
+    }
+}
