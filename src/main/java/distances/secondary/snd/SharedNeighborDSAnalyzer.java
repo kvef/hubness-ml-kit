@@ -120,4 +120,74 @@ public class SharedNeighborDSAnalyzer {
             int memCleanCount = 0;
             // Go through all the noise and mislabeling levels that were
             // specified in the configuration file. No noise and no mislabeling
-            // is also an option, a 
+            // is also an option, a default one at that.
+            for (float noise = noiseMin; noise <= noiseMax; noise +=
+                    noiseStep) {
+                for (float ml = mlMin; ml <= mlMax; ml += mlStep) {
+                    if (++memCleanCount % 5 == 0) {
+                        System.gc();
+                    }
+                    currDSet = originalDSet.copy();
+                    if (ml > 0) {
+                        currDSet.induceMislabeling(ml, numCategories);
+                    }
+                    if (noise > 0) {
+                        currDSet.addGaussianNoiseToNormalizedCollection(
+                                noise, 0.1f);
+                    }
+                    if (hubnessWeightedSND) {
+                        currOutDSDir = new File(outDir,
+                                dsFile.getName().substring(
+                                0, dsFile.getName().lastIndexOf("."))
+                                + "SNH" + this.thetaSimhub + File.separator
+                                + "k" + kMax + File.separator + "ml" + ml
+                                + File.separator + "noise" + noise);
+                    } else {
+                        currOutDSDir = new File(outDir,
+                                dsFile.getName().substring(0,
+                                dsFile.getName().lastIndexOf("."))
+                                + "SN" + File.separator + "k" + kMax
+                                + File.separator + "ml" + ml + File.separator
+                                + "noise" + noise);
+                    }
+                    FileUtil.createDirectory(currOutDSDir);
+                    currCmet = dsMetric.get(counter);
+                    float[] cP = currDSet.getClassPriors();
+
+                    // Perform initial calculations.
+
+                    NeighborSetFinder nsfTemp = new NeighborSetFinder(
+                            currDSet, currCmet);
+                    nsfTemp.calculateDistances();
+                    nsfTemp.calculateNeighborSetsMultiThr(kSND, 6);
+
+                    float[][] dMatPrimary = nsfTemp.getDistances();
+                    // Primary distance analysis.
+                    float maxPrimary = 0;
+                    float minPrimary = Float.MAX_VALUE;
+                    for (int i = 0; i < dMatPrimary.length; i++) {
+                        for (int j = 0; j < dMatPrimary[i].length; j++) {
+                            maxPrimary = Math.max(maxPrimary,
+                                    dMatPrimary[i][j]);
+                            minPrimary = Math.min(minPrimary,
+                                    dMatPrimary[i][j]);
+                        }
+                    }
+                    double intraSumPrimary = 0;
+                    double interSumPrimary = 0;
+                    double intraNumPrimary = 0;
+                    double interNumPrimary = 0;
+                    // The distribution of intra- and inter-class primary
+                    // distances, with 50 bins.
+                    double[] intraDistrPrimary = new double[50];
+                    double[] interDistrPrimary = new double[50];
+                    for (int i = 0; i < dMatPrimary.length; i++) {
+                        for (int j = 0; j < dMatPrimary[i].length; j++) {
+                            // Re-scale the primary distances.
+                            dMatPrimary[i][j] = (dMatPrimary[i][j]
+                                    - minPrimary) / (maxPrimary - minPrimary);
+                            if (currDSet.getLabelOf(i) == currDSet.
+                                    getLabelOf(i + j + 1)) {
+                                intraSumPrimary += dMatPrimary[i][j];
+                                intraNumPrimary++;
+                 
