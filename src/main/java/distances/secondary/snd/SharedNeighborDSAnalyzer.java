@@ -258,4 +258,74 @@ public class SharedNeighborDSAnalyzer {
                     double interNum = 0;
                     double[] intraDistr = new double[50];
                     double[] interDistr = new double[50];
-                    
+                    // The same analysis as in the primary case above.
+                    for (int i = 0; i < dMatSecondary.length; i++) {
+                        for (int j = 0; j < dMatSecondary[i].length; j++) {
+                            dMatSecondary[i][j] = (dMatSecondary[i][j]
+                                    - min) / (max - min);
+                            if (currDSet.getLabelOf(i)
+                                    == currDSet.getLabelOf(i + j + 1)) {
+                                intraSum += dMatSecondary[i][j];
+                                intraNum++;
+                                if (dMatSecondary[i][j] < 1) {
+                                    intraDistr[(int)
+                                            (dMatSecondary[i][j] * 50)]++;
+                                } else {
+                                    intraDistr[49]++;
+                                }
+                            } else {
+                                interSum += dMatSecondary[i][j];
+                                interNum++;
+                                if (dMatSecondary[i][j] < 1) {
+                                    interDistr[(int) (dMatSecondary[i][j]
+                                            * 50)]++;
+                                } else {
+                                    interDistr[49]++;
+                                }
+                            }
+                        }
+                    }
+                    double interAvg = interSum / interNum;
+                    double intraAvg = intraSum / intraNum;
+                    double avgD = interSum + intraSum;
+                    avgD /= (interNum + intraNum);
+                    // Normalize by the overall average distance.
+                    double interAvgRatio = interAvg / avgD;
+                    double intraAvgRatio = intraAvg / avgD;
+                    for (int i = 0; i < 50; i++) {
+                        interDistr[i] /= interNum;
+                        intraDistr[i] /= intraNum;
+                    }
+                    // Make a distance calculator out of snf.
+                    SharedNeighborCalculator snc;
+                    if (hubnessWeightedSND) {
+                        snc = new SharedNeighborCalculator(snf,
+                                SharedNeighborCalculator.
+                                WeightingType.HUBNESS_INFORMATION);
+                    } else {
+                        snc = new SharedNeighborCalculator(snf,
+                                SharedNeighborCalculator.WeightingType.NONE);
+                    }
+
+                    NeighborSetFinder nsf = new NeighborSetFinder(
+                            currDSet, dMatSecondary, snc);
+                    nsf.calculateNeighborSetsMultiThr(kMax, 6);
+
+                    // Silhouette index is often used in cluster analysis
+                    // and here we use it to compare how well the data is
+                    // separated into clusters in the primary and the
+                    // secondary metric space.
+                    // First we look at the SNN metric space.
+                    QIndexSilhouette silIndex = new QIndexSilhouette(
+                            currDSet.countCategories(),
+                            currDSet.obtainLabelArray(), currDSet);
+                    silIndex.setDistanceMatrix(dMatSecondary);
+                    silIndex.hubnessArray = nsf.getNeighborFrequencies();
+                    float silData = silIndex.validity();
+                    // Here we look at the primary metric space.
+                    silIndex = new QIndexSilhouette(
+                            currDSet.countCategories(),
+                            currDSet.obtainLabelArray(), currDSet);
+                    silIndex.setDistanceMatrix(dMatPrimary);
+                    silIndex.hubnessArray = nsfTemp.getNeighborFrequencies();
+             
