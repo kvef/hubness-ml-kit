@@ -190,4 +190,72 @@ public class SharedNeighborDSAnalyzer {
                                     getLabelOf(i + j + 1)) {
                                 intraSumPrimary += dMatPrimary[i][j];
                                 intraNumPrimary++;
-                 
+                                if (dMatPrimary[i][j] < 1) {
+                                    intraDistrPrimary[(int)
+                                            (dMatPrimary[i][j] * 50)]++;
+                                } else {
+                                    intraDistrPrimary[49]++;
+                                }
+                            } else {
+                                interSumPrimary += dMatPrimary[i][j];
+                                interNumPrimary++;
+                                if (dMatPrimary[i][j] < 1) {
+                                    interDistrPrimary[(int)
+                                            (dMatPrimary[i][j] * 50)]++;
+                                } else {
+                                    interDistrPrimary[49]++;
+                                }
+                            }
+                        }
+                    }
+                    // Average inter- and intra- class primary distances.
+                    double interAvgPrimary =
+                            interSumPrimary / interNumPrimary;
+                    double intraAvgPrimary =
+                            intraSumPrimary / intraNumPrimary;
+                    double avgDPrimary = interSumPrimary + intraSumPrimary;
+                    avgDPrimary /= (interNumPrimary + intraNumPrimary);
+                    // Scale by the overall average distance.
+                    double interAvgRatioPrimary =
+                            interAvgPrimary / avgDPrimary;
+                    double intraAvgRatioPrimary =
+                            intraAvgPrimary / avgDPrimary;
+                    for (int i = 0; i < 50; i++) {
+                        interDistrPrimary[i] /= interNumPrimary;
+                        intraDistrPrimary[i] /= intraNumPrimary;
+                    }
+                    // Initialize the shared-neighbor finder.
+                    SharedNeighborFinder snf =
+                            new SharedNeighborFinder(nsfTemp);
+                    if (hubnessWeightedSND) {
+                        snf.obtainWeightsFromHubnessInformation(thetaSimhub);
+                    }
+                    // Count the kNN set intersections.
+                    snf.countSharedNeighbors();
+                    // First get the similarity matrix from the SNN-s.
+                    float[][] simMatSNN = snf.getSharedNeighborCounts();
+                    // Now transform it to a distance matrix.
+                    float[][] dMatSecondary = new float[simMatSNN.length][];
+                    for (int i = 0; i < dMatSecondary.length; i++) {
+                        dMatSecondary[i] = new float[simMatSNN[i].length];
+                        for (int j = 0; j < dMatSecondary[i].length; j++) {
+                            dMatSecondary[i][j] = kSND - simMatSNN[i][j];
+                        }
+                    }
+                    // Normalize the scores and get the intra- and
+                    // inter-class distributions and averages.
+                    float max = 0;
+                    float min = Float.MAX_VALUE;
+                    for (int i = 0; i < dMatSecondary.length; i++) {
+                        for (int j = 0; j < dMatSecondary[i].length; j++) {
+                            max = Math.max(max, dMatSecondary[i][j]);
+                            min = Math.min(min, dMatSecondary[i][j]);
+                        }
+                    }
+                    double intraSum = 0;
+                    double interSum = 0;
+                    double intraNum = 0;
+                    double interNum = 0;
+                    double[] intraDistr = new double[50];
+                    double[] interDistr = new double[50];
+                    
