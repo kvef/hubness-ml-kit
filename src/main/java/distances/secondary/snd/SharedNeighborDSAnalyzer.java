@@ -328,4 +328,70 @@ public class SharedNeighborDSAnalyzer {
                             currDSet.obtainLabelArray(), currDSet);
                     silIndex.setDistanceMatrix(dMatPrimary);
                     silIndex.hubnessArray = nsfTemp.getNeighborFrequencies();
-             
+                    float silDataPrimary = silIndex.validity();
+
+                    // Now we analyze the hubness-related properties of the
+                    // data.
+                    HubnessAboveThresholdExplorer hte =
+                            new HubnessAboveThresholdExplorer(1, true, nsf);
+                    HubnessSkewAndKurtosisExplorer hske =
+                            new HubnessSkewAndKurtosisExplorer(nsf);
+                    HubnessExtremesGrabber heg =
+                            new HubnessExtremesGrabber(true, nsf);
+                    HubnessVarianceExplorer hve =
+                            new HubnessVarianceExplorer(nsf);
+                    TopHubsClusterUtil thcu =
+                            new TopHubsClusterUtil(nsf);
+                    KNeighborEntropyExplorer knee =
+                            new KNeighborEntropyExplorer(nsf,
+                            numCategories);
+
+                    // Without going into much detail here, the semantics of
+                    // the data collected here will be clear from the
+                    // following print-outs.
+                    float[] aboveZeroArray =
+                            hte.getThresholdPercentageArray();
+                    hske.calcSkewAndKurtosisArrays();
+                    float[] skewArray = hske.getOccFreqsSkewnessArray();
+                    float[] kurtosisArray = hske.getOccFreqsKurtosisArray();
+                    float[][] highestHubnesses =
+                            heg.getHubnessExtremesForKValues(15);
+                    float[] stDevArray = hve.getStDevForKRange();
+                    thcu.calcTopHubnessDiamAndAvgDist(10);
+                    float[] topHubClustDiamsArr =
+                            thcu.getTopHubClusterDiameters();
+                    float[] topHubClustAvgDistArr =
+                            thcu.getTopHubClusterAvgDists();
+                    knee.calculateAllKNNEntropyStats();
+                    float[] kEntropiesMeans =
+                            knee.getDirectEntropyMeans();
+                    float[] kHubnessEntropiesMeans =
+                            knee.getReverseEntropyMeans();
+                    float[] kEntropiesStDevs =
+                            knee.getDirectEntropyStDevs();
+                    float[] kHubnessEntropiesStDevs =
+                            knee.getReverseEntropyStDevs();
+                    float[] kEntropiesSkews =
+                            knee.getDirectEntropySkews();
+                    float[] kHubnessEntropiesSkews =
+                            knee.getReverseEntropySkews();
+                    float[] kEntropiesKurtosis =
+                            knee.getDirectEntropyKurtosisVals();
+                    float[] kHubnessEntropiesKurtosis =
+                            knee.getReverseEntropyKurtosisVals();
+                    float[] entDiffs =
+                            knee.getAverageDirectAndReverseEntropyDifs();
+                    float[] bhArray = nsf.getLabelMismatchPercsAllK();
+                    float[][][] gCtoChubness = new float[kMax][][];
+                    for (int k = 1; k <= kMax; k++) {
+                        gCtoChubness[k - 1] =
+                                nsf.getGlobalClassToClassForKforFuzzy(
+                                k, numCategories, 0.01f, true);
+                    }
+
+                    File currOutFile = new File(currOutDSDir,
+                            "hubnessOverview.txt");
+                    PrintWriter pw = new PrintWriter(
+                            new FileWriter(currOutFile));
+                    try {
+                        pw.println("dataset: " 
