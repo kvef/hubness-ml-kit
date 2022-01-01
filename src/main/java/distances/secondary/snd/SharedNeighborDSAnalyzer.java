@@ -394,4 +394,73 @@ public class SharedNeighborDSAnalyzer {
                     PrintWriter pw = new PrintWriter(
                             new FileWriter(currOutFile));
                     try {
-                        pw.println("dataset: " 
+                        pw.println("dataset: " + dsFile.getName());
+                        pw.println("k_max: " + kMax);
+                        pw.println("shared neighbor k: " + kSND);
+                        pw.println("noise: " + noise);
+                        pw.println("ml: " + ml);
+                        pw.println("instances: " + originalDSet.size());
+                        pw.println("numCat: " + numCategories);
+                        pw.print("class priors: ");
+                        for (int i = 0; i < numCategories; i++) {
+                            pw.print(BasicMathUtil.makeADecimalCutOff(cP[i],
+                                    3));
+                            pw.print(" ");
+                        }
+                        pw.println();
+                        try {
+                            pw.println("dim: "
+                                    + originalDSet.fAttrNames.length);
+                        } catch (Exception e) {
+                            System.err.println(e.getMessage());
+                        }
+                        pw.println("intra-class avg normalized dist: "
+                                + intraAvgPrimary);
+                        pw.println("inter-class avg normalized dist: "
+                                + interAvgPrimary);
+                        pw.println("intra-class avg normalized SN dist: "
+                                + intraAvg);
+                        pw.println("inter-class avg normalized SN dist: "
+                                + interAvg);
+                        pw.println("intra-class avg normalized by "
+                                + "AVG dist: " + intraAvgRatioPrimary);
+                        pw.println("inter-class avg normalized by "
+                                + "AVG dist: " + interAvgRatioPrimary);
+                        pw.println("intra-class avg normalized by "
+                                + "AVG SN dist: " + intraAvgRatio);
+                        pw.println("inter-class avg normalized by "
+                                + "AVG SN dist: " + interAvgRatio);
+                        pw.println("original silIndex: " + silDataPrimary);
+                        pw.println("SN silIndex: " + silData);
+                        pw.println("-------------------------------------");
+                        pw.println("distance distributions: ");
+                        pw.print("intra-class ");
+                        for (int i = 0; i < 50; i++) {
+                            pw.print(intraDistrPrimary[i] + " ");
+                        }
+                        pw.println();
+                        pw.print("inter-class ");
+                        for (int i = 0; i < 50; i++) {
+                            pw.print(interDistrPrimary[i] + " ");
+                        }
+                        pw.println();
+                        pw.print("intra-class SND ");
+                        for (int i = 0; i < 50; i++) {
+                            pw.print(intraDistr[i] + " ");
+                        }
+                        pw.println();
+                        pw.print("inter-class SND ");
+                        for (int i = 0; i < 50; i++) {
+                            pw.print(interDistr[i] + " ");
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("stDevArray: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                stDevArray[0], 3));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    stDevArray[i], 3));
+                        }
+     
