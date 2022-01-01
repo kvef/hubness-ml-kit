@@ -593,4 +593,64 @@ public class SharedNeighborDSAnalyzer {
                                     + BasicMathUtil.makeADecimalCutOff(
                                     aboveZeroArray[i], 2));
                         }
-                      
+                        pw.println();
+                        hte = new HubnessAboveThresholdExplorer(2, true, nsf);
+                        aboveZeroArray = hte.getThresholdPercentageArray();
+                        pw.println("-------------------------------------");
+                        pw.println("hubness above one percentage Array: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                aboveZeroArray[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    aboveZeroArray[i], 2));
+                        }
+                        pw.println();
+                        hte = new HubnessAboveThresholdExplorer(3, true, nsf);
+                        aboveZeroArray = hte.getThresholdPercentageArray();
+                        pw.println("-------------------------------------");
+                        pw.println("hubness above two percentage Array: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                aboveZeroArray[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    aboveZeroArray[i], 2));
+                        }
+                        pw.println();
+                        hte = new HubnessAboveThresholdExplorer(4, true, nsf);
+                        aboveZeroArray = hte.getThresholdPercentageArray();
+                        pw.println("-------------------------------------");
+                        pw.println("hubness above three percentage "
+                                + "Array: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                aboveZeroArray[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    aboveZeroArray[i], 2));
+                        }
+                        pw.println();
+                        hte = new HubnessAboveThresholdExplorer(5, true, nsf);
+                        aboveZeroArray = hte.getThresholdPercentageArray();
+                        pw.println("-------------------------------------");
+                        pw.println("hubness above four percentage Array: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                aboveZeroArray[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    aboveZeroArray[i], 2));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("Top ten hubs diam: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                topHubClustDiamsArr[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                    topHubClustDiamsArr[i], 2));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("Top ten hubs avg w
