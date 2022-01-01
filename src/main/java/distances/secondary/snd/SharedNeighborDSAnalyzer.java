@@ -530,4 +530,67 @@ public class SharedNeighborDSAnalyzer {
                                 kEntropiesKurtosis[0], 3));
                         for (int i = 1; i < stDevArray.length; i++) {
                             pw.print(","
-   
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    kEntropiesKurtosis[i], 3));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("kHubnessEntropyMeans: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                kHubnessEntropiesMeans[0], 3));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    kHubnessEntropiesMeans[i], 3));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("kHubnessEntropyStDevs: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                kHubnessEntropiesStDevs[0], 3));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    kHubnessEntropiesStDevs[i], 3));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("kHubnessEntropySkews: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                kHubnessEntropiesSkews[0], 3));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    kHubnessEntropiesSkews[i], 3));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("kHubnessEntropyKurtosis: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                kHubnessEntropiesKurtosis[0], 3));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    kHubnessEntropiesKurtosis[i], 3));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("kEnt - khEnt avgs: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                entDiffs[0], 3));
+                        for (int i = 1; i < entDiffs.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    entDiffs[i], 3));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("hubness above zero percentage Array: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                aboveZeroArray[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print(","
+                                    + BasicMathUtil.makeADecimalCutOff(
+                                    aboveZeroArray[i], 2));
+                        }
+                      
