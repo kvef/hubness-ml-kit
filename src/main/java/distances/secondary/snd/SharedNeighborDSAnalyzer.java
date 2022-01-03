@@ -800,4 +800,51 @@ public class SharedNeighborDSAnalyzer {
                         cmet.setCombinationMethod(CombinedMetric.DEFAULT);
                         dsMetric.add(cmet);
                     }
-            
+                }
+                s = br.readLine();
+            }
+            // Now complete/correct the file paths by prepending the directory.
+            for (int i = 0; i < dsPaths.size(); i++) {
+                if (!dsPaths.get(i).startsWith("sparse:")) {
+                    dsPaths.set(i, (new File(inDir, dsPaths.get(i))).getPath());
+                } else {
+                    dsPaths.set(i, "sparse:" + (new File(
+                            inDir, dsPaths.get(i).substring(
+                            dsPaths.get(i).indexOf(":") + 1,
+                            dsPaths.get(i).length()))).getPath());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            throw e;
+        } finally {
+            br.close();
+        }
+    }
+
+    /**
+     * Runs all the experiments specified in the configuration file for
+     * comparing the properties of primary distances and secondary SNN distances
+     * on a series of datasets under a series of conditions.
+     *
+     * @param args One command line argument - the path to the configuration
+     * file.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            System.out.println("Runs all the experiments specified in the "
+                    + "configuration file for comparing the properties of "
+                    + "primary distances and secondary SNN distances on a "
+                    + "series of datasets under a series of conditions.");
+            System.out.println("---------------------------------------------");
+            System.out.println("1 parameter - file with test configuration");
+            return;
+        }
+        File inConfigFile = new File(args[0]);
+        SharedNeighborDSAnalyzer tester =
+                new SharedNeighborDSAnalyzer(inConfigFile);
+        tester.loadParameters();
+        tester.runAllTests();
+    }
+}
