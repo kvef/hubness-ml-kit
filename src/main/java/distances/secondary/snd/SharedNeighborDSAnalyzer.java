@@ -653,4 +653,70 @@ public class SharedNeighborDSAnalyzer {
                         }
                         pw.println();
                         pw.println("-------------------------------------");
-                        pw.println("Top ten hubs avg w
+                        pw.println("Top ten hubs avg within cluster dist: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                topHubClustAvgDistArr[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                    topHubClustAvgDistArr[i], 2));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        thcu.calcTopHubnessDiamAndAvgDist(5);
+                        topHubClustDiamsArr = thcu.getTopHubClusterDiameters();
+                        topHubClustAvgDistArr = thcu.getTopHubClusterAvgDists();
+                        pw.println("Top five hubs diam: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                topHubClustDiamsArr[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                    topHubClustDiamsArr[i], 2));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("Top five hubs avg within cluster dist: ");
+                        pw.print(BasicMathUtil.makeADecimalCutOff(
+                                topHubClustAvgDistArr[0], 2));
+                        for (int i = 1; i < stDevArray.length; i++) {
+                            pw.print("," + BasicMathUtil.makeADecimalCutOff(
+                                    topHubClustAvgDistArr[i], 2));
+                        }
+                        pw.println();
+                        pw.println("-------------------------------------");
+                        pw.println("highest hubnesses (each line is for "
+                                + "one k value, lines go from zero to"
+                                + " k_max): ");
+                        for (int k = 0; k < kMax; k++) {
+                            pw.print("k: " + (k + 1) + ":: ");
+                            pw.print(BasicMathUtil.makeADecimalCutOff(
+                                    highestHubnesses[k][0], 3));
+                            for (int i = 1; i < 15; i++) {
+                                pw.print(","
+                                        + BasicMathUtil.makeADecimalCutOff(
+                                        highestHubnesses[k][i], 3));
+                            }
+                            pw.println();
+                        }
+                        pw.println("-------------------------------------");
+                        pw.println("global class to class hubness matrices"
+                                + " for all K-s: ");
+                        for (int k = 1; k <= kMax; k++) {
+                            pw.println("k = " + k);
+                            for (int c1 = 0; c1 < numCategories; c1++) {
+                                for (int c2 = 0; c2 < numCategories; c2++) {
+                                    pw.print(
+                                            BasicMathUtil.
+                                            makeADecimalCutOff(
+                                            gCtoChubness[k - 1][c1][c2], 3));
+                                    pw.print(" ");
+                                }
+                                pw.println();
+                            }
+                            pw.println();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        System.out.println(e.getMessage());
+                    } finally {
+                        pw.close();
+       
