@@ -719,4 +719,85 @@ public class SharedNeighborDSAnalyzer {
                         System.out.println(e.getMessage());
                     } finally {
                         pw.close();
-       
+                    }
+                }
+            }
+            counter++;
+        }
+    }
+
+    /**
+     * Loads all the experiment parameters from a file that was specified in the
+     * constructor.
+     *
+     * @throws Exception
+     */
+    public void loadParameters() throws Exception {
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(inConfigFile)));
+        try {
+            String s = br.readLine();
+            String[] lineItems;
+            // Primary integer and float metrics.
+            Class currIntMet;
+            Class currFloatMet;
+
+            while (s != null) {
+                s = s.trim();
+                if (s.startsWith("@in_directory")) {
+                    lineItems = s.split(" ");
+                    inDir = new File(lineItems[1]);
+                } else if (s.startsWith("@shared_neighbors_metric_override")) {
+                    lineItems = s.split(" ");
+                    kSND = Integer.parseInt(lineItems[1]);
+                    hubnessWeightedSND = Boolean.parseBoolean(lineItems[2]);
+                    if (hubnessWeightedSND) {
+                        thetaSimhub = Float.parseFloat(lineItems[3]);
+                    }
+                } else if (s.startsWith("@out_directory")) {
+                    lineItems = s.split(" ");
+                    outDir = new File(lineItems[1]);
+                } else if (s.startsWith("@k_max")) {
+                    lineItems = s.split(" ");
+                    kMax = Integer.parseInt(lineItems[1]);
+                } else if (s.startsWith("@noise_range")) {
+                    lineItems = s.split(" ");
+                    noiseMin = Float.parseFloat(lineItems[1]);
+                    noiseMax = Float.parseFloat(lineItems[2]);
+                    noiseStep = Float.parseFloat(lineItems[3]);
+                } else if (s.startsWith("@mislabeled_range")) {
+                    lineItems = s.split(" ");
+                    mlMin = Float.parseFloat(lineItems[1]);
+                    mlMax = Float.parseFloat(lineItems[2]);
+                    mlStep = Float.parseFloat(lineItems[3]);
+                } else if (s.startsWith("@dataset")) {
+                    lineItems = s.split(" ");
+                    dsPaths.add(lineItems[1]);
+                    if (lineItems[1].startsWith("sparse:")) {
+                        // We have to indicate that the data is in the sparse
+                        // format and that we consequently need a sparse metric
+                        // object to handle it.
+                        SparseCombinedMetric smc =
+                                new SparseCombinedMetric(
+                                null, null, (SparseMetric) (Class.forName(
+                                lineItems[2]).newInstance()),
+                                CombinedMetric.DEFAULT);
+                        dsMetric.add(smc);
+                    } else {
+                        CombinedMetric cmet = new CombinedMetric();
+                        if (!lineItems[2].equals("null")) {
+                            currIntMet = Class.forName(lineItems[2]);
+                            cmet.setIntegerMetric(
+                                    (DistanceMeasure)
+                                    (currIntMet.newInstance()));
+                        }
+                        if (!lineItems[3].equals("null")) {
+                            currFloatMet = Class.forName(lineItems[3]);
+                            cmet.setFloatMetric(
+                                    (DistanceMeasure)
+                                    (currFloatMet.newInstance()));
+                        }
+                        cmet.setCombinationMethod(CombinedMetric.DEFAULT);
+                        dsMetric.add(cmet);
+                    }
+            
