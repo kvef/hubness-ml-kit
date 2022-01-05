@@ -37,4 +37,53 @@ public class SparseCosineMetric extends SparseMetric implements Serializable {
         if ((firstMap == null || firstMap.isEmpty())
                 && (secondMap == null || secondMap.isEmpty())) {
             return 0;
-    
+        } else if ((firstMap == null || firstMap.isEmpty())
+                && (secondMap != null && !secondMap.isEmpty())) {
+            return 1;
+        } else if ((secondMap == null || secondMap.isEmpty())
+                && (firstMap != null && !firstMap.isEmpty())) {
+            return 1;
+        } else {
+            double result = 0;
+            double normFirst = 0;
+            double normSecond = 0;
+            // Iterating over one of the maps and looking into the other is
+            // enough to find all the common keys.
+            Set<Integer> keys = firstMap.keySet();
+            for (int index : keys) {
+                if (secondMap.containsKey(index)) {
+                    if (DataMineConstants.isAcceptableFloat(firstMap.get(index))
+                            && DataMineConstants.isAcceptableFloat(
+                            secondMap.get(index))) {
+                        result += firstMap.get(index) * secondMap.get(index);
+                    }
+                    if (DataMineConstants.isAcceptableFloat(
+                            firstMap.get(index))) {
+                        normFirst += firstMap.get(index) * firstMap.get(index);
+                    }
+                }
+            }
+            // Now calculate the norm of the second BoW.
+            keys = secondMap.keySet();
+            for (int index : keys) {
+                if (DataMineConstants.isAcceptableFloat(secondMap.get(index))) {
+                    normSecond += secondMap.get(index) * secondMap.get(index);
+                }
+            }
+            normFirst = Math.sqrt(normFirst);
+            normSecond = Math.sqrt(normSecond);
+            if ((DataMineConstants.isPositive(normFirst))
+                    && (DataMineConstants.isPositive(normSecond))) {
+                result = result / (normFirst * normSecond);
+            } else {
+                if ((DataMineConstants.isZero(normFirst))
+                        && (DataMineConstants.isZero(normSecond))) {
+                    result = 1;
+                } else {
+                    result = -1.;
+                }
+            }
+            return (float) (1f - result) * 0.5f;
+        }
+    }
+}
