@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -22,14 +23,27 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * This class implements the Manhattan distance for sparse representations.
- *
+ * This class implements the Manhattan distance for sparse representations, with
+ * additional feature weighting.
+ * 
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class SparseManhattan extends SparseMetric implements Serializable {
+public class SparseManhattanWeighted extends SparseMetric
+        implements Serializable {
     
     private static final long serialVersionUID = 1L;
-
+    
+    float[] featureWeights = null;
+    
+    /**
+     * Initialization.
+     * 
+     * @param featureWeights float[] representing feature weights.
+     */
+    public SparseManhattanWeighted(float[] featureWeights) {
+        this.featureWeights = featureWeights;
+    }
+    
     @Override
     public float dist(HashMap<Integer, Float> firstMap,
             HashMap<Integer, Float> secondMap)
@@ -53,13 +67,25 @@ public class SparseManhattan extends SparseMetric implements Serializable {
                     if (DataMineConstants.isAcceptableFloat(firstMap.get(index))
                             && DataMineConstants.isAcceptableFloat(
                             secondMap.get(index))) {
-                        result += Math.abs(
-                                firstMap.get(index) - secondMap.get(index));
+                        if (featureWeights != null && index <
+                                featureWeights.length) {
+                            result += featureWeights[index] * Math.abs(
+                                    firstMap.get(index) - secondMap.get(index));
+                        } else {
+                            result += Math.abs(
+                                    firstMap.get(index) - secondMap.get(index));
+                        }
                     }
                 } else {
                     if (DataMineConstants.isAcceptableFloat(
                             firstMap.get(index))) {
-                        result += Math.abs(firstMap.get(index));
+                        if (featureWeights != null && index <
+                                featureWeights.length) {
+                            result += featureWeights[index] *
+                                    Math.abs(firstMap.get(index));
+                        } else {
+                            result += Math.abs(firstMap.get(index));
+                        }
                     }
                 }
             }
@@ -68,10 +94,17 @@ public class SparseManhattan extends SparseMetric implements Serializable {
                 if (!firstMap.containsKey(index)
                         && DataMineConstants.isAcceptableFloat(
                         secondMap.get(index))) {
-                    result += Math.abs(secondMap.get(index));
+                    if (featureWeights != null && index <
+                            featureWeights.length) {
+                        result += featureWeights[index] *
+                                Math.abs(secondMap.get(index));
+                    } else {
+                        result += Math.abs(secondMap.get(index));
+                    }
                 }
             }
             return result;
         }
     }
+    
 }
