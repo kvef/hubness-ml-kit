@@ -32,4 +32,99 @@ import javax.swing.*;
  * a) an entire component b) a region of the component c) the entire desktop d)
  * a region of the desktop
  *
- * This class can also be used to create im
+ * This class can also be used to create images of components not displayed on a
+ * GUI. The only foolproof way to get an image in such cases is to make sure the
+ * component has been added to a realized window with code something like the
+ * following:
+ *
+ * JFrame frame = new JFrame(); frame.setContentPane( someComponent );
+ * frame.pack(); ScreenImage.createImage( someComponent );
+ *
+ * @author This code has been taken from the following web sources:
+ * https://www.wuestkamp.com/2012/02/java-save-component-to-image-make-screen-shot-of-component/
+ * http://tips4java.wordpress.com/2008/10/13/screen-image/
+ */
+public class ScreenImage {
+
+    private static List<String> imageTypes = Arrays.asList(
+            ImageIO.getWriterFileSuffixes());
+
+    /**
+     * Create a BufferedImage for Swing components. The entire component will be
+     * captured to an image.
+     *
+     * @param component Swing component to create the image from.
+     * @return	image The image for the given region.
+     */
+    public static BufferedImage createImage(JComponent component) {
+        Dimension dim = component.getSize();
+        if (dim.width == 0 || dim.height == 0) {
+            dim = component.getPreferredSize();
+            component.setSize(dim);
+        }
+        Rectangle region = new Rectangle(0, 0, dim.width, dim.height);
+        return ScreenImage.createImage(component, region);
+    }
+
+    /**
+     * Create a BufferedImage for Swing components. All or part of the component
+     * can be captured to an image.
+     *
+     * @param component Swing component to create the image from.
+     * @param region The region of the component to be captured to an image.
+     * @return	image The image for the given region.
+     */
+    public static BufferedImage createImage(JComponent component,
+            Rectangle region) {
+        if (!component.isDisplayable()) {
+            Dimension dim = component.getSize();
+            if (dim.width == 0 || dim.height == 0) {
+                dim = component.getPreferredSize();
+                component.setSize(dim);
+            }
+            layoutComponent(component);
+        }
+        BufferedImage image = new BufferedImage(region.width, region.height,
+                BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = image.createGraphics();
+        // Paint a background for non-opaque components.
+        if (!component.isOpaque()) {
+            g2d.setColor(component.getBackground());
+            g2d.fillRect(region.x, region.y, region.width, region.height);
+        }
+        g2d.translate(-region.x, -region.y);
+        component.paint(g2d);
+        g2d.dispose();
+        return image;
+    }
+
+    /**
+     * Convenience method to create a BufferedImage of the desktop.
+     *
+     * @param fileName Name of file to be created or null.
+     * @return	image The image for the given region.
+     * @exception AWTException
+     * @exception IOException
+     */
+    public static BufferedImage createDesktopImage() throws AWTException,
+            IOException {
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        Rectangle region = new Rectangle(0, 0, dim.width, dim.height);
+        return ScreenImage.createImage(region);
+    }
+
+    /**
+     * Create a BufferedImage for AWT components.
+     *
+     * @param component AWT component to create image from
+     * @return	image the image for the given region
+     * @exception AWTException see Robot class constructors
+     */
+    public static BufferedImage createImage(Component component)
+            throws AWTException {
+        Point p = new Point(0, 0);
+        SwingUtilities.convertPointToScreen(p, component);
+        Rectangle region = component.getBounds();
+        region.x = p.x;
+        region.y = p.y;
+        return ScreenImage.createImage(regi
