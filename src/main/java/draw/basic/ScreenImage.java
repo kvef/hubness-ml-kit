@@ -127,4 +127,64 @@ public class ScreenImage {
         Rectangle region = component.getBounds();
         region.x = p.x;
         region.y = p.y;
-        return ScreenImage.createImage(regi
+        return ScreenImage.createImage(region);
+    }
+
+    /**
+     * Create a BufferedImage from a rectangular region on the screen. This will
+     * include Swing components JFrame, JDialog and JWindow which all extend
+     * from Component, not JComponent.
+     *
+     * @param Region region on the screen to create image from
+     * @return	Image the image for the given region
+     * @exception AWTException see Robot class constructors
+     */
+    public static BufferedImage createImage(Rectangle region)
+            throws AWTException {
+        BufferedImage image = new Robot().createScreenCapture(region);
+        return image;
+    }
+
+    /**
+     * Write a BufferedImage to a File.
+     *
+     * @param Image image to be written.
+     * @param FileName name of file to be created.
+     * @exception IOException if an error occurs during writing.
+     */
+    public static void writeImage(BufferedImage image, String fileName)
+            throws IOException {
+        if (fileName == null) {
+            return;
+        }
+        int offset = fileName.lastIndexOf(".");
+        if (offset == -1) {
+            String message = "file type was not specified";
+            throw new IOException(message);
+        }
+        String fileType = fileName.substring(offset + 1);
+        if (imageTypes.contains(fileType)) {
+            ImageIO.write(image, fileType, new File(fileName));
+        } else {
+            String message = "unknown writer file type (" + fileType + ")";
+            throw new IOException(message);
+        }
+    }
+
+    /**
+     * A recursive layout call on the component.
+     *
+     * @param component Component object.
+     */
+    static void layoutComponent(Component component) {
+        synchronized (component.getTreeLock()) {
+            component.doLayout();
+            if (component instanceof Container) {
+                for (Component child :
+                        ((Container) component).getComponents()) {
+                    layoutComponent(child);
+                }
+            }
+        }
+    }
+}
