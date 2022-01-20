@@ -214,4 +214,15 @@ public class SpearmanCorrelation extends CorrelationCoefficient {
                 numEqual++;
             }
             sum += (index + 1);
-  
+            sum /= (float) numEqual;
+            for (int i = startingPoint; i < startingPoint + numEqual; i++) {
+                actualRanksSecond[secondSortedIndexes[i]] = sum;
+            }
+            index++;
+        }
+        // Now that the ranks have been processed, we calculate the Pearson
+        // correlation between the rank arrays.
+        return PearsonCorrelation.correlation(actualRanksFirst,
+                actualRanksSecond);
+    }
+}
