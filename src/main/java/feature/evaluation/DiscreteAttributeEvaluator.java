@@ -75,4 +75,92 @@ public abstract class DiscreteAttributeEvaluator {
     /**
      * Get the type and index of the feature with the lowest evaluation.
      *
-     * @return Integer array of two elements, the first one being the type an
+     * @return Integer array of two elements, the first one being the type and
+     * the second one the index of the feature in its feature group.
+     */
+    public int[] getTypeAndIndexOfLowestEvaluatedFeature() {
+        float lowInt = Float.MAX_VALUE;
+        float lowFloat = Float.MAX_VALUE;
+        float lowNominal = Float.MAX_VALUE;
+        int intIndex = getIndexOfLowestEvaluatedFeature(
+                DataMineConstants.INTEGER);
+        int floatIndex = getIndexOfLowestEvaluatedFeature(
+                DataMineConstants.FLOAT);
+        int nominalIndex = getIndexOfLowestEvaluatedFeature(
+                DataMineConstants.NOMINAL);
+        if (intIndex == -1 && floatIndex == -1 && nominalIndex == -1) {
+            return null;
+        } else {
+            int[] result = new int[2];
+            if (intIndex != -1) {
+                lowInt = intEvaluations[intIndex];
+            }
+            if (floatIndex != -1) {
+                lowFloat = floatEvaluations[floatIndex];
+            }
+            if (nominalIndex != -1) {
+                lowNominal = nominalEvaluations[nominalIndex];
+            }
+            // Get the minimum feature evaluation.
+            float min = Math.min(lowInt, Math.min(lowFloat, lowNominal));
+            // Determine the type.
+            if (lowInt == min) {
+                result[0] = DataMineConstants.INTEGER;
+                result[1] = intIndex;
+            } else if (lowFloat == min) {
+                result[0] = DataMineConstants.FLOAT;
+                result[1] = floatIndex;
+            } else if (lowNominal == min) {
+                result[0] = DataMineConstants.NOMINAL;
+                result[1] = nominalIndex;
+            }
+            return result;
+        }
+    }
+
+    /**
+     * Get the type and index of the feature with the lowest evaluation. This
+     * can yield best or worst features, depending on the type of estimator
+     * score.
+     *
+     * @param subset ArrayList of integer indexes defining the subset to
+     * analyze.
+     * @return Integer array of two elements, the first one being the type and
+     * the second one the index of the feature in its feature group.
+     */
+    public int[] getTypeAndIndexOfLowestEvaluatedFeatureOnSubset(
+            ArrayList<Integer> subset) {
+        float lowInt = Float.MAX_VALUE;
+        float lowFloat = Float.MAX_VALUE;
+        float lowNominal = Float.MAX_VALUE;
+        int intIndex = getIndexOfLowestEvaluatedFeatureOnSubset(subset,
+                DataMineConstants.INTEGER);
+        int floatIndex = getIndexOfLowestEvaluatedFeatureOnSubset(subset,
+                DataMineConstants.FLOAT);
+        int nominalIndex = getIndexOfLowestEvaluatedFeatureOnSubset(subset,
+                DataMineConstants.NOMINAL);
+        if (intIndex == -1 && floatIndex == -1 && nominalIndex == -1) {
+            return null;
+        } else {
+            int[] result = new int[2];
+            if (intIndex != -1) {
+                lowInt = intEvaluations[intIndex];
+            }
+            if (floatIndex != -1) {
+                lowFloat = floatEvaluations[floatIndex];
+            }
+            if (nominalIndex != -1) {
+                lowNominal = nominalEvaluations[nominalIndex];
+            }
+            // Get the minimum feature evaluation.
+            float min = Math.min(lowInt, Math.min(lowFloat, lowNominal));
+            // Determine the type.
+            if (lowInt == min) {
+                result[0] = DataMineConstants.INTEGER;
+                result[1] = intIndex;
+            } else if (lowFloat == min) {
+                result[0] = DataMineConstants.FLOAT;
+                result[1] = floatIndex;
+            } else if (lowNominal == min) {
+                result[0] = DataMineConstants.NOMINAL;
+                result[1] = nom
