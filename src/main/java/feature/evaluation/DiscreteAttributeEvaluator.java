@@ -344,4 +344,91 @@ public abstract class DiscreteAttributeEvaluator {
                 }
                 return -1;
             }
-    
+        } else {
+            if (nominalEvaluations == null) {
+                nominalEvaluations = evaluateAll(subset, attType);
+            }
+            if (nominalEvaluations != null && nominalEvaluations.length > 0) {
+                float minIndexValue = Float.MAX_VALUE;
+                int minIndex = 0;
+                for (int i = 0; i < nominalEvaluations.length; i++) {
+                    if (nominalEvaluations[i] < minIndexValue) {
+                        minIndex = i;
+                        minIndexValue = nominalEvaluations[i];
+                    }
+                }
+                return minIndex;
+            } else {
+                return -1;
+            }
+        }
+    }
+
+    /**
+     * Get the index of the lowest evaluated feature of the specified type. This
+     * can yield best or worst features, depending on the type of estimator
+     * score.
+     *
+     * @param subset ArrayList of integer indexes defining the subset to
+     * analyze.
+     * @param attType Feature type, as in DataMineConstants.
+     * @param acceptable Boolean array indicating which features to consider.
+     * @return Index of the lowest evaluated feature in its feature group.
+     */
+    public int getIndexOfLowestEvaluatedFeatureOnSubset(
+            ArrayList<Integer> subset, int attType, boolean[] acceptable) {
+        if (attType == DataMineConstants.INTEGER) {
+            if (intEvaluations == null) {
+                intEvaluations = evaluateAll(subset, attType, acceptable);
+            }
+            if (intEvaluations != null && intEvaluations.length > 0) {
+                float minIndexValue = Float.MAX_VALUE;
+                int minIndex = 0;
+                for (int i = 0; i < intEvaluations.length; i++) {
+                    if (acceptable[i]) {
+                        if (intEvaluations[i] < minIndexValue) {
+                            minIndex = i;
+                            minIndexValue = intEvaluations[i];
+                        }
+                    }
+                }
+                return minIndex;
+            } else {
+                return -1;
+            }
+        } else if (attType == DataMineConstants.FLOAT) {
+            if (floatEvaluations == null) {
+                floatEvaluations = evaluateAll(subset, attType, acceptable);
+            }
+            if (floatEvaluations != null && floatEvaluations.length > 0) {
+                float minIndexValue = Float.MAX_VALUE;
+                int minIndex = 0;
+                for (int i = 0; i < floatEvaluations.length; i++) {
+                    if (acceptable[i]) {
+                        if (floatEvaluations[i] < minIndexValue) {
+                            minIndex = i;
+                            minIndexValue = floatEvaluations[i];
+                        }
+                    }
+                }
+                return minIndex;
+            } else {
+                if (floatEvaluations == null) {
+                    System.err.println("fEval null");
+                } else {
+                    System.err.println("fEval zero length");
+                }
+                return -1;
+            }
+        } else {
+            if (nominalEvaluations == null) {
+                nominalEvaluations = evaluateAll(subset, attType, acceptable);
+            }
+            if (nominalEvaluations != null && nominalEvaluations.length > 0) {
+                float minIndexValue = Float.MAX_VALUE;
+                int minIndex = 0;
+                for (int i = 0; i < nominalEvaluations.length; i++) {
+                    if (acceptable[i]) {
+                        if (nominalEvaluations[i] < minIndexValue) {
+                            minIndex = i;
+                       
