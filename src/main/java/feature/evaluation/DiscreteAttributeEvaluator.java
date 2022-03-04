@@ -431,4 +431,98 @@ public abstract class DiscreteAttributeEvaluator {
                     if (acceptable[i]) {
                         if (nominalEvaluations[i] < minIndexValue) {
                             minIndex = i;
-                       
+                            minIndexValue = nominalEvaluations[i];
+                        }
+                    }
+                }
+                return minIndex;
+            } else {
+                return -1;
+            }
+        }
+    }
+
+    /**
+     * Gets the type and index of the highest evaluated feature. This can yield
+     * best or worst features, depending on the type of estimator score.
+     *
+     * @return Integer array of two elements, the first one being the type and
+     * the second one the index of the feature in its feature group.
+     */
+    public int[] getTypeAndIndexOfHighestEvaluatedFeature() {
+        float highInt = Float.MIN_VALUE;
+        float highFloat = Float.MIN_VALUE;
+        float highNominal = Float.MIN_VALUE;
+        int intIndex = getIndexOfHighestEvaluatedFeature(
+                DataMineConstants.INTEGER);
+        int floatIndex = getIndexOfHighestEvaluatedFeature(
+                DataMineConstants.FLOAT);
+        int nominalIndex = getIndexOfHighestEvaluatedFeature(
+                DataMineConstants.NOMINAL);
+        if (intIndex == -1 && floatIndex == -1 && nominalIndex == -1) {
+            return null;
+        } else {
+            int[] result = new int[2];
+            if (intIndex != -1) {
+                highInt = intEvaluations[intIndex];
+            }
+            if (floatIndex != -1) {
+                highFloat = floatEvaluations[floatIndex];
+            }
+            if (nominalIndex != -1) {
+                highNominal = nominalEvaluations[nominalIndex];
+            }
+            // Get the maximum feature evaluation.
+            float max = Math.max(highInt, Math.max(highFloat, highNominal));
+            // Determine the type.
+            if (highInt == max) {
+                result[0] = DataMineConstants.INTEGER;
+                result[1] = intIndex;
+            } else if (highFloat == max) {
+                result[0] = DataMineConstants.FLOAT;
+                result[1] = floatIndex;
+            } else if (highNominal == max) {
+                result[0] = DataMineConstants.NOMINAL;
+                result[1] = nominalIndex;
+            }
+            return result;
+        }
+    }
+
+    /**
+     * Gets the type and index of the highest evaluated feature. This can yield
+     * best or worst features, depending on the type of estimator score.
+     *
+     * @param subset ArrayList of integer indexes defining the subset to
+     * analyze.
+     * @return Integer array of two elements, the first one being the type and
+     * the second one the index of the feature in its feature group.
+     */
+    public int[] getTypeAndIndexOfHighestEvaluatedFeatureOnSubset(
+            ArrayList<Integer> subset) {
+        if (subset == null) {
+            return null;
+        }
+        float highInt = Float.MIN_VALUE;
+        float highFloat = Float.MIN_VALUE;
+        float highNominal = Float.MIN_VALUE;
+        int intIndex = getIndexOfHighestEvaluatedFeatureOnSubset(subset,
+                DataMineConstants.INTEGER);
+        int floatIndex = getIndexOfHighestEvaluatedFeatureOnSubset(subset,
+                DataMineConstants.FLOAT);
+        int nominalIndex = getIndexOfHighestEvaluatedFeatureOnSubset(subset,
+                DataMineConstants.NOMINAL);
+        if (intIndex == -1 && floatIndex == -1 && nominalIndex == -1) {
+            return null;
+        } else {
+            int[] result = new int[2];
+            if (intIndex != -1) {
+                highInt = intEvaluations[intIndex];
+            }
+            if (floatIndex != -1) {
+                highFloat = floatEvaluations[floatIndex];
+            }
+            if (nominalIndex != -1) {
+                highNominal = nominalEvaluations[nominalIndex];
+            }
+        
