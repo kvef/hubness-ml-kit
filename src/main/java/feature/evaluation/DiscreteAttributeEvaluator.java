@@ -525,4 +525,96 @@ public abstract class DiscreteAttributeEvaluator {
             if (nominalIndex != -1) {
                 highNominal = nominalEvaluations[nominalIndex];
             }
-        
+            float max = Math.max(highInt, Math.max(highFloat, highNominal));
+            if (highInt == max) {
+                result[0] = DataMineConstants.INTEGER;
+                result[1] = intIndex;
+            } else if (highFloat == max) {
+                result[0] = DataMineConstants.FLOAT;
+                result[1] = floatIndex;
+            } else if (highNominal == max) {
+                result[0] = DataMineConstants.NOMINAL;
+                result[1] = nominalIndex;
+            }
+            return result;
+        }
+    }
+
+    /**
+     * Gets the highest evaluated feature index of the specified type. This can
+     * yield best or worst features, depending on the type of estimator score.
+     *
+     * @param attType Feature type, as in DataMineConstants.
+     * @return Index of the highest evaluated feature in its feature group.
+     */
+    public int getIndexOfHighestEvaluatedFeature(int attType) {
+        if (attType == DataMineConstants.INTEGER) {
+            if (intEvaluations == null) {
+                intEvaluations = evaluateAll(attType);
+            }
+            if (intEvaluations != null && intEvaluations.length > 0) {
+                float maxIndexValue = Float.MIN_VALUE;
+                int maxIndex = 0;
+                for (int i = 0; i < intEvaluations.length; i++) {
+                    if (intEvaluations[i] > maxIndexValue) {
+                        maxIndex = i;
+                        maxIndexValue = intEvaluations[i];
+                    }
+                }
+                return maxIndex;
+            } else {
+                return -1;
+            }
+        } else if (attType == DataMineConstants.FLOAT) {
+            if (floatEvaluations == null) {
+                floatEvaluations = evaluateAll(attType);
+            }
+            if (floatEvaluations != null && floatEvaluations.length > 0) {
+                float maxIndexValue = Float.MIN_VALUE;
+                int maxIndex = 0;
+                for (int i = 0; i < floatEvaluations.length; i++) {
+                    if (floatEvaluations[i] > maxIndexValue) {
+                        maxIndex = i;
+                        maxIndexValue = floatEvaluations[i];
+                    }
+                }
+                return maxIndex;
+            } else {
+                return -1;
+            }
+        } else {
+            if (nominalEvaluations == null) {
+                nominalEvaluations = evaluateAll(attType);
+            }
+            if (nominalEvaluations != null && nominalEvaluations.length > 0) {
+                float maxIndexValue = Float.MIN_VALUE;
+                int maxIndex = 0;
+                for (int i = 0; i < nominalEvaluations.length; i++) {
+                    if (nominalEvaluations[i] > maxIndexValue) {
+                        maxIndex = i;
+                        maxIndexValue = nominalEvaluations[i];
+                    }
+                }
+                return maxIndex;
+            } else {
+                return -1;
+            }
+        }
+    }
+
+    /**
+     * Gets the highest evaluated feature index of the specified type. This can
+     * yield best or worst features, depending on the type of estimator score.
+     *
+     * @param subset ArrayList of integer indexes defining the subset to
+     * analyze.
+     * @param attType Feature type, as in DataMineConstants.
+     * @return Index of the highest evaluated feature in its feature group.
+     */
+    public int getIndexOfHighestEvaluatedFeatureOnSubset(
+            ArrayList<Integer> subset, int attType) {
+        if (subset == null) {
+            return -1;
+        }
+        if (attType == DataMineConstants.INTEGER) {
+            if (intEvaluations =
