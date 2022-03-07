@@ -718,4 +718,89 @@ public abstract class DiscreteAttributeEvaluator {
                             < discDSet.getIntIntervalDivisions().length; i++) {
                         evaluations[i] = evaluate(attType, i);
                     }
-                    intEvaluation
+                    intEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            } else if (attType == DataMineConstants.FLOAT) {
+                if (discDSet.getFloatIntervalDivisions() != null
+                        && discDSet.getFloatIntervalDivisions().length != 0) {
+                    float[] evaluations =
+                            new float[discDSet.
+                            getFloatIntervalDivisions().length];
+                    for (int i = 0; i
+                            < discDSet.getFloatIntervalDivisions().length;
+                            i++) {
+                        evaluations[i] = evaluate(attType, i);
+                    }
+                    floatEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            } else {
+                if (discDSet.getNominalVocabularies() != null
+                        && discDSet.getNominalVocabularies().length != 0) {
+                    float[] evaluations =
+                            new float[discDSet.getNominalVocabularies().length];
+                    for (int i = 0; i
+                            < discDSet.getNominalVocabularies().length; i++) {
+                        evaluations[i] = evaluate(attType, i);
+                    }
+                    nominalEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            }
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Evaluate all features of the specified feature type.
+     *
+     * @param subset ArrayList of integer indexes defining the subset to
+     * analyze.
+     * @param attType Feature type, as in DataMineConstants.
+     * @return Float array of feature evaluations.
+     */
+    public float[] evaluateAll(ArrayList<Integer> subset, int attType) {
+        if (subset == null) {
+            return null;
+        }
+        if (discDSet != null && discDSet.size() > 0) {
+            if (attType == DataMineConstants.INTEGER) {
+                if (discDSet.getIntIntervalDivisions() != null
+                        && discDSet.getIntIntervalDivisions().length != 0) {
+                    float[] evaluations = new float[discDSet.
+                            getIntIntervalDivisions().length];
+                    for (int i = 0; i
+                            < discDSet.getIntIntervalDivisions().length; i++) {
+                        evaluations[i] = evaluateOnSubset(subset, attType, i);
+                    }
+                    intEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            } else if (attType == DataMineConstants.FLOAT) {
+                if (discDSet.getFloatIntervalDivisions() != null
+                        && discDSet.getFloatIntervalDivisions().length != 0) {
+                    float[] evaluations = new float[discDSet.
+                            getFloatIntervalDivisions().length];
+                    for (int i = 0; i
+                            < discDSet.getFloatIntervalDivisions().length;
+                            i++) {
+                        evaluations[i] = evaluateOnSubset(subset, attType, i);
+                    }
+                    floatEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            } else {
+                if (discDSet.getNominalVocabularies() != null
+                        && discDSet.
