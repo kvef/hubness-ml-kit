@@ -886,4 +886,14 @@ public abstract class DiscreteAttributeEvaluator {
                 } else {
                     return null;
                 }
-            
+            }
+        } else {
+            if (discDSet == null) {
+                System.err.println("Null data encountered.");
+            } else {
+                System.err.println("Empty data encountered.");
+            }
+            return null;
+        }
+    }
+}
