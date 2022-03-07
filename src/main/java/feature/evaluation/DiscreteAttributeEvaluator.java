@@ -617,4 +617,105 @@ public abstract class DiscreteAttributeEvaluator {
             return -1;
         }
         if (attType == DataMineConstants.INTEGER) {
-            if (intEvaluations =
+            if (intEvaluations == null) {
+                intEvaluations = evaluateAll(subset, attType);
+            }
+            if (intEvaluations != null && intEvaluations.length > 0) {
+                float maxIndexValue = Float.MIN_VALUE;
+                int maxIndex = 0;
+                for (int i = 0; i < intEvaluations.length; i++) {
+                    if (intEvaluations[i] > maxIndexValue) {
+                        maxIndex = i;
+                        maxIndexValue = intEvaluations[i];
+                    }
+                }
+                return maxIndex;
+            } else {
+                return -1;
+            }
+        } else if (attType == DataMineConstants.FLOAT) {
+            if (floatEvaluations == null) {
+                floatEvaluations = evaluateAll(subset, attType);
+            }
+            if (floatEvaluations != null && floatEvaluations.length > 0) {
+                float maxIndexValue = Float.MIN_VALUE;
+                int maxIndex = 0;
+                for (int i = 0; i < floatEvaluations.length; i++) {
+                    if (floatEvaluations[i] > maxIndexValue) {
+                        maxIndex = i;
+                        maxIndexValue = floatEvaluations[i];
+                    }
+                }
+                return maxIndex;
+            } else {
+                return -1;
+            }
+        } else {
+            if (nominalEvaluations == null) {
+                nominalEvaluations = evaluateAll(subset, attType);
+            }
+            if (nominalEvaluations != null && nominalEvaluations.length > 0) {
+                float maxIndexValue = Float.MIN_VALUE;
+                int maxIndex = 0;
+                for (int i = 0; i < nominalEvaluations.length; i++) {
+                    if (nominalEvaluations[i] > maxIndexValue) {
+                        maxIndex = i;
+                        maxIndexValue = nominalEvaluations[i];
+                    }
+                }
+                return maxIndex;
+            } else {
+                return -1;
+            }
+        }
+    }
+
+    /**
+     * @return Float array of evaluations of integer features.
+     */
+    public float[] getIntEvaluations() {
+        return intEvaluations;
+    }
+
+    /**
+     * @return Float array of evaluations of float features.
+     */
+    public float[] getFloatEvaluations() {
+        return floatEvaluations;
+    }
+
+    /**
+     * @return Float array of evaluations of nominal features.
+     */
+    public float[] getNominalEvaluations() {
+        return nominalEvaluations;
+    }
+
+    /**
+     * Evaluate all features of all feature types.
+     */
+    public void evaluateAll() {
+        intEvaluations = evaluateAll(DataMineConstants.INTEGER);
+        floatEvaluations = evaluateAll(DataMineConstants.FLOAT);
+        nominalEvaluations = evaluateAll(DataMineConstants.NOMINAL);
+    }
+
+    /**
+     * Evaluate all features of the specified feature type.
+     *
+     * @param attType Feature type, as in DataMineConstants.
+     * @return Float array of feature evaluations.
+     */
+    public float[] evaluateAll(int attType) {
+        if (discDSet != null && discDSet.size() > 0) {
+            if (attType == DataMineConstants.INTEGER) {
+                if (discDSet.getIntIntervalDivisions() != null
+                        && discDSet.getIntIntervalDivisions().length != 0) {
+                    float[] evaluations =
+                            new float[
+                                    discDSet.getIntIntervalDivisions().length];
+                    for (int i = 0; i
+                            < discDSet.getIntIntervalDivisions().length; i++) {
+                        evaluations[i] = evaluate(attType, i);
+                    }
+                    intEvaluation
