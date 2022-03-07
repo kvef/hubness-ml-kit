@@ -803,4 +803,87 @@ public abstract class DiscreteAttributeEvaluator {
                 }
             } else {
                 if (discDSet.getNominalVocabularies() != null
-                        && discDSet.
+                        && discDSet.getNominalVocabularies().length != 0) {
+                    float[] evaluations = new float[discDSet.
+                            getNominalVocabularies().length];
+                    for (int i = 0; i
+                            < discDSet.getNominalVocabularies().length; i++) {
+                        evaluations[i] = evaluateOnSubset(subset, attType, i);
+                    }
+                    nominalEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            }
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Evaluate all designated features of the specified feature type.
+     *
+     * @param subset ArrayList of integer indexes defining the subset to
+     * analyze.
+     * @param attType Feature type, as in DataMineConstants.
+     * @param acceptable Boolean array indicating which features to consider.
+     * @return array of feature evaluations. The default evaluation for the
+     * non-selected features is zero.
+     */
+    public float[] evaluateAll(ArrayList<Integer> subset, int attType,
+            boolean[] acceptable) {
+        if (discDSet != null && discDSet.size() > 0) {
+            if (attType == DataMineConstants.INTEGER) {
+                if (discDSet.getIntIntervalDivisions() != null
+                        && discDSet.getIntIntervalDivisions().length != 0) {
+                    float[] evaluations = new float[discDSet.
+                            getIntIntervalDivisions().length];
+                    for (int i = 0; i
+                            < discDSet.getIntIntervalDivisions().length; i++) {
+                        if (acceptable[i]) {
+                            evaluations[i] =
+                                    evaluateOnSubset(subset, attType, i);
+                        }
+                    }
+                    intEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            } else if (attType == DataMineConstants.FLOAT) {
+                if (discDSet.getFloatIntervalDivisions() != null
+                        && discDSet.getFloatIntervalDivisions().length != 0) {
+                    float[] evaluations = new float[discDSet.
+                            getFloatIntervalDivisions().length];
+                    for (int i = 0; i
+                            < discDSet.getFloatIntervalDivisions().length;
+                            i++) {
+                        if (acceptable[i]) {
+                            evaluations[i] =
+                                    evaluateOnSubset(subset, attType, i);
+                        }
+                    }
+                    floatEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            } else {
+                if (discDSet.getNominalVocabularies() != null
+                        && discDSet.getNominalVocabularies().length != 0) {
+                    float[] evaluations = new float[discDSet.
+                            getNominalVocabularies().length];
+                    for (int i = 0; i
+                            < discDSet.getNominalVocabularies().length; i++) {
+                        if (acceptable[i]) {
+                            evaluations[i] =
+                                    evaluateOnSubset(subset, attType, i);
+                        }
+                    }
+                    nominalEvaluations = evaluations;
+                    return evaluations;
+                } else {
+                    return null;
+                }
+            
