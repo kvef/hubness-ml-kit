@@ -72,4 +72,5 @@ public abstract class SplitAssesment {
      * @return The quality assessment of the split.
      */
     public abstract float assesSplitOnSubset(ArrayList<Integer> subset,
-            
+            ArrayList<Integer>[] split);
+}
