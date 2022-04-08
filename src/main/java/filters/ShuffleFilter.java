@@ -58,4 +58,20 @@ public class ShuffleFilter implements FilterInterface {
             int[] indexes = null;
             try {
                 indexes = AuxSort.sortIndexedValue(orderer, true);
-            } catch (Exception e) 
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+            DataSet identifiersDS = dset.identifiers;
+            ArrayList<DataInstance> newInstances =
+                    new ArrayList<>(dset.data.size());
+            ArrayList<DataInstance> newIDs =
+                    new ArrayList<>(dset.data.size());
+            for (int i = 0; i < dset.size(); i++) {
+                newInstances.add(dset.getInstance(indexes[i]));
+                newIDs.add(identifiersDS.getInstance(indexes[i]));
+            }
+            dset.data = newInstances;
+            identifiersDS.data = newIDs;
+        }
+    }
+}
