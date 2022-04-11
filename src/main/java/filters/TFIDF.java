@@ -180,4 +180,49 @@ public class TFIDF implements FilterInterface {
                             case DataMineConstants.INTEGER: {
                                 if (instance.iAttr[i] > 0) {
                                     numPosDoc++;
-                
+                                }
+                                break;
+                            }
+                            default: {
+                                if (instance.fAttr[i] > 0) {
+                                    numPosDoc++;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    if (numPosDoc > 0) {
+                        idf = (float) BasicMathUtil.log2(((float) size)
+                                / numPosDoc);
+                    } else {
+                        idf = 5 * (float) BasicMathUtil.log2(((float) size));
+                    }
+                    // Re-weight it in each instance.
+                    for (int j = 0; j < size; j++) {
+                        instance = dset.getInstance(j);
+                        switch (featureType) {
+                            case DataMineConstants.FLOAT: {
+                                if (instance.fAttr[i] > 0) {
+                                    instance.fAttr[i] *= idf;
+                                }
+                                break;
+                            }
+                            case DataMineConstants.INTEGER: {
+                                if (instance.fAttr[i] > 0) {
+                                    instance.iAttr[i] *= idf;
+                                }
+                                break;
+                            }
+                            default: {
+                                if (instance.fAttr[i] > 0) {
+                                    instance.fAttr[i] *= idf;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
