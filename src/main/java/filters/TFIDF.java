@@ -81,4 +81,103 @@ public class TFIDF implements FilterInterface {
      * @param dset DataSet to filter.
      */
     public static void filterFloats(DataSet dset) {
-        if (ds
+        if (dset == null) {
+            return;
+        }
+        boolean[] fBool;
+        if (dset instanceof BOWDataSet) {
+            fBool = new boolean[((BOWDataSet) dset).getNumDifferentWords()];
+        } else {
+            fBool = new boolean[dset.getNumFloatAttr()];
+        }
+        Arrays.fill(fBool, true);
+        int fType = DataMineConstants.FLOAT;
+        TFIDF filter = new TFIDF(fBool, fType);
+        if (dset instanceof BOWDataSet) {
+            filter.setSparse(true);
+        }
+        filter.filter(dset);
+    }
+
+    /**
+     * Perform TF-IDF on sparse data representations (BOW).
+     *
+     * @param dset DataSet to filter.
+     */
+    public static void filterWords(BOWDataSet dset) {
+        if (dset == null) {
+            return;
+        }
+        boolean[] fBool = new boolean[((BOWDataSet) dset).
+                getNumDifferentWords()];
+        Arrays.fill(fBool, true);
+        int fType = DataMineConstants.FLOAT;
+        TFIDF filter = new TFIDF(fBool, fType);
+        filter.setSparse(true);
+        filter.filter(dset);
+    }
+
+    @Override
+    public void filter(DataSet dset) {
+        if (dset == null) {
+            return;
+        }
+        if (sparse) {
+            // The sparse case.
+            if (!(dset instanceof BOWDataSet)) {
+                System.err.println("wrong pairing in TFIDF");
+                return;
+            }
+            BOWInstance instance;
+            int totalNumFeat = ((BOWDataSet) dset).getNumDifferentWords();
+            float[] termDocumentFrequencies = new float[totalNumFeat];
+            for (int i = 0; i < dset.size(); i++) {
+                instance = (BOWInstance) (dset.getInstance(i));
+                HashMap<Integer, Float> indexMap =
+                        instance.getWordIndexesHash();
+                Set<Integer> keys = indexMap.keySet();
+                for (int index : keys) {
+                    if (termFeatures[index] && indexMap.get(index) > 0) {
+                        termDocumentFrequencies[index]++;
+                    }
+                }
+            }
+            // Iterate over documents.
+            for (int i = 0; i < dset.size(); i++) {
+                instance = (BOWInstance) (dset.getInstance(i));
+                HashMap<Integer, Float> indexMap =
+                        instance.getWordIndexesHash();
+                Set<Integer> keys = indexMap.keySet();
+                for (int index : keys) {
+                    if (termFeatures[index]) {
+                        float value = indexMap.get(index);
+                        indexMap.put(index, value
+                                * (float) BasicMathUtil.log2(
+                                ((float) (dset.size()))
+                                / termDocumentFrequencies[index]));
+                    }
+                }
+            }
+        } else {
+            DataInstance instance;
+            // Number of documents.
+            int size = dset.size();
+            float idf;
+            float numPosDoc;
+            for (int i = 0; i < termFeatures.length; i++) {
+                numPosDoc = 0;
+                if (termFeatures[i]) {
+                    // First get the document frequency.
+                    for (int j = 0; j < size; j++) {
+                        instance = dset.getInstance(j);
+                        switch (featureType) {
+                            case DataMineConstants.FLOAT: {
+                                if (instance.fAttr[i] > 0) {
+                                    numPosDoc++;
+                                }
+                                break;
+                            }
+                            case DataMineConstants.INTEGER: {
+                                if (instance.iAttr[i] > 0) {
+                                    numPosDoc++;
+                
