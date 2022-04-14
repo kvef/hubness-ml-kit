@@ -28,4 +28,30 @@ public class VertexScaleComparator implements Comparator {
 
     public static final boolean DESCENDING = false;
     public static final boolean ASCENDING = true;
-    priv
+    private boolean mode = ASCENDING;
+
+    /**
+     * Initialization.
+     *
+     * @param mode Boolean flag indicating whether to use the ascending or the
+     * descending mode.
+     */
+    public VertexScaleComparator(boolean mode) {
+        this.mode = mode;
+    }
+
+    @Override
+    public int compare(Object firstVertex, Object secondVertex) {
+        if ((firstVertex != null) && (secondVertex != null)) {
+            if (mode == ASCENDING) {
+                return (int) (((VertexInstance) firstVertex).scale
+                        - ((VertexInstance) secondVertex).scale);
+            } else {
+                return (int) (((VertexInstance) secondVertex).scale
+                        - ((VertexInstance) firstVertex).scale);
+            }
+        } else {
+            return 0;
+        }
+    }
+}
