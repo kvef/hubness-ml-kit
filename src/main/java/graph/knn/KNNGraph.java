@@ -24,4 +24,116 @@ import graph.basic.DMGraphEdge;
 
 /**
  * This class models the KNN graph on the specified DataSet for the specified
- * met
+ * metric. An edge (x,y) exists if y is in a k-NN list of x.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class KNNGraph extends DMGraph {
+
+    private NeighborSetFinder nsf;
+    private int[][] kneighbors = null;
+    private CombinedMetric cmet;
+    private int k = 1;
+
+    /**
+     * The basic constructor.
+     */
+    public KNNGraph() {
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param networkName String that is the graph name.
+     * @param networkDescription String that is the graph description.
+     */
+    public KNNGraph(String networkName, String networkDescription) {
+        this.networkName = networkName;
+        this.networkDescription = networkDescription;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param networkName String that is the graph name.
+     * @param networkDescription String that is the graph description.
+     * @param vertices DataSet that holds the vertex information. This is where
+     * the kNN graph will be derived from.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public KNNGraph(String networkName, String networkDescription,
+            DataSet vertices, CombinedMetric cmet) {
+        this.networkName = networkName;
+        this.networkDescription = networkDescription;
+        this.vertices = vertices;
+        this.cmet = cmet;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param networkName String that is the graph name.
+     * @param networkDescription String that is the graph description.
+     * @param vertices DataSet that holds the vertex information. This is where
+     * the kNN graph will be derived from.
+     * @param kneighbors CombinedMetric object for distance calculations.
+     */
+    public KNNGraph(String networkName, String networkDescription,
+            DataSet vertices, int[][] kneighbors) {
+        this.networkName = networkName;
+        this.networkDescription = networkDescription;
+        this.vertices = vertices;
+        this.kneighbors = kneighbors;
+        // We get the actual k value from the neighbor set lengths.
+        k = kneighbors[0].length;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param networkName String that is the graph name.
+     * @param networkDescription String that is the graph description.
+     * @param vertices DataSet that holds the vertex information. This is where
+     * the kNN graph will be derived from.
+     * @param edges DMGraphEdge[] of edges of the graph, in case they have
+     * already been calculated.
+     */
+    public KNNGraph(String networkName, String networkDescription,
+            DataSet vertices, DMGraphEdge[] edges) {
+        this.networkName = networkName;
+        this.networkDescription = networkDescription;
+        this.vertices = vertices;
+        this.edges = edges;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     */
+    public KNNGraph(int k) {
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param networkName String that is the graph name.
+     * @param networkDescription String that is the graph description.
+     * @param k Integer that is the neighborhood size.
+     */
+    public KNNGraph(String networkName, String networkDescription, int k) {
+        this.networkName = networkName;
+        this.networkDescription = networkDescription;
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param networkName String that is the graph name.
+     * @param networkDescription String that is the graph description.
+     * @param vertices DataSet that holds the vertex information. This is where
+     * the kNN graph will be derived from.
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for di
