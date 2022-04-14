@@ -62,4 +62,50 @@ public class RandomCoordinateFinder implements CoordinateFinderInterface {
         this.updateJG = updateJG;
     }
 
-    @O
+    @Override
+    public void findCoordinates() throws Exception {
+        if (g.isEmpty()) {
+            return;
+        }
+        Random randa = new Random();
+        for (int i = 0; i < g.vertices.data.size(); i++) {
+            if (isRunning) {
+                ((VertexInstance) (g.vertices.data.get(i))).x =
+                        randa.nextDouble() * width;
+                ((VertexInstance) (g.vertices.data.get(i))).y =
+                        randa.nextDouble() * height;
+                // Set the current progress.
+                progress = (i + 1) / g.vertices.data.size();
+                // If auto-updating the JGraph as well.
+                if (updateJG) {
+                    // If there exists the associated visual context.
+                    if (((VertexInstance) (g.vertices.data.get(i))).jgVertex
+                            != null) {
+                        JGraphConverter.setCellCoordinates(g.visGraph,
+                                ((VertexInstance) (g.vertices.data.get(
+                                i))).jgVertex,
+                                ((VertexInstance) (g.vertices.data.get(i))).x,
+                                ((VertexInstance) (g.vertices.data.get(i))).y,
+                                ((VertexInstance) (g.vertices.data.get(
+                                i))).scale);
+                    }
+                }
+            }
+        }
+        if (!updateJG) {
+            progress = 0.99;
+            JGraphConverter.updateJGCoordinates(g);
+            progress = 1.;
+        }
+    }
+
+    @Override
+    public void stop() {
+        isRunning = false;
+    }
+
+    @Override
+    public double getProgress() {
+        return progress;
+    }
+}
