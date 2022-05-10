@@ -117,4 +117,68 @@
                   </AuxValues>
                 </MenuItem>
               </SubComponents>
-            </Men
+            </Menu>
+            <MenuItem class="javax.swing.JMenuItem" name="makeThumbnailsItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;Make &lt;u&gt;T&lt;/u&gt;humbnails"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="makeThumbnailsItemActionPerformed"/>
+              </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="makeThumbnailsItem.setMnemonic(KeyEvent.VK_T);"/>
+              </AuxValues>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="codeBookMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="&lt;html&gt;Code &lt;u&gt;B&lt;/u&gt;ook"/>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="codeBookMenu.setMnemonic(KeyEvent.VK_B);"/>
+          </AuxValues>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="loadCodeBookItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;u&gt;L&lt;/u&gt;oad codebook"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="loadCodeBookItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="calculateCodeBookItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;u&gt;C&lt;/u&gt;alculate from collection"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="calculateCodeBookItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="codebookProfileMenuItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Calculate and Save Codebook Profile"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="codebookProfileMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="clusteringMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="&lt;html&gt;C&lt;u&gt;l&lt;/u&gt;ustering"/>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="clusteringMenu.setMnemonic(KeyEvent.VK_L);"/>
+          </AuxValues>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="clusterImagesItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;u&gt;C&lt;/u&gt;luster images"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clusterImagesItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="
