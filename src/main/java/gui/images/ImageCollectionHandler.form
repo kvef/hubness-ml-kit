@@ -348,4 +348,58 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignmen
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="displayedClusterNumberLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="displayedClusterNumberValueLabel" pref="487" max="32767" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="medoidLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="medoidValueLabel" min="-2" pref="439" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Component id="displayedClusterElementNumberLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="displayedClusterElementNumberValueLabel" pref="470" max="32767" attributes="0"/>
+                  </Group>
+                  <Component id="representativeImagesLabel" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="medoidPathLabel" max="32767" attributes="1"/>
+                          <Component id="imagePanel1" alignment="0" max="32767" attributes="1"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="75" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="secondPathLabel" max="32767" attributes="1"/>
+                          <Component id="imagePanel3" max="32767" attributes="1"/>
+                          <Component id="imagePanel2" alignment="0" max="32767" attributes="1"/>
+                          <Component id="thirdPathLabel" alignment="0" max="32767" attributes="1"/>
+                      </Group>
+                  </Group>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="collectionDirLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="collectionDirValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="displayedClusterNumberLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="displayedClusterNumberValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="collectionSizeLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="collectionSizeValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="medoidLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="medoidValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace
