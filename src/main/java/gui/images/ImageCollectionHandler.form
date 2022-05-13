@@ -402,4 +402,48 @@
                   <Component id="medoidLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="medoidValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="workspaceLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="workspaceValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="displayedClusterElementNumberLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="displayedClusterElementNumberValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="codeBookLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="codeBookValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="codeBookSizeLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="codeBookSizeValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="clusterFileLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="clusterFileValueLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="representativeImagesLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="clusteringIntervalLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="minClustTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="maxClustTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="confirmClustNumButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="validityChoiceLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="dunnValidityRadio" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="dbValidityRadio" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Component id="silhouetteValidityRadio" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="
