@@ -500,4 +500,89 @@
         <Property name="text" type="java.lang.String" value="Collection:"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="collectionDirValueLab
+    <Component class="javax.swing.JLabel" name="collectionDirValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="collectionSizeLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Num Images:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="collectionSizeValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="workspaceLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Workspace:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="workspaceValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="codeBookLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Codebook:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="codeBookValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="codeBookSizeLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Codebook size:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="codeBookSizeValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="clusterFileLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="File with clusters:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="clusterFileValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="clusteringIntervalLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Choose clustering interval:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="minClustTextField">
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="minClustTextFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JTextField" name="maxClustTextField">
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="maxClustTextFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="confirmClustNumButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Confirm"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="confirmClustNumButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="validityChoiceLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Choose validity measure:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="dunnValidityRadio">
+      <Properties>
+        <Property name="buttonGro
