@@ -585,4 +585,85 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="dunnValidityRadio">
       <Properties>
-        <Property name="buttonGro
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="validityButtonGroup"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Dunn Index"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="dbValidityRadio">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="validityButtonGroup"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Davies Boulding Index"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="silhouetteValidityRadio">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="validityButtonGroup"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Silhouette Index"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="statusLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Status:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="statusValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JProgressBar" name="progressBar">
+    </Component>
+    <Component class="javax.swing.JLabel" name="resultingNumLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Resulting number of clusters:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="resultingNumValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="inspectLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Inspect cluster (choose number):"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="inspectionNumberField">
+    </Component>
+    <Component class="javax.swing.JButton" name="visualizeButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Go!"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="visualizeButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="displayedClusterNumberLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Cluster number:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="displayedClusterNumberValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="medoidLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Medoid: "/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="medoidValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="displayedClusterElementNumberLabel">
+      <Properties>
+        <Property name="text
