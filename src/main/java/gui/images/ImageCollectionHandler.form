@@ -666,4 +666,96 @@
     </Component>
     <Component class="javax.swing.JLabel" name="displayedClusterElementNumberLabel">
       <Properties>
-        <Property name="text
+        <Property name="text" type="java.lang.String" value="Number of Elements:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="displayedClusterElementNumberValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="representativeImagesLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Representative images from selected cluster: "/>
+      </Properties>
+    </Component>
+    <Container class="gui.images.ImagePanel" name="imagePanel1">
+
+      <Layout>
+        <DimensionLayout dim="0">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+        <DimensionLayout dim="1">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="127" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+      </Layout>
+    </Container>
+    <Container class="gui.images.ImagePanel" name="imagePanel2">
+
+      <Layout>
+        <DimensionLayout dim="0">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+        <DimensionLayout dim="1">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="89" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+      </Layout>
+    </Container>
+    <Container class="gui.images.ImagePanel" name="imagePanel3">
+
+      <Layout>
+        <DimensionLayout dim="0">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+        <DimensionLayout dim="1">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="94" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+      </Layout>
+    </Container>
+    <Component class="javax.swing.JLabel" name="medoidPathLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="---------------------------------------------------"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="secondPathLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="----------------------------------"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="thirdPathLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="----------------------------------"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="reinitButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Reinit"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="reinitButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="executionLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Execution:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="executionValueLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="-"/>
+      </Properties>
+    </Component>
+  </SubComponents>
+</Form>
