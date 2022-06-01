@@ -149,4 +149,69 @@
               <SubComponents>
                 <MenuItem class="javax.swing.JMenuItem" name="simcosMenuItem">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="simcos shared neighbor
+                    <Property name="text" type="java.lang.String" value="simcos shared neighbor sim"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="simcosMenuItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="simhubMenuItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="simhub shared neighbor sim"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="simhubMenuItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mpMenuItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="mutual proximity"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mpMenuItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="localScalingItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="local scaling"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="localScalingItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="nicdmItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="NICDM"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="nicdmItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+              </SubComponents>
+            </Menu>
+            <MenuItem class="javax.swing.JMenuItem" name="loadSecondaryDistancesItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Load secondary distance matrix"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="loadSecondaryDistancesItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="editMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Edit"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="previousMenuItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Previous"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="previousMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="nextMenuItem">
+              <Properties>
+                <Property name="text" type="java.l
