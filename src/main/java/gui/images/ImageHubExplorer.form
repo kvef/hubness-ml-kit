@@ -214,4 +214,75 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="nextMenuItem">
               <Properties>
-                <Property name="text" type="java.l
+                <Property name="text" type="java.lang.String" value="Next"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="nextMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <Menu class="javax.swing.JMenu" name="screenCaptureMenu">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Screen capture"/>
+              </Properties>
+              <SubComponents>
+                <MenuItem class="javax.swing.JMenuItem" name="mdsScreenCaptureItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="MDS screen"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mdsScreenCaptureItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="graphScreenCaptureItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Graph screen"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="graphScreenCaptureItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+              </SubComponents>
+            </Menu>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="codebookMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Codebook"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="loadCodebookItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="load Codebook"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="loadCodebookItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="loadCodebookProfileMenuItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="load Codebook Profile"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="loadCodebookProfileMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="classificationMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Classification"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="trainModelsItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Train models"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="trainModelsItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="selImageMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Selec
