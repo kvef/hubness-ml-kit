@@ -83,4 +83,70 @@
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="klMenuItemActionPerformed"/>
                       </Events>
                     </MenuItem>
-                    <MenuItem class="javax.swing.JMenuIte
+                    <MenuItem class="javax.swing.JMenuItem" name="bcMenuItem">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="Bray-Curtis"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bcMenuItemActionPerformed"/>
+                      </Events>
+                    </MenuItem>
+                    <MenuItem class="javax.swing.JMenuItem" name="canMenuItem">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="Canberra"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="canMenuItemActionPerformed"/>
+                      </Events>
+                    </MenuItem>
+                  </SubComponents>
+                </Menu>
+              </SubComponents>
+            </Menu>
+            <MenuItem class="javax.swing.JMenuItem" name="neighborStatsItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Calculate Neighbor Stats"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="neighborStatsItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mdsVisualizeItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="MDS Visualize"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mdsVisualizeItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="selImgPathMenuItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Select image by browsing"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="selImgPathMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="majorHubSelectionItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Select major hub"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="majorHubSelectionItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="metricLearningMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Metric Learning"/>
+          </Properties>
+          <SubComponents>
+            <Menu class="javax.swing.JMenu" name="secondaryMetricMenu">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Calculate secondary metric"/>
+              </Properties>
+              <SubComponents>
+                <MenuItem class="javax.swing.JMenuItem" name="simcosMenuItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="simcos shared neighbor
