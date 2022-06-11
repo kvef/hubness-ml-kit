@@ -359,4 +359,44 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
-                      <Empty
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="mdsScrollPane" min="-2" pref="536" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="rnkEntropySkewnessTxt" min="-2" max="-2" attributes="0"/>
+                                  <Component id="nkEntropySkewnessTxt" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="nkEntropyLabelTxt" min="-2" max="-2" attributes="0"/>
+                                  <Component id="hRelatedPropTxt" max="32767" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Component id="workspaceLabelTxt" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="workspaceLabelValue" min="-2" pref="169" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                          <Component id="numClassesLabelTxt" alignment="0" max="32767" attributes="1"/>
+                                          <Component id="collectionSizeLabelTxt" alignment="0" max="32767" attributes="1"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                          <Component id="numClassesLabelValue" max="32767" attributes="1"/>
+                                          <Component id="collectionSizeLabelValue" alignment="0" pref="68" max="32767" attributes="1"/>
+                                      </Group>
+                                  </Group>
+                                  <Component id="kSelectionSlider" alignment="1" min="-2" pref="249" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                          <Component id="kurtosisLabelTxt" alignment="0" max="32767" attributes="1"/>
+                                          <Component id="skewnwessLabelTxt" alignment="0" max="32767" attributes="1"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="nkEntropySkewnessValues" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Component id="skewnessLabelValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="kurtosisLabelValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="nkEntropyLabelValue" alignment="0" min="-2" max="-2" attributes
