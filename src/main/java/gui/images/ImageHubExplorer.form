@@ -438,4 +438,50 @@
                                   <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                                       <Group type="102" attributes="1">
                                           <Component id="percAboveLabelTxt" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace type="
+                                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                                          <Component id="percAboveLabelValue" max="32767" attributes="0"/>
+                                      </Group>
+                                      <Component id="nhSizeLabelTxt" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
+                              <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="selectedImageLabelClassNeighborMain" alignment="0" max="32767" attributes="1"/>
+                                  <Component id="selectedImagePanelClassNeighborMain" alignment="1" min="-2" max="-2" attributes="1"/>
+                                  <Component id="jScrollPane1" min="-2" pref="241" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <Component id="chartHoldingPanelOccDistribution" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+            <DimensionLayout dim="1">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="mdsScrollPane" min="-2" pref="593" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="workspaceLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="workspaceLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                          <Component id="collectionSizeLabelTxt" max="32767" attributes="0"/>
+                                          <Component id="collectionSizeLabelValue" max="32767" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                          <Component id="numClassesLabelTxt" max="32767" attributes="0"/>
+                                          <Component id="numClassesLabelValue" max="32767" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace min="-2" pref="17" max="-2" attributes="0"/>
+                                      <Component id="hRelatedPropTxt" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="skewnwessLabelTxt" alignment="3" min="-2" max
