@@ -399,4 +399,43 @@
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Component id="skewnessLabelValue" alignment="0" min="-2" max="-2" attributes="0"/>
                                                   <Component id="kurtosisLabelValue" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="nkEntropyLabelValue" alignment="0" min="-2" max="-2" attributes
+                                                  <Component id="nkEntropyLabelValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="rnkEntropyValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="rnkEntropySkewnessValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
+                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Component id="badHubnessLabelTxt" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="badHubnessLabelValue" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Component id="majorDegLabelTxt" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="majorDegLabelValue" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Component id="regularLabelTxt" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                                      <Component id="regularLabelValue" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Group type="103" groupAlignment="0" attributes="0">
+                                                          <Component id="hubsLabelTxt" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="orphansLabelTxt" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                                      <Group type="103" groupAlignment="0" attributes="0">
+                                                          <Component id="orphansLabelValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hubsLabelValue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                  </Group>
+                                              </Group>
+                                          </Group>
+                                      </Group>
+                                  </Group>
+                                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                                      <Group type="102" attributes="1">
+                                          <Component id="percAboveLabelTxt" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace type="
