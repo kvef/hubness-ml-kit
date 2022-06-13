@@ -484,4 +484,41 @@
                                       <Component id="hRelatedPropTxt" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="skewnwessLabelTxt" alignment="3" min="-2" max
+                                          <Component id="skewnwessLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="skewnessLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="hubsLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="hubsLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="kurtosisLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="kurtosisLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="orphansLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="orphansLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="nkEntropyLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="nkEntropyLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="regularLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="regularLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="rnkEntropyValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="majorDegLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="majorDegLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="nkEntropySkewnessTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="nkEntropySkewnessValues" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="rnkEntropySkewnessTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="rnkEntropySkewnessValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="badHubnessLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="badHubnessLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                       
