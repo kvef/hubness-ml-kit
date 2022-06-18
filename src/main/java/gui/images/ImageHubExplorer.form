@@ -521,4 +521,66 @@
                                           <Component id="rnkEntropySkewnessValue" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="badHubnessLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="badHubnessLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
-                       
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="percAboveLabelTxt" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="percAboveLabelValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                                  <Component id="selectedImagePanelClassNeighborMain" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="selectedImageLabelClassNeighborMain" pref="53" max="32767" attributes="0"/>
+                                  <Component id="nhSizeLabelTxt" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="kSelectionSlider" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jScrollPane1" min="-2" pref="53" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="chartHoldingPanelOccDistribution" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+          </Layout>
+          <SubComponents>
+            <Container class="gui.images.ImagePanel" name="selectedImagePanelClassNeighborMain">
+
+              <Layout>
+                <DimensionLayout dim="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <EmptySpace min="0" pref="241" max="32767" attributes="0"/>
+                  </Group>
+                </DimensionLayout>
+                <DimensionLayout dim="1">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <EmptySpace min="0" pref="257" max="32767" attributes="0"/>
+                  </Group>
+                </DimensionLayout>
+              </Layout>
+            </Container>
+            <Component class="javax.swing.JLabel" name="selectedImageLabelClassNeighborMain">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Current Image"/>
+              </Properties>
+            </Component>
+            <Container class="javax.swing.JScrollPane" name="mdsScrollPane">
+              <Properties>
+                <Property name="horizontalScrollBarPolicy" type="int" value="32"/>
+                <Property name="verticalScrollBarPolicy" type="int" value="22"/>
+              </Properties>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+              <SubComponents>
+                <Container class="gui.images.ImagesDisplayPanel" name="mdsCollectionPanel">
+                  <Properties>
+                    <Property name="name" type="java.lang.String" value="" noResource="true"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mdsCollectio
