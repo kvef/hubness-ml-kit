@@ -583,4 +583,79 @@
                     <Property name="name" type="java.lang.String" value="" noResource="true"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mdsCollectio
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mdsCollectionPanelMouseClicked"/>
+                  </Events>
+
+                  <Layout>
+                    <DimensionLayout dim="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <EmptySpace min="0" pref="2000" max="32767" attributes="0"/>
+                      </Group>
+                    </DimensionLayout>
+                    <DimensionLayout dim="1">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <EmptySpace min="0" pref="2000" max="32767" attributes="0"/>
+                      </Group>
+                    </DimensionLayout>
+                  </Layout>
+                </Container>
+              </SubComponents>
+            </Container>
+            <Component class="javax.swing.JLabel" name="workspaceLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Workspace:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="collectionSizeLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Collection size:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="workspaceLabelValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="collectionSizeLabelValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JSlider" name="kSelectionSlider">
+              <Properties>
+                <Property name="maximum" type="int" value="50"/>
+                <Property name="paintLabels" type="boolean" value="true"/>
+                <Property name="paintTicks" type="boolean" value="true"/>
+                <Property name="toolTipText" type="java.lang.String" value="Select the neighborhood size, k"/>
+                <Property name="value" type="int" value="1"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="nhSizeLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Neighborhood size (k):"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="numClassesLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Num. Classes:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="numClassesLabelValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="hRelatedPropTxt">
+              <Properties>
+                <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                  <Color blue="ff" green="99" red="66" type="rgb"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Hubness-related properties:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="skewnwessLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Occ. Skewness: "/>
+              </Properties>
+            </Component>
+            <Component class
