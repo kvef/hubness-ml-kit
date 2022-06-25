@@ -658,4 +658,81 @@
                 <Property name="text" type="java.lang.String" value="Occ. Skewness: "/>
               </Properties>
             </Component>
-            <Component class
+            <Component class="javax.swing.JLabel" name="skewnessLabelValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="kurtosisLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Occ. Kurtosis:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="kurtosisLabelValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="nkEntropyLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Nk Entropy:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="nkEntropyLabelValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel1">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="RNk Entropy:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="rnkEntropyValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="nkEntropySkewnessTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Nk Ent. Skew:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="rnkEntropySkewnessTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="RNk Ent Skew:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="nkEntropySkewnessValues">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="rnkEntropySkewnessValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="percAboveLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Perc Nk(x) &gt; 0"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="percAboveLabelValue">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="..."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="hubsLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Hubs:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="orphansLabelTxt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Orphans:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="regularLabelTxt">
+              <Properties>
+                <
