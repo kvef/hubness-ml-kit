@@ -86,4 +86,15 @@ public class ImagePanel extends JPanel {
             super.paint(g);
         } else {
             // If no information is provided, just paint a rectangle.
-            Color 
+            Color c = g.getColor();
+            g.setColor(Color.GRAY);
+            g.fillRect(0, 0, this.getWidth(), this.getHeight());
+            g.setColor(c);
+        }
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        update(g);
+    }
+}
