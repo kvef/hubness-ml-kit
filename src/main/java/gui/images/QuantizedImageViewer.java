@@ -340,3 +340,83 @@ public class QuantizedImageViewer extends javax.swing.JFrame {
             allQuantizedPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 450, Short.MAX_VALUE)
         );
+        allQuantizedPanelLayout.setVerticalGroup(
+            allQuantizedPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 305, Short.MAX_VALUE)
+        );
+
+        selectedCodebookPanel.setMaximumSize(new java.awt.Dimension(450, 300));
+        selectedCodebookPanel.setMinimumSize(new java.awt.Dimension(450, 300));
+        selectedCodebookPanel.setPreferredSize(new java.awt.Dimension(450, 300));
+
+        javax.swing.GroupLayout selectedCodebookPanelLayout = new javax.swing.GroupLayout(selectedCodebookPanel);
+        selectedCodebookPanel.setLayout(selectedCodebookPanelLayout);
+        selectedCodebookPanelLayout.setHorizontalGroup(
+            selectedCodebookPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 450, Short.MAX_VALUE)
+        );
+        selectedCodebookPanelLayout.setVerticalGroup(
+            selectedCodebookPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
+        );
+
+        codebookScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        codebookScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        codebookScrollPane.setMaximumSize(new java.awt.Dimension(900, 100));
+        codebookScrollPane.setMinimumSize(new java.awt.Dimension(900, 100));
+        codebookScrollPane.setPreferredSize(new java.awt.Dimension(900, 100));
+
+        codebookProfilesPanel.setMaximumSize(new java.awt.Dimension(50000, 400));
+        codebookProfilesPanel.setMinimumSize(new java.awt.Dimension(50000, 100));
+        codebookProfilesPanel.setPreferredSize(new java.awt.Dimension(50000, 100));
+
+        javax.swing.GroupLayout codebookProfilesPanelLayout = new javax.swing.GroupLayout(codebookProfilesPanel);
+        codebookProfilesPanel.setLayout(codebookProfilesPanelLayout);
+        codebookProfilesPanelLayout.setHorizontalGroup(
+            codebookProfilesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 50000, 50000)
+        );
+        codebookProfilesPanelLayout.setVerticalGroup(
+            codebookProfilesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 120, Short.MAX_VALUE)
+        );
+
+        codebookScrollPane.setViewportView(codebookProfilesPanel);
+
+        cvectLabel.setText("Observing codebook vector:");
+
+        occCountLabel.setText("Occurrence count:");
+
+        occCountValueLabel.setText("...");
+
+        jMenu1.setText("Photo");
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Edit");
+
+        saveOverallItem.setText("Save Overall SIFT Distribution");
+        saveOverallItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveOverallItemActionPerformed(evt);
+            }
+        });
+        jMenu2.add(saveOverallItem);
+
+        saveSelectedItem.setText("Save Selected Codebook Distribution");
+        saveSelectedItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveSelectedItemActionPerformed(evt);
+            }
+        });
+        jMenu2.add(saveSelectedItem);
+
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+     
