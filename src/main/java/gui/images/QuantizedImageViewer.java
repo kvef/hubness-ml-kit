@@ -168,4 +168,96 @@ public class QuantizedImageViewer extends javax.swing.JFrame {
                 maxSize = partialReps[cInd].size();
             }
         }
-        visualizeVisualWordUtilit
+        visualizeVisualWordUtility(maxRepIndex);
+        // Visualize the overall utility of different image regions.
+        try {
+            goodnessSIFTImage = SIFTDraw.drawSIFTGoodnessOnImage(imageFRep,
+                    featureGoodness, bwImage);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        allQuantizedPanel.setImage(goodnessSIFTImage);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+
+    /**
+     * Visualizes the utility of a particular visual word.
+     *
+     * @param codebookfeatureIndex Integer that is the index of the particular
+     * codebook feature.
+     */
+    private void visualizeVisualWordUtility(int codebookfeatureIndex) {
+        occCountValueLabel.setText(""
+                + partialReps[codebookfeatureIndex].size());
+        selectedCodebookFeatureIndex = codebookfeatureIndex;
+        cvectLabel.setText("Observing codebook vector: "
+                + codebookfeatureIndex);
+        if (codebookVisualizationImages[codebookfeatureIndex] != null) {
+            // If the visualization has already been calculated, just move to
+            // the appropriate object in-memory.
+            selectedCodebookPanel.setImage(
+                    codebookVisualizationImages[codebookfeatureIndex]);
+        } else {
+            // Calculate a new visualization.
+            if (partialReps[codebookfeatureIndex].isEmpty()) {
+                // If there are no matches for this codebook feature, just show
+                // the grayscale image with no features on top.
+                selectedCodebookPanel.setImage(bwImage);
+                return;
+            }
+            // Set the local image feature goodness for each feature in this
+            // partial view that contains only the matches to the current
+            // visual word to be the goodness of that visual word.
+            float[] featureGoodness = new float[partialReps[
+                    codebookfeatureIndex].size()];
+            Arrays.fill(featureGoodness, 0, featureGoodness.length,
+                    codebookGoodness[codebookfeatureIndex]);
+            try {
+                codebookVisualizationImages[codebookfeatureIndex] =
+                        SIFTDraw.drawSIFTGoodnessOnImage(
+                        partialReps[codebookfeatureIndex],
+                        featureGoodness, bwImage);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+            selectedCodebookPanel.setImage(
+                    codebookVisualizationImages[codebookfeatureIndex]);
+        }
+    }
+
+    /**
+     * Listener for visual word selections.
+     */
+    class CodebookSelectionListener implements MouseListener {
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            Component comp = e.getComponent();
+            System.out.println("selection made");
+            if (comp instanceof CodebookVectorProfilePanel) {
+                int index = ((CodebookVectorProfilePanel) comp).
+                        getCodebookIndex();
+                System.out.println("selected index " + index);
+                visualizeVisualWordUtility(index);
+            } else if (comp.getParent() != null && comp.getParent() instanceof
+                    CodebookVectorProfilePanel) {
+                int index = ((CodebookVectorProfilePanel) comp.getParent()).
+                        getCodebookIndex();
+                System.out.println("selected index " + index);
+           
