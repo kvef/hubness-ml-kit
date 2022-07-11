@@ -93,4 +93,79 @@ public class QuantizedImageViewer extends javax.swing.JFrame {
      * @param imageFRep Image feature representation.
      * @param codebookGoodness Float array of codebook goodness scores.
      * @param codebook GenericCodeBook object that holds the visual word
-     *
+     * definitions.
+     * @param codebookProfiles double[][] that represents the class-conditional
+     * occurrence profiles for all the codebooks.
+     * @param cProfPanels CodebookVectorProfilePanel[] of the codebook profile
+     * panels.
+     * @param classColors Color[] of class colors.
+     * @param classNames String[] of class names.
+     */
+    public QuantizedImageViewer(
+            BufferedImage originalImage,
+            LFeatRepresentation imageFRep,
+            float[] codebookGoodness,
+            GenericCodeBook codebook,
+            double[][] codebookProfiles,
+            CodebookVectorProfilePanel[] cProfPanels,
+            Color[] classColors,
+            String[] classNames) {
+        initComponents();
+        codebookProfilesPanel.setLayout(new FlowLayout());
+        this.imageFRep = imageFRep;
+        this.codebookGoodness = codebookGoodness;
+        this.codebook = codebook;
+        this.codebookProfiles = codebookProfiles;
+        this.classColors = classColors;
+        this.classNames = classNames;
+        this.originalImage = originalImage;
+        // Get a proper black-white image to draw on.
+        bwImage = new BufferedImage(originalImage.getWidth(),
+                originalImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        Graphics2D g2d = bwImage.createGraphics();
+        g2d.drawImage(originalImage, 0, 0, originalImage.getWidth(),
+                originalImage.getHeight(), null);
+        BufferedImage bwImageTmp = new BufferedImage(originalImage.getWidth(),
+                originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        g2d = bwImageTmp.createGraphics();
+        g2d.drawImage(bwImage, 0, 0, originalImage.getWidth(),
+                originalImage.getHeight(), null);
+        bwImage = bwImageTmp;
+        partialReps = new LFeatRepresentation[codebook.getSize()];
+        codebookVisualizationImages = new BufferedImage[codebook.getSize()];
+        // Insert all the individual codebook profile visualization panels.
+        for (int cInd = 0; cInd < codebook.getSize(); cInd++) {
+            codebookProfilesPanel.add(cProfPanels[cInd]);
+            cProfPanels[cInd].addMouseListener(new CodebookSelectionListener());
+            partialReps[cInd] = new LFeatRepresentation();
+        }
+        codebookProfilesPanel.revalidate();
+        codebookProfilesPanel.repaint();
+        codebookScrollPane.revalidate();
+        codebookScrollPane.repaint();
+        originalImagePanel.setImage(originalImage);
+        // Calculate the closest codebook feature for each feature in the
+        // original image.
+        float[] featureGoodness = new float[imageFRep.size()];
+        codebookAssignments = new int[imageFRep.size()];
+        for (int i = 0; i < imageFRep.size(); i++) {
+            LFeatVector sv = (LFeatVector) (imageFRep.getInstance(i));
+            try {
+                codebookAssignments[i] = codebook.getIndexOfClosestCodebook(sv);
+                partialReps[codebookAssignments[i]].addDataInstance(sv);
+            } catch (Exception e) {
+                System.err.println("Quantization error.");
+                System.err.println(e);
+            }
+            featureGoodness[i] = codebookGoodness[codebookAssignments[i]];
+        }
+        // Determine the best visual word and visualize it first by default.
+        int maxRepIndex = 0;
+        int maxSize = 0;
+        for (int cInd = 0; cInd < codebook.getSize(); cInd++) {
+            if (partialReps[cInd].size() > maxSize) {
+                maxRepIndex = cInd;
+                maxSize = partialReps[cInd].size();
+            }
+        }
+        visualizeVisualWordUtilit
