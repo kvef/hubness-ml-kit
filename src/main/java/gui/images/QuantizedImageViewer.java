@@ -456,4 +456,87 @@ public class QuantizedImageViewer extends javax.swing.JFrame {
                         .addComponent(cvectLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(occCountLabel, javax.swing
+                            .addComponent(occCountLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 44, Short.MAX_VALUE)
+                            .addComponent(occCountValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * Saves the overall visual word utility image to the disk.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void saveOverallItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveOverallItemActionPerformed
+        try {
+            File outFile;
+            JFileChooser jfc = new JFileChooser(currentDirectory);
+            jfc.setDialogTitle("Select file to save the component image: ");
+            jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            int rVal = jfc.showOpenDialog(QuantizedImageViewer.this);
+            if (rVal == JFileChooser.APPROVE_OPTION) {
+                currentDirectory = jfc.getSelectedFile().getParentFile();
+                outFile = jfc.getSelectedFile();
+                try {
+                    ImageIO.write(goodnessSIFTImage, "jpg", outFile);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("problem writing file: " + e.getMessage());
+        }
+    }//GEN-LAST:event_saveOverallItemActionPerformed
+
+    /**
+     * Saves a visual word utility image for a particular visual word to the
+     * disk.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void saveSelectedItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveSelectedItemActionPerformed
+        try {
+            if (selectedCodebookFeatureIndex < 0
+                    || codebookVisualizationImages[
+                        selectedCodebookFeatureIndex] == null) {
+                System.out.println("no image selected");
+                return;
+            }
+            File outFile;
+            JFileChooser jfc = new JFileChooser(currentDirectory);
+            jfc.setDialogTitle("Select file to save the component image: ");
+            jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            int rVal = jfc.showOpenDialog(QuantizedImageViewer.this);
+            if (rVal == JFileChooser.APPROVE_OPTION) {
+                currentDirectory = jfc.getSelectedFile().getParentFile();
+                outFile = jfc.getSelectedFile();
+                try {
+                    ImageIO.write(codebookVisualizationImages[
+                                selectedCodebookFeatureIndex], "jpg", outFile);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("problem writing file: " + e.getMessage());
+        }
+    }//GEN-LAST:event_saveSelectedItemActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+     
