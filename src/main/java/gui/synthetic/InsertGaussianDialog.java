@@ -79,4 +79,43 @@ public class InsertGaussianDialog extends JDialog implements ActionListener {
         getContentPane().add(ySLabel);
         getContentPane().add(ySigmaField);
         getContentPane().add(rotLabel);
-        
+        getContentPane().add(rotAngleField);
+        getContentPane().add(numLabel);
+        getContentPane().add(numInstField);
+        getContentPane().add(okButton);
+
+        setVisible(true);
+    }
+
+    /**
+     * Creates and shows a new Gaussian input dialog.
+     *
+     * @param parentFrame Visual2DdataGenerator frame that the request is for.
+     * @param x Float value that is the current X coordinate.
+     * @param y Float value that is the current Y coordinate.
+     */
+    public static void showDialog(Visual2DdataGenerator parentFrame,
+            float x, float y) {
+        InsertGaussianDialog d = new InsertGaussianDialog(parentFrame, x, y);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        float xSigma = 0.1f;
+        float ySigma = 0.1f;
+        float rotAngle = 0;
+        int numInstances = 1;
+        try {
+            // Parse all the input fields.
+            xSigma = Float.parseFloat(xSigmaField.getText());
+            ySigma = Float.parseFloat(ySigmaField.getText());
+            rotAngle = Float.parseFloat(rotAngleField.getText());
+            numInstances = Integer.parseInt(numInstField.getText());
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+        }
+        // Generate and insert the requested points into the model.
+        parent.insertGaussian(x, y, xSigma, ySigma, rotAngle, numInstances);
+        dispose();
+    }
+}
