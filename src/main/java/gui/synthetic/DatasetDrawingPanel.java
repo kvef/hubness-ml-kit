@@ -168,4 +168,24 @@ public class DatasetDrawingPanel extends javax.swing.JPanel {
         instance.fAttr[0] = x;
         instance.fAttr[1] = y;
         Graphics g = getGraphics();
-        drawCircle(g, ((int) (x * totalWidth)), (
+        drawCircle(g, ((int) (x * totalWidth)), ((int) (y * totalHeight)));
+        instance.setCategory(currClass);
+        dset.addDataInstance(instance);
+        repaint();
+    }
+
+    /**
+     * Draw a circle on top of a Graphics object. The radius is fixed.
+     *
+     * @param g Graphics object to draw the circle on.
+     * @param x Integer that is the X coordinate.
+     * @param y Integer that is the Y coordinate.
+     */
+    private void drawCircle(Graphics g, int x, int y) {
+        g.setColor(classColors[currClass]);
+        g.fillOval(x - circlePointRadius, y - circlePointRadius,
+                2 * circlePointRadius, 2 * circlePointRadius);
+    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // End of variables declaration//GEN-END:variables
+}
