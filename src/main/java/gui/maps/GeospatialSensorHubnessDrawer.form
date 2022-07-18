@@ -103,4 +103,10 @@
         <Property name="text" type="java.lang.String" value="Draw Hubness Points"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" p
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="hDrawButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="statusLabel">
+    </Component>
+  </SubComponents>
+</Form>
