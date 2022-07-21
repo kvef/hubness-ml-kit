@@ -309,4 +309,103 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
             .addGap(0, 868, Short.MAX_VALUE)
         );
         drawDSPanelLayout.setVerticalGroup(
-            drawDSPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADIN
+            drawDSPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 511, Short.MAX_VALUE)
+        );
+
+        fileMenu.setText("<html><u>F</u>ile");
+
+        newItem.setText("<html><u>N</u>ew");
+        newItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(newItem);
+
+        openItem.setText("<html><u>O</u>pen");
+        openItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(openItem);
+
+        saveItem.setText("<html><u>S</u>ave");
+        saveItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(saveItem);
+
+        closeItem.setText("<html><u>Q</u>uit");
+        closeItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                closeItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(closeItem);
+
+        menuBar.add(fileMenu);
+
+        editMenu.setText("<html><u>E</u>dit");
+
+        noiseItem.setText("<html>Add Gaussian <u>N</u>oise</html>");
+        noiseItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                noiseItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(noiseItem);
+
+        mislabelItem.setText("<html>Induce <u>M</u>islabeling</html>");
+        mislabelItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mislabelItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(mislabelItem);
+
+        rotateItem.setText("<html><u>R</u>otate</html>");
+        rotateItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rotateItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(rotateItem);
+
+        undoItem.setText("<html><u>U</u>ndo</html>");
+        undoItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                undoItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(undoItem);
+
+        insertGaussianDataitem.setText("<html><u>I</u>nsert Gaussian Data");
+        insertGaussianDataitem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                insertGaussianDataitemActionPerformed(evt);
+            }
+        });
+        editMenu.add(insertGaussianDataitem);
+
+        menuBar.add(editMenu);
+
+        toolsMenu.setText("<html><u>T</u>ools");
+
+        propertiesSubMenu.setText("<html><u>P</u>roperties");
+
+        bgColorItem.setText("<html><u>B</u>ackground color</html>");
+        bgColorItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bgColorItemActionPerformed(evt);
+            }
+        });
+        propertiesSubMenu.add(bgColorItem);
+
+        toolsMenu.add(propertiesSubMenu);
+
+        imageExportItem.setText("<html><u>E</u>xport image</html>");
+        imageExpor
