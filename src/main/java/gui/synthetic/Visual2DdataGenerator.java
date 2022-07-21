@@ -408,4 +408,86 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
         toolsMenu.add(propertiesSubMenu);
 
         imageExportItem.setText("<html><u>E</u>xport image</html>");
-        imageExpor
+        imageExportItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                imageExportItemActionPerformed(evt);
+            }
+        });
+        toolsMenu.add(imageExportItem);
+
+        menuBar.add(toolsMenu);
+
+        knnMenu.setText("<html><u>K</u>NN");
+
+        hubnessItem.setText("hubness");
+
+        hubnessLandscapeItem.setText("<html><u>H</u>ubness landscape");
+        hubnessLandscapeItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hubnessLandscapeItemActionPerformed(evt);
+            }
+        });
+        hubnessItem.add(hubnessLandscapeItem);
+
+        HubnessEntropyLandscapeItem.setText("<html>Hubness <u>E</u>ntropy landscape");
+        HubnessEntropyLandscapeItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                HubnessEntropyLandscapeItemActionPerformed(evt);
+            }
+        });
+        hubnessItem.add(HubnessEntropyLandscapeItem);
+
+        badHubnessInterpolatedItem.setText("<html><u>B</u>ad hubness interpolated");
+        badHubnessInterpolatedItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                badHubnessInterpolatedItemActionPerformed(evt);
+            }
+        });
+        hubnessItem.add(badHubnessInterpolatedItem);
+
+        badHubnessKNNItem.setText("<html>Bad Hubness kNN");
+        badHubnessKNNItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                badHubnessKNNItemActionPerformed(evt);
+            }
+        });
+        hubnessItem.add(badHubnessKNNItem);
+
+        knnMenu.add(hubnessItem);
+
+        classMapsMenu.setText("classification maps");
+
+        knnDensityMenuItem.setText("<html><u>K</u>NN probability map");
+        knnDensityMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                knnDensityMenuItemActionPerformed(evt);
+            }
+        });
+        classMapsMenu.add(knnDensityMenuItem);
+
+        nhbnnProbMenuItem.setText("<html><u>N</u>HBNN probability map");
+        nhbnnProbMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nhbnnProbMenuItemActionPerformed(evt);
+            }
+        });
+        classMapsMenu.add(nhbnnProbMenuItem);
+
+        hiknnInformationMapItem.setText("<html><u>H</u>IKNN information map");
+        hiknnInformationMapItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hiknnInformationMapItemActionPerformed(evt);
+            }
+        });
+        classMapsMenu.add(hiknnInformationMapItem);
+
+        hiknnNonWeightedInfoItem.setText("<html>Non-Weighted HIKNN information map");
+        hiknnNonWeightedInfoItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hiknnNonWeightedInfoItemActionPerformed(evt);
+            }
+        });
+        classMapsMenu.add(hiknnNonWeightedInfoItem);
+
+        hwKNNDensityMenuItem.setText("hw-KNN probability map");
+        hwKNNDensityMenuItem.addActionListener(new java.awt.event.ActionListener()
