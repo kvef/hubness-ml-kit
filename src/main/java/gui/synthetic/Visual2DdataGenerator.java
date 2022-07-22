@@ -490,4 +490,72 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
         classMapsMenu.add(hiknnNonWeightedInfoItem);
 
         hwKNNDensityMenuItem.setText("hw-KNN probability map");
-        hwKNNDensityMenuItem.addActionListener(new java.awt.event.ActionListener()
+        hwKNNDensityMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hwKNNDensityMenuItemActionPerformed(evt);
+            }
+        });
+        classMapsMenu.add(hwKNNDensityMenuItem);
+
+        hFNNDensityMenuItem.setText("h-FNN probability map");
+        hFNNDensityMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hFNNDensityMenuItemActionPerformed(evt);
+            }
+        });
+        classMapsMenu.add(hFNNDensityMenuItem);
+
+        knnMenu.add(classMapsMenu);
+
+        menuBar.add(knnMenu);
+
+        helpMenu.setText("<html><u>H</u>elp");
+
+        aboutItem.setText("<html><u>A</u>bout");
+        helpMenu.add(aboutItem);
+
+        menuBar.add(helpMenu);
+
+        setJMenuBar(menuBar);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(yNameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(yLabel))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(xNameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(xLabel)
+                                .addGap(231, 231, 231)
+                                .addComponent(scalingNameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(scaleTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(drawDSPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(19, 19, 19)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(addClassButton)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(class0Radio)
+                                .addComponent(class1Radio)
+                                .addComponent(class2Radio)
+                                .addComponent(class3Radio)
+                                .addComponent(class4Radio)
+                                .addComponent(class5Radio)
+                                .addComponent(class6Radio)
+                                .addComponent(class7Radio)
+                                .addComponent(class8Radio))
+                            .addComponent(class9Radio)
+                            .addComponent(class10Radio)
+                            .addComponent(class11Radio)
+                            .addComponent(class12Radio)
+                            .addComponent(class13Radio)
+          
