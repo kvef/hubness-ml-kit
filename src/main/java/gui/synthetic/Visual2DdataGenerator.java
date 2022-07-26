@@ -787,4 +787,96 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
      * @param evt ActionEvent object.
      */
     private void bgColorItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bgColorItemActionPerformed
-        Color bgColor = JColorCh
+        Color bgColor = JColorChooser.showDialog(this,
+                "Select background color", Color.WHITE);
+        drawDSPanel.actionHistory.add(DatasetDrawingPanel.BG_COLOR_CHANGE);
+        drawDSPanel.prevColors.add(drawDSPanel.getBackground());
+        drawDSPanel.setBackground(bgColor);
+        repaint();
+    }//GEN-LAST:event_bgColorItemActionPerformed
+
+    /**
+     * Close the GUI.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void closeItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeItemActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_closeItemActionPerformed
+
+    /**
+     * Start with a new dataset.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void newItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newItemActionPerformed
+        try {
+            drawDSPanel.actionHistory.add(DatasetDrawingPanel.DATASET_CHANGE);
+            if (drawDSPanel.dset != null) {
+                drawDSPanel.allDSets.add(drawDSPanel.dset.copy());
+            } else {
+                drawDSPanel.allDSets.add(null);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        drawDSPanel.dset = null;
+        for (int i = 1; i < classChoosers.length; i++) {
+            classChoosers[i].setVisible(false);
+        }
+        numVisibleClasses = 1;
+        scaleTextField.setText("");
+        drawDSPanel.setBackground(Color.WHITE);
+    }//GEN-LAST:event_newItemActionPerformed
+
+    /**
+     * Export the image of the drawing panel.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void imageExportItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imageExportItemActionPerformed
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        int rVal = jfc.showSaveDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentOutFile = jfc.getSelectedFile();
+            currentDirectory = currentOutFile.getParentFile();
+            try {
+                BufferedImage image = new BufferedImage(
+                        drawDSPanel.getWidth(), drawDSPanel.getHeight(),
+                        BufferedImage.TYPE_INT_RGB);
+                Graphics gx = image.getGraphics();
+                drawDSPanel.paint(gx);
+                ImageIO.write(image, "JPG", currentOutFile);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_imageExportItemActionPerformed
+
+    /**
+     * Insert some noise into the data.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void noiseItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_noiseItemActionPerformed
+        String percStr = JOptionPane.showInputDialog(this,
+                "Probability of noise on each attribute:",
+                "Input noise probability", 1);
+        float prob = Float.parseFloat(percStr);
+        String stDevStr = JOptionPane.showInputDialog(this,
+                "Standard deviation of Gaussian noise:",
+                "Input dispersion factor", 1);
+        float stDev = Float.parseFloat(stDevStr);
+        try {
+            drawDSPanel.actionHistory.add(DatasetDrawingPanel.DATASET_CHANGE);
+            if (drawDSPanel.dset != null) {
+                drawDSPanel.allDSets.add(drawDSPanel.dset.copy());
+            } else {
+                drawDSPanel.allDSets.add(null);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        drawDSPanel.dset.addGaussianNoiseToNormalizedCollection(prob, stDev);
+        repaint();
+   
