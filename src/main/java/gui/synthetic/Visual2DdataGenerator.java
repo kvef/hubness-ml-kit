@@ -609,4 +609,94 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                     .addComponent(scaleTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .a
+                    .addComponent(yNameLabel)
+                    .addComponent(yLabel))
+                .addGap(44, 44, 44))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * Inserts another class.
+     *
+     * @param evt MouseEvent invoked on the class insertion component.
+     */
+    private void addClassButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_addClassButtonMouseClicked
+        if (numVisibleClasses < classChoosers.length) {
+            classChoosers[numVisibleClasses].setVisible(true);
+            numVisibleClasses++;
+        }
+    }//GEN-LAST:event_addClassButtonMouseClicked
+
+    /**
+     * Determine the current class and insert a point or a set of points.
+     *
+     * @param evt MouseEvent on the drawing panel.
+     */
+    private void drawDSPanelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawDSPanelMouseClicked
+        Object source = evt.getSource();
+        for (int i = 0; i < classChoosers.length; i++) {
+            if (classChoosers[i].isSelected()) {
+                drawDSPanel.currClass = i;
+                break;
+            }
+        }
+        if (source instanceof DatasetDrawingPanel) {
+            if (!gaussianInsertionMode) {
+                drawDSPanel.actionHistory.add(DatasetDrawingPanel.INSTANCE_ADD);
+                ((DatasetDrawingPanel) source).addAndDrawPoint(evt.getX(),
+                        evt.getY());
+                repaint();
+            } else {
+                InsertGaussianDialog.showDialog(this, ((float) evt.getX()
+                        / (float) drawDSPanel.getWidth()), ((float) evt.getY()
+                        / (float) drawDSPanel.getHeight()));
+                gaussianInsertionMode = false;
+                repaint();
+            }
+        }
+    }//GEN-LAST:event_drawDSPanelMouseClicked
+
+    /**
+     * Reset the coordinates for the current point.
+     *
+     * @param evt MouseEvent on the drawing panel.
+     */
+    private void drawDSPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_drawDSPanelMouseMoved
+        float x = BasicMathUtil.makeADecimalCutOff((float) evt.getX()
+                / (float) drawDSPanel.getWidth(), 2);
+        float y = BasicMathUtil.makeADecimalCutOff((float) evt.getY()
+                / (float) drawDSPanel.getHeight(), 2);
+        xLabel.setText((new Float(x)).toString());
+        yLabel.setText((new Float(y)).toString());
+    }//GEN-LAST:event_drawDSPanelMouseMoved
+
+    /**
+     * Opens an existing dataset.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void openItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openItemActionPerformed
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentInFile = jfc.getSelectedFile();
+            currentDirectory = currentInFile.getParentFile();
+            IOARFF persister = new IOARFF();
+            try {
+                drawDSPanel.actionHistory.add(
+                        DatasetDrawingPanel.DATASET_CHANGE);
+                if (drawDSPanel.dset != null) {
+                    drawDSPanel.allDSets.add(drawDSPanel.dset.copy());
+                } else {
+                    drawDSPanel.allDSets.add(null);
+                }
+                drawDSPanel.dset = persister.load(currentInFile.getPath());
+                // Shift all the values into the positive range, hence search
+                // for minX and minY.
+                int numCat = drawDSPanel.dset.countCategories();
+                float minX = Float.MAX_VALUE;
+                float minY = Float.MAX_VALUE;
+                for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+        
