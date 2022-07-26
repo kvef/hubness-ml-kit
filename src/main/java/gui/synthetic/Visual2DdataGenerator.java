@@ -1213,4 +1213,82 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                         width));
                 image.getGraphics().drawImage(piximg, 0, 0, null);
                 try {
-                    ImageIO.
+                    ImageIO.write(image, "JPG", currentOutFile);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        }
+    }//GEN-LAST:event_hiknnInformationMapItemActionPerformed
+
+    /**
+     * Calculate the HIKNN class probabilities for each pixel, without the
+     * distance weighting.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void hiknnNonWeightedInfoItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hiknnNonWeightedInfoItemActionPerformed
+        String kString = JOptionPane.showInputDialog("Enter k:");
+        int k = Integer.parseInt(kString);
+        CombinedMetric cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                CombinedMetric.DEFAULT);
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        Random randa = new Random();
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentDirectory = jfc.getSelectedFile();
+            int numClasses = drawDSPanel.dset.countCategories();
+            System.out.println(numClasses + " " + k);
+            int dsCode = randa.nextInt(10000);
+            int width = drawDSPanel.getWidth();
+            int height = drawDSPanel.getHeight();
+            int[][] pixels = new int[numClasses][width * height];
+            DataSet dset = drawDSPanel.dset;
+            DataInstance instance;
+            HIKNNNonDW classifier = new HIKNNNonDW(k, cmet, numClasses);
+            ArrayList<Integer> dIndexes = new ArrayList(dset.size());
+            for (int j = 0; j < dset.size(); j++) {
+                dIndexes.add(j);
+            }
+            classifier.setDataIndexes(dIndexes, dset);
+            try {
+                classifier.train();
+            } catch (Exception e) {
+                System.err.println("Training failed: " + e.getMessage());
+            }
+            float[] probs = null;
+            int r, g, b;
+            int rgba;
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    instance = new DataInstance(dset);
+                    instance.fAttr[0] = (float) x / (float) width;
+                    instance.fAttr[1] = (float) y / (float) height;
+                    try {
+                        probs = classifier.classifyProbabilistically(instance);
+                    } catch (Exception e) {
+                        System.err.println("ClassificationError");
+                        System.err.println(e.getMessage());
+                    }
+                    for (int c = 0; c < numClasses; c++) {
+                        r = (int) (probs[c] * 255f);
+                        g = r;
+                        b = r;
+                        rgba = (0xff000000 | r << 16 | g << 8 | b);
+                        pixels[c][y * width + x] = rgba;
+                    }
+                }
+            }
+            for (int c = 0; c < numClasses; c++) {
+                currentOutFile = new File(currentDirectory,
+                        "hiknnNonWeightedInfo_" + dsCode + "_" + c + ".jpg");
+                BufferedImage image = new BufferedImage(width, height,
+                        BufferedImage.TYPE_INT_RGB);
+                Image piximg = Toolkit.getDefaultToolkit().createImage(
+                        new MemoryImageSource(width, height, pixels[c], 0,
+                        width));
+                image.getGraphics().drawImage(piximg, 0, 0, null);
+                try {
+                    ImageIO.write(image, "JPG", currentOutFile);
+   
