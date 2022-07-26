@@ -699,4 +699,92 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                 float minX = Float.MAX_VALUE;
                 float minY = Float.MAX_VALUE;
                 for (int i = 0; i < drawDSPanel.dset.size(); i++) {
-        
+                    DataInstance instance = drawDSPanel.dset.data.get(i);
+                    if (instance.fAttr[0] < minX) {
+                        minX = instance.fAttr[0];
+                    }
+                    if (instance.fAttr[1] < minY) {
+                        minY = instance.fAttr[1];
+                    }
+                }
+
+                for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+                    DataInstance instance = drawDSPanel.dset.data.get(i);
+                    instance.fAttr[0] += minX;
+                    instance.fAttr[1] += minY;
+                }
+
+                // Scale the data into the [0,1] range.
+                float maxValue = 0;
+                for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+                    DataInstance instance = drawDSPanel.dset.data.get(i);
+                    if (instance.fAttr[0] != Float.MAX_VALUE
+                            && instance.fAttr[0] > maxValue) {
+                        maxValue = instance.fAttr[0];
+                    }
+                    if (instance.fAttr[1] != Float.MAX_VALUE
+                            && instance.fAttr[1] > maxValue) {
+                        maxValue = instance.fAttr[1];
+                    }
+                }
+                if (maxValue > 0) {
+                    for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+                        DataInstance instance = drawDSPanel.dset.data.get(i);
+                        instance.fAttr[0] /= maxValue;
+                        instance.fAttr[1] /= maxValue;
+                    }
+                    scaleTextField.setText(
+                            new Float(BasicMathUtil.makeADecimalCutOff(maxValue,
+                            4)).toString());
+                }
+                while (numCat > numVisibleClasses) {
+                    classChoosers[numVisibleClasses].setVisible(true);
+                    numVisibleClasses++;
+                }
+                while (numCat < numVisibleClasses) {
+                    numVisibleClasses--;
+                    classChoosers[numVisibleClasses].setVisible(false);
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        repaint();
+    }//GEN-LAST:event_openItemActionPerformed
+
+    /**
+     * Save the generated dataset.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void saveItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveItemActionPerformed
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        int rVal = jfc.showSaveDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentOutFile = jfc.getSelectedFile();
+            currentDirectory = currentOutFile.getParentFile();
+            IOARFF persister = new IOARFF();
+            try {
+
+                DataSet dset = drawDSPanel.dset.copy();
+                float scale = Float.parseFloat(scaleTextField.getText());
+                // Scale the values.
+                for (int i = 0; i < dset.size(); i++) {
+                    dset.data.get(i).fAttr[0] *= scale;
+                    dset.data.get(i).fAttr[1] *= scale;
+                }
+                persister.saveLabeledWithIdentifiers(dset,
+                        currentOutFile.getPath(), null);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_saveItemActionPerformed
+
+    /**
+     * Change the background color.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void bgColorItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bgColorItemActionPerformed
+        Color bgColor = JColorCh
