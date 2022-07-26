@@ -971,4 +971,89 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                 maxValue = instance.fAttr[1];
             }
         }
-        if (maxValue > 0) 
+        if (maxValue > 0) {
+            for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+                instance = drawDSPanel.dset.data.get(i);
+                instance.fAttr[0] /= maxValue;
+                instance.fAttr[1] /= maxValue;
+            }
+            scaleTextField.setText(
+                    new Float(BasicMathUtil.makeADecimalCutOff(
+                    maxValue * scaleFactor, 4)).toString());
+        }
+        repaint();
+    }//GEN-LAST:event_rotateItemActionPerformed
+
+    /**
+     * Perform undo.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void undoItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_undoItemActionPerformed
+        drawDSPanel.undoLast();
+    }//GEN-LAST:event_undoItemActionPerformed
+
+    /**
+     * Calculate the kNN density.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void knnDensityMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knnDensityMenuItemActionPerformed
+        String kString = JOptionPane.showInputDialog("Enter k:");
+        int k = Integer.parseInt(kString);
+        CombinedMetric cmet = new CombinedMetric(
+                null, new MinkowskiMetric(), CombinedMetric.DEFAULT);
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        Random randa = new Random();
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentDirectory = jfc.getSelectedFile();
+            int numClasses = drawDSPanel.dset.countCategories();
+            System.out.println(numClasses + " " + k);
+            int dsCode = randa.nextInt(10000);
+            int width = drawDSPanel.getWidth();
+            int height = drawDSPanel.getHeight();
+            int[][] pixels = new int[numClasses][width * height];
+            DataSet dset = drawDSPanel.dset;
+            DataInstance instance;
+            KNN classifier = new KNN(k, cmet);
+            ArrayList<Integer> dIndexes = new ArrayList(dset.size());
+            for (int j = 0; j < dset.size(); j++) {
+                dIndexes.add(j);
+            }
+            classifier.setDataIndexes(dIndexes, dset);
+            try {
+                classifier.train();
+            } catch (Exception e) {
+                System.out.println("training failed: " + e.getMessage());
+            }
+            float[] probs = null;
+            int r, g, b;
+            int rgba;
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    instance = new DataInstance(dset);
+                    instance.fAttr[0] = (float) x / (float) width;
+                    instance.fAttr[1] = (float) y / (float) height;
+                    try {
+                        probs = classifier.classifyProbabilistically(instance);
+                    } catch (Exception e) {
+                        System.err.println("ClassificationError");
+                        System.err.println(e.getMessage());
+                    }
+                    for (int c = 0; c < numClasses; c++) {
+                        r = (int) (probs[c] * 255f);
+                        g = r;
+                        b = r;
+                        rgba = (0xff000000 | r << 16 | g << 8 | b);
+                        pixels[c][y * width + x] = rgba;
+                    }
+                }
+            }
+            for (int c = 0; c < numClasses; c++) {
+                currentOutFile = new File(currentDirectory, "knnProb_"
+                        + dsCode + "_" + c + ".jpg");
+                BufferedImage image = new BufferedImage(width, height,
+                        BufferedImage.TYPE_INT_RGB);
+          
