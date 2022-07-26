@@ -879,4 +879,96 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
         }
         drawDSPanel.dset.addGaussianNoiseToNormalizedCollection(prob, stDev);
         repaint();
-   
+    }//GEN-LAST:event_noiseItemActionPerformed
+
+    /**
+     * Introduce mislabeling into the data.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void mislabelItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mislabelItemActionPerformed
+        String percStr = JOptionPane.showInputDialog(this,
+                "Probability of mislabeling:",
+                "Input mislabeling probability", 1);
+        float prob = Float.parseFloat(percStr);
+        try {
+            drawDSPanel.actionHistory.add(DatasetDrawingPanel.DATASET_CHANGE);
+            if (drawDSPanel.dset != null) {
+                drawDSPanel.allDSets.add(drawDSPanel.dset.copy());
+            } else {
+                drawDSPanel.allDSets.add(null);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        drawDSPanel.dset.induceMislabeling(prob);
+        repaint();
+    }//GEN-LAST:event_mislabelItemActionPerformed
+
+    /**
+     * Perform rotation on the data.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void rotateItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateItemActionPerformed
+        String degStr = JOptionPane.showInputDialog(this,
+                "RotationAngle(degress):", "Input rotation angle", 1);
+        try {
+            drawDSPanel.actionHistory.add(DatasetDrawingPanel.DATASET_CHANGE);
+            if (drawDSPanel.dset != null) {
+                drawDSPanel.allDSets.add(drawDSPanel.dset.copy());
+            } else {
+                drawDSPanel.allDSets.add(null);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        float angleDegrees = Float.parseFloat(degStr);
+        float angleDegreesRadian = (((float) (angleDegrees % 360)) / 360f)
+                * 2f * (float) Math.PI;
+        float angleCosine = (float) Math.cos(angleDegreesRadian);
+        float angleSine = (float) Math.sin(angleDegreesRadian);
+        float x, y;
+        DataInstance instance;
+        for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+            instance = drawDSPanel.dset.data.get(i);
+            x = 0.5f + (instance.fAttr[0] - 0.5f) * angleCosine
+                    - (instance.fAttr[1] - 0.5f) * angleSine;
+            y = 0.5f + (instance.fAttr[0] - 0.5f) * angleSine
+                    + (instance.fAttr[1] - 0.5f) * angleCosine;
+            instance.fAttr[0] = x;
+            instance.fAttr[1] = y;
+        }
+        float scaleFactor = Float.parseFloat(scaleTextField.getText());
+        float minX = Float.MAX_VALUE;
+        float minY = Float.MAX_VALUE;
+        for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+            instance = drawDSPanel.dset.data.get(i);
+            if (instance.fAttr[0] < minX) {
+                minX = instance.fAttr[0];
+            }
+            if (instance.fAttr[1] < minY) {
+                minY = instance.fAttr[1];
+            }
+        }
+
+        for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+            instance = drawDSPanel.dset.data.get(i);
+            instance.fAttr[0] += minX;
+            instance.fAttr[1] += minY;
+        }
+
+        // Scale the data into the [0,1] interval.
+        float maxValue = 0;
+        for (int i = 0; i < drawDSPanel.dset.size(); i++) {
+            instance = drawDSPanel.dset.data.get(i);
+            if (instance.fAttr[0] != Float.MAX_VALUE
+                    && instance.fAttr[0] > maxValue) {
+                maxValue = instance.fAttr[0];
+            }
+            if (instance.fAttr[1] != Float.MAX_VALUE
+                    && instance.fAttr[1] > maxValue) {
+                maxValue = instance.fAttr[1];
+            }
+        }
+        if (maxValue > 0) 
