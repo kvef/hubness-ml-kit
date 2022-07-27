@@ -1371,4 +1371,85 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                     System.err.println(e.getMessage());
                 }
             }
-     
+        }
+    }//GEN-LAST:event_hwKNNDensityMenuItemActionPerformed
+
+    /**
+     * Calculates the class probabilities according to hFNN for all pixels.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void hFNNDensityMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hFNNDensityMenuItemActionPerformed
+        String kString = JOptionPane.showInputDialog("Enter k:");
+        int k = Integer.parseInt(kString);
+        int dWeighted = JOptionPane.showConfirmDialog(this,
+                "Use distance weighting?", "Distance weighting",
+                JOptionPane.YES_NO_OPTION);
+        boolean useDistanceWeighting;
+        if (dWeighted == JOptionPane.YES_OPTION) {
+            useDistanceWeighting = true;
+        } else {
+            useDistanceWeighting = false;
+        }
+        CombinedMetric cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                CombinedMetric.DEFAULT);
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        Random randa = new Random();
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentDirectory = jfc.getSelectedFile();
+            int numClasses = drawDSPanel.dset.countCategories();
+            System.out.println(numClasses + " " + k);
+            int dsCode = randa.nextInt(10000);
+            int width = drawDSPanel.getWidth();
+            int height = drawDSPanel.getHeight();
+            int[][] pixels = new int[numClasses][width * height];
+            DataSet dset = drawDSPanel.dset;
+            DataInstance instance;
+            Classifier classifier = null;
+            if (useDistanceWeighting) {
+                classifier = new DWHFNN(k, cmet, numClasses);
+            } else {
+                classifier = new HFNN(k, cmet, numClasses);
+            }
+            ArrayList<Integer> dIndexes = new ArrayList(dset.size());
+            for (int j = 0; j < dset.size(); j++) {
+                dIndexes.add(j);
+            }
+            classifier.setDataIndexes(dIndexes, dset);
+            try {
+                classifier.train();
+            } catch (Exception e) {
+                System.out.println("training failed: " + e.getMessage());
+            }
+            float[] probs = null;
+            int r, g, b;
+            int rgba;
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    instance = new DataInstance(dset);
+                    instance.fAttr[0] = (float) x / (float) width;
+                    instance.fAttr[1] = (float) y / (float) height;
+                    try {
+                        probs = classifier.classifyProbabilistically(instance);
+                    } catch (Exception e) {
+                        System.err.println("classificationError");
+                        System.err.println(e.getMessage());
+                    }
+                    for (int c = 0; c < numClasses; c++) {
+                        r = (int) (probs[c] * 255f);
+                        g = r;
+                        b = r;
+                        rgba = (0xff000000 | r << 16 | g << 8 | b);
+                        pixels[c][y * width + x] = rgba;
+                    }
+                }
+            }
+            for (int c = 0; c < numClasses; c++) {
+                if (useDistanceWeighting) {
+                    currentOutFile = new File(currentDirectory, "hdwFNN_"
+                            + dsCode + "_" + c + ".jpg");
+                } else {
+                    currentOutFile = new File(currentDirectory, "hFNN_"
+                            + dsCode 
