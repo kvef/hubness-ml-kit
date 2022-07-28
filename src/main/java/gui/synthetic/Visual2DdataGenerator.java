@@ -1452,4 +1452,83 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                             + dsCode + "_" + c + ".jpg");
                 } else {
                     currentOutFile = new File(currentDirectory, "hFNN_"
-                            + dsCode 
+                            + dsCode + "_" + c + ".jpg");
+                }
+                BufferedImage image = new BufferedImage(width, height,
+                        BufferedImage.TYPE_INT_RGB);
+                Image piximg = Toolkit.getDefaultToolkit().createImage(
+                        new MemoryImageSource(width, height, pixels[c], 0,
+                        width));
+                image.getGraphics().drawImage(piximg, 0, 0, null);
+                try {
+                    ImageIO.write(image, "JPG", currentOutFile);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        }
+    }//GEN-LAST:event_hFNNDensityMenuItemActionPerformed
+
+    /**
+     * Calculate the hubness landscape - how often a point would occur in the
+     * kNN sets of other points, for each pixel.
+     *
+     * @param evt
+     */
+    private void hubnessLandscapeItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hubnessLandscapeItemActionPerformed
+        String kString = JOptionPane.showInputDialog("Enter k:");
+        int k = Integer.parseInt(kString);
+        CombinedMetric cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                CombinedMetric.DEFAULT);
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentOutFile = jfc.getSelectedFile();
+            int width = drawDSPanel.getWidth();
+            int height = drawDSPanel.getHeight();
+            float[] hubness = new float[width * height];
+            int[] pixels = new int[width * height];
+            DataSet dset = drawDSPanel.dset;
+            DataInstance tempInstance;
+            NeighborSetFinder nsf = new NeighborSetFinder(dset, cmet);
+            try {
+                nsf.calculateDistances();
+                nsf.calculateNeighborSets(k);
+            } catch (Exception e) {
+                System.err.println("Neighbor set error: " + e.getMessage());
+            }
+            int r, g, b;
+            int rgba;
+            float[][] kDistances = nsf.getKDistances();
+            float maxHubness = 0;
+            float currDist = 0;
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    tempInstance = new DataInstance(dset);
+                    tempInstance.fAttr[0] = (float) x / (float) width;
+                    tempInstance.fAttr[1] = (float) y / (float) height;
+                    for (int index = 0; index < dset.size(); index++) {
+                        try {
+                            currDist = cmet.dist(tempInstance,
+                                    dset.data.get(index));
+                        } catch (Exception e) {
+                            System.err.println("Distance error for point: "
+                                    + x + " " + y + " : " + e.getMessage());
+                        }
+                        // We compare the current distance to the k-distance
+                        // of the kNN set.
+                        if (currDist < kDistances[index][k - 1]) {
+                            hubness[y * width + x]++;
+                        }
+                    }
+                    if (hubness[y * width + x] > maxHubness) {
+                        maxHubness = hubness[y * width + x];
+                    }
+                }
+            }
+            // Normalization.
+            for (int hi = 0; hi < hubness.length; hi++) {
+                hubness[hi] /= maxHubness;
+            }
+            for (int x = 0; x < widt
