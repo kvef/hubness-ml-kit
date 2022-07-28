@@ -1531,4 +1531,82 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
             for (int hi = 0; hi < hubness.length; hi++) {
                 hubness[hi] /= maxHubness;
             }
-            for (int x = 0; x < widt
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    r = (int) (hubness[y * width + x] * 255f);
+                    g = r;
+                    b = r;
+                    rgba = (0xff000000 | r << 16 | g << 8 | b);
+                    pixels[y * width + x] = rgba;
+                }
+            }
+            BufferedImage image = new BufferedImage(width, height,
+                    BufferedImage.TYPE_INT_RGB);
+            Image piximg = Toolkit.getDefaultToolkit().createImage(
+                    new MemoryImageSource(width, height, pixels, 0, width));
+            image.getGraphics().drawImage(piximg, 0, 0, null);
+            try {
+                ImageIO.write(image, "JPG", currentOutFile);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_hubnessLandscapeItemActionPerformed
+
+    /**
+     * Calculate the reverse neighbor set entropies for all the pixels.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void HubnessEntropyLandscapeItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_HubnessEntropyLandscapeItemActionPerformed
+        String kString = JOptionPane.showInputDialog("Enter k:");
+        int k = Integer.parseInt(kString);
+        CombinedMetric cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                CombinedMetric.DEFAULT);
+        int numClasses = drawDSPanel.dset.countCategories();
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentOutFile = jfc.getSelectedFile();
+            int width = drawDSPanel.getWidth();
+            int height = drawDSPanel.getHeight();
+            float[][] classConditionalHubness = new float[width * height][numClasses];
+            float[] hubness = new float[width * height];
+            float[] hubnessEntropies = new float[width * height];
+            int[] pixels = new int[width * height];
+            DataSet dset = drawDSPanel.dset;
+            DataInstance instance;
+            // Calculate the kNN sets.
+            NeighborSetFinder nsf = new NeighborSetFinder(dset, cmet);
+            try {
+                nsf.calculateDistances();
+                nsf.calculateNeighborSets(k);
+            } catch (Exception e) {
+                System.err.println("Neighbor set error: " + e.getMessage());
+            }
+            int r, g, b;
+            int rgba;
+            float[][] kDistances = nsf.getKDistances();
+            float maxHubnessEntropy = 0;
+            float currDist = 0;
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    instance = new DataInstance(dset);
+                    instance.fAttr[0] = (float) x / (float) width;
+                    instance.fAttr[1] = (float) y / (float) height;
+                    for (int index = 0; index < dset.size(); index++) {
+                        try {
+                            currDist = cmet.dist(instance,
+                                    dset.data.get(index));
+                        } catch (Exception e) {
+                            System.err.println("Distance error for point: "
+                                    + x + " " + y + " : " + e.getMessage());
+                        }
+                        if (currDist < kDistances[index][k - 1]) {
+                            hubness[y * width + x]++;
+                            classConditionalHubness[y * width + x][
+                                    dset.data.get(index).getCategory()]++;
+                        }
+                    }
+                    //
