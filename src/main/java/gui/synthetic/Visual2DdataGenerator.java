@@ -1609,4 +1609,85 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                                     dset.data.get(index).getCategory()]++;
                         }
                     }
-                    //
+                    // Calculate the entropies.
+                    if (hubness[y * width + x] > 0) {
+                        for (int c = 0; c < numClasses; c++) {
+                            classConditionalHubness[y * width + x][c] /=
+                                    hubness[y * width + x];
+                            if (classConditionalHubness[y * width + x][c] > 0) {
+                                hubnessEntropies[y * width + x] -=
+                                        BasicMathUtil.log2(
+                                        classConditionalHubness[
+                                        y * width + x][c]);
+                            }
+                        }
+                    } else {
+                        hubnessEntropies[y * width + x] = 0;
+                    }
+                    if (hubnessEntropies[y * width + x] > maxHubnessEntropy) {
+                        maxHubnessEntropy = hubness[y * width + x];
+                    }
+                }
+            }
+            // Normalize.
+            for (int hi = 0; hi < hubness.length; hi++) {
+                hubnessEntropies[hi] /= maxHubnessEntropy;
+            }
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    r = (int) (hubnessEntropies[y * width + x] * 255f);
+                    g = r;
+                    b = r;
+                    rgba = (0xff000000 | r << 16 | g << 8 | b);
+                    pixels[y * width + x] = rgba;
+                }
+            }
+            BufferedImage image = new BufferedImage(width, height,
+                    BufferedImage.TYPE_INT_RGB);
+            Image piximg = Toolkit.getDefaultToolkit().createImage(
+                    new MemoryImageSource(width, height, pixels, 0, width));
+            image.getGraphics().drawImage(piximg, 0, 0, null);
+            try {
+                ImageIO.write(image, "JPG", currentOutFile);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_HubnessEntropyLandscapeItemActionPerformed
+
+    /**
+     * Calculates the average regional bad hubness of each pixel point after by
+     * integrating over all the points while taking their distances into
+     * account.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void badHubnessInterpolatedItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_badHubnessInterpolatedItemActionPerformed
+        String kString = JOptionPane.showInputDialog("Enter k:");
+        int k = Integer.parseInt(kString);
+        CombinedMetric cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                CombinedMetric.DEFAULT);
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentOutFile = jfc.getSelectedFile();
+            int width = drawDSPanel.getWidth();
+            int height = drawDSPanel.getHeight();
+            float[] goodHubness = new float[width * height];
+            int[] pixels = new int[width * height];
+            DataSet dset = drawDSPanel.dset;
+            DataInstance instance;
+            // Calculate the kNN sets.
+            NeighborSetFinder nsf = new NeighborSetFinder(dset, cmet);
+            try {
+                nsf.calculateDistances();
+                nsf.calculateNeighborSets(k);
+            } catch (Exception e) {
+                System.err.println("Neighbor set error: " + e.getMessage());
+            }
+            float[] instanceWeights = nsf.getHWKNNWeightingScheme();
+            int r, g, b;
+            int rgba;
+            float maxGoodHubness = -Float.MAX_VALUE;
+            float minGoodHubness = Fl
