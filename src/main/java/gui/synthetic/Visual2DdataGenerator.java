@@ -1690,4 +1690,83 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
             int r, g, b;
             int rgba;
             float maxGoodHubness = -Float.MAX_VALUE;
-            float minGoodHubness = Fl
+            float minGoodHubness = Float.MAX_VALUE;
+            float currDist = 0;
+            float[] instDists = new float[dset.size()];
+            float totalDist;
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    totalDist = 0;
+                    instance = new DataInstance(dset);
+                    instance.fAttr[0] = (float) x / (float) width;
+                    instance.fAttr[1] = (float) y / (float) height;
+                    for (int index = 0; index < dset.size(); index++) {
+                        try {
+                            currDist = cmet.dist(instance,
+                                    dset.data.get(index));
+                        } catch (Exception e) {
+                            System.err.println("Distance error for point: "
+                                    + x + " " + y + " : " + e.getMessage());
+                        }
+                        instDists[index] = currDist;
+                        totalDist += currDist;
+                    }
+                    for (int index = 0; index < dset.size(); index++) {
+                        instDists[index] /= totalDist;
+                        goodHubness[y * width + x] +=
+                                (instDists[index] * instanceWeights[index]);
+                    }
+
+                }
+            }
+            // Perform good hubness normalization.
+            for (int i = 0; i < goodHubness.length; i++) {
+                if (goodHubness[i] > maxGoodHubness) {
+                    maxGoodHubness = goodHubness[i];
+                }
+                if (goodHubness[i] < minGoodHubness) {
+                    minGoodHubness = goodHubness[i];
+                }
+            }
+            for (int i = 0; i < goodHubness.length; i++) {
+                goodHubness[i] = (goodHubness[i] - minGoodHubness)
+                        / (maxGoodHubness - minGoodHubness);
+            }
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    r = (int) ((1 - goodHubness[y * width + x]) * 255f);
+                    g = (int) ((goodHubness[y * width + x]) * 255f);
+                    b = 0;
+                    rgba = (0xff000000 | r << 16 | g << 8 | b);
+                    pixels[y * width + x] = rgba;
+                }
+            }
+            BufferedImage image = new BufferedImage(width, height,
+                    BufferedImage.TYPE_INT_RGB);
+            Image piximg = Toolkit.getDefaultToolkit().createImage(
+                    new MemoryImageSource(width, height, pixels, 0, width));
+            image.getGraphics().drawImage(piximg, 0, 0, null);
+            try {
+                ImageIO.write(image, "JPG", currentOutFile);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_badHubnessInterpolatedItemActionPerformed
+
+    /**
+     * Calculates the bad hubness scores for all the pixels.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void badHubnessKNNItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_badHubnessKNNItemActionPerformed
+        String kString = JOptionPane.showInputDialog("Enter k:");
+        int k = Integer.parseInt(kString);
+        CombinedMetric cmet = new CombinedMetric(null, new MinkowskiMetric(),
+                CombinedMetric.DEFAULT);
+        JFileChooser jfc = new JFileChooser(currentDirectory);
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            currentOutFile = jfc.getSelectedFile();
+   
