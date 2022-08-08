@@ -1930,4 +1930,52 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
     private javax.swing.JMenuItem saveItem;
     private javax.swing.JTextField scaleTextField;
     private javax.swing.JLabel scalingNameLabel;
-    privat
+    private javax.swing.JMenu toolsMenu;
+    private javax.swing.JMenuItem undoItem;
+    private javax.swing.JLabel xLabel;
+    private javax.swing.JLabel xNameLabel;
+    private javax.swing.JLabel yLabel;
+    private javax.swing.JLabel yNameLabel;
+    // End of variables declaration//GEN-END:variables
+
+    /**
+     * Insert Gaussian data points.
+     *
+     * @param x Float that is the current X coordinate.
+     * @param y Float that is the current Y coordinate.
+     * @param xSigma Float that is the standard deviation in the X direction.
+     * @param ySigma Float that is the standard deviation in the Y direction.
+     * @param rotAngle Float that is the rotation angle.
+     * @param numInstances Integer that is the number of instances.
+     */
+    public void insertGaussian(float x, float y, float xSigma, float ySigma,
+            float rotAngle, int numInstances) {
+        Random randa = new Random();
+        if (numInstances <= 0) {
+            return;
+        }
+        if (xSigma <= 0) {
+            return;
+        }
+        if (ySigma <= 0) {
+            return;
+        }
+        // Convert to radians.
+        float rotRadian = rotAngle / 180f * (float) Math.PI;
+        float X;
+        float Y;
+        float Xtemp;
+        float Ytemp;
+        float cos = (float) (Math.cos(rotRadian));
+        float sin = (float) (Math.sin(rotRadian));
+        for (int i = 0; i < numInstances; i++) {
+            Xtemp = (float) randa.nextGaussian() * xSigma;
+            Ytemp = (float) randa.nextGaussian() * ySigma;
+            // Now rotate.
+            X = Math.max(Math.min(cos * Xtemp - sin * Ytemp + x, 1), 0);
+            Y = Math.max(Math.min(sin * Xtemp + cos * Ytemp + y, 1), 0);
+            // Insert the point into the panel at the specified coordinates.
+            drawDSPanel.addAndDrawNormalizedPoint(X, Y);
+        }
+    }
+}
