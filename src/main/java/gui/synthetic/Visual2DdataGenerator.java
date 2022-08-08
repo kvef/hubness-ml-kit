@@ -1848,4 +1848,86 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
                 }
             }
             BufferedImage image = new BufferedImage(width, height,
-               
+                    BufferedImage.TYPE_INT_RGB);
+            Image piximg = Toolkit.getDefaultToolkit().createImage(
+                    new MemoryImageSource(width, height, pixels, 0, width));
+            image.getGraphics().drawImage(piximg, 0, 0, null);
+            try {
+                ImageIO.write(image, "JPG", currentOutFile);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_badHubnessKNNItemActionPerformed
+
+    /**
+     * Sets the Gaussian data insertion mode.
+     *
+     * @param evt ActionEvent object.
+     */
+    private void insertGaussianDataitemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_insertGaussianDataitemActionPerformed
+        gaussianInsertionMode = true;
+    }//GEN-LAST:event_insertGaussianDataitemActionPerformed
+
+    /**
+     * @param args The command line arguments.
+     */
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new Visual2DdataGenerator().setVisible(true);
+            }
+        });
+    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem HubnessEntropyLandscapeItem;
+    private javax.swing.JMenuItem aboutItem;
+    private javax.swing.JButton addClassButton;
+    private javax.swing.JMenuItem badHubnessInterpolatedItem;
+    private javax.swing.JMenuItem badHubnessKNNItem;
+    private javax.swing.JMenuItem bgColorItem;
+    private javax.swing.JRadioButton class0Radio;
+    private javax.swing.JRadioButton class10Radio;
+    private javax.swing.JRadioButton class11Radio;
+    private javax.swing.JRadioButton class12Radio;
+    private javax.swing.JRadioButton class13Radio;
+    private javax.swing.JRadioButton class14Radio;
+    private javax.swing.JRadioButton class1Radio;
+    private javax.swing.JRadioButton class2Radio;
+    private javax.swing.JRadioButton class3Radio;
+    private javax.swing.JRadioButton class4Radio;
+    private javax.swing.JRadioButton class5Radio;
+    private javax.swing.JRadioButton class6Radio;
+    private javax.swing.JRadioButton class7Radio;
+    private javax.swing.JRadioButton class8Radio;
+    private javax.swing.JRadioButton class9Radio;
+    private javax.swing.JMenu classMapsMenu;
+    private javax.swing.ButtonGroup classSelectButtons;
+    private javax.swing.JMenuItem closeItem;
+    private gui.synthetic.DatasetDrawingPanel drawDSPanel;
+    private javax.swing.JMenu editMenu;
+    private javax.swing.JMenu fileMenu;
+    private javax.swing.JMenuItem hFNNDensityMenuItem;
+    private javax.swing.JMenu helpMenu;
+    private javax.swing.JMenuItem hiknnInformationMapItem;
+    private javax.swing.JMenuItem hiknnNonWeightedInfoItem;
+    private javax.swing.JMenu hubnessItem;
+    private javax.swing.JMenuItem hubnessLandscapeItem;
+    private javax.swing.JMenuItem hwKNNDensityMenuItem;
+    private javax.swing.JMenuItem imageExportItem;
+    private javax.swing.JMenuItem insertGaussianDataitem;
+    private javax.swing.JMenuItem knnDensityMenuItem;
+    private javax.swing.JMenu knnMenu;
+    private javax.swing.JMenuBar menuBar;
+    private javax.swing.JMenuItem mislabelItem;
+    private javax.swing.JMenuItem newItem;
+    private javax.swing.JMenuItem nhbnnProbMenuItem;
+    private javax.swing.JMenuItem noiseItem;
+    private javax.swing.JMenuItem openItem;
+    private javax.swing.JMenu propertiesSubMenu;
+    private javax.swing.JMenuItem rotateItem;
+    private javax.swing.JMenuItem saveItem;
+    private javax.swing.JTextField scaleTextField;
+    private javax.swing.JLabel scalingNameLabel;
+    privat
