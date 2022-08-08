@@ -1769,4 +1769,83 @@ public class Visual2DdataGenerator extends javax.swing.JFrame {
         int rVal = jfc.showOpenDialog(Visual2DdataGenerator.this);
         if (rVal == JFileChooser.APPROVE_OPTION) {
             currentOutFile = jfc.getSelectedFile();
-   
+            int width = drawDSPanel.getWidth();
+            int height = drawDSPanel.getHeight();
+
+            float[] goodHubness = new float[width * height];
+            int[] pixels = new int[width * height];
+            DataSet dset = drawDSPanel.dset;
+            DataInstance instance;
+            // Calculate the kNN sets.
+            NeighborSetFinder nsf = new NeighborSetFinder(dset, cmet);
+            try {
+                nsf.calculateDistances();
+                nsf.calculateNeighborSets(k);
+            } catch (Exception e) {
+                System.err.println("Neighbor set error: " + e.getMessage());
+            }
+            float[] instanceWeights = nsf.getHWKNNWeightingScheme();
+            int r, g, b;
+            int rgba;
+            float maxGoodHubness = -Float.MAX_VALUE;
+            float minGoodHubness = Float.MAX_VALUE;
+            float currDist = 0;
+            float[] instDists = new float[k];
+            float totalDist;
+            int[] kNeighborIndexes = null;
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    totalDist = 0;
+                    instance = new DataInstance(dset);
+                    instance.fAttr[0] = (float) x / (float) width;
+                    instance.fAttr[1] = (float) y / (float) height;
+                    try {
+                        kNeighborIndexes = NeighborSetFinder.
+                                getIndexesOfNeighbors(dset, instance, k, cmet);
+                    } catch (Exception e) {
+                        System.err.println("KNN error for point: " + x + " "
+                                + y + " : " + e.getMessage());
+                    }
+                    for (int index = 0; index < k; index++) {
+                        try {
+                            currDist = cmet.dist(instance, dset.data.get(
+                                    kNeighborIndexes[index]));
+                        } catch (Exception e) {
+                            System.out.println("Distance error for point: "
+                                    + x + " " + y + " : " + e.getMessage());
+                        }
+                        instDists[index] = currDist;
+                        totalDist += currDist;
+                    }
+                    for (int index = 0; index < k; index++) {
+                        instDists[index] /= totalDist;
+                        goodHubness[y * width + x] += (instDists[index]
+                                * instanceWeights[kNeighborIndexes[index]]);
+                    }
+                }
+            }
+            // Perform good hubness normalization.
+            for (int i = 0; i < goodHubness.length; i++) {
+                if (goodHubness[i] > maxGoodHubness) {
+                    maxGoodHubness = goodHubness[i];
+                }
+                if (goodHubness[i] < minGoodHubness) {
+                    minGoodHubness = goodHubness[i];
+                }
+            }
+            for (int i = 0; i < goodHubness.length; i++) {
+                goodHubness[i] = (goodHubness[i] - minGoodHubness)
+                        / (maxGoodHubness - minGoodHubness);
+            }
+
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    r = (int) ((1 - goodHubness[y * width + x]) * 255f);
+                    g = (int) ((goodHubness[y * width + x]) * 255f);
+                    b = 0;
+                    rgba = (0xff000000 | r << 16 | g << 8 | b);
+                    pixels[y * width + x] = rgba;
+                }
+            }
+            BufferedImage image = new BufferedImage(width, height,
+               
