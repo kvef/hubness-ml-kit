@@ -61,3 +61,103 @@ public class OptimizeSIFTClustering {
     public void runOptimization() throws Exception {
         nameList = ImageUtil.getImageNamesArray(inImagesDir, "jpg");
         // Homogeneity of SIFT features from different clusters in segments of
+        // the segmented image is used as an indicator of the fitness of the
+        // current solution.
+        SIFTSegmentationHomogeneity fitness =
+                SIFTSegmentationHomogeneity.newInstance(
+                inImagesDir, inSIFTDir, inSegmentDir, nameList, minClusters,
+                maxClusters, useRank);
+        DataSet dset = new DataSet();
+        dset.fAttrNames = new String[3];
+        dset.fAttrNames[0] = "f1";
+        dset.fAttrNames[1] = "f2";
+        dset.fAttrNames[2] = "f3";
+        DataInstance instance = new DataInstance(dset);
+        instance.embedInDataset(dset);
+        instance.fAttr[0] = 0.0f;
+        instance.fAttr[1] = 0.05f;
+        instance.fAttr[2] = 1f;
+        float[] lowerBounds = new float[3];
+        float[] upperBounds = new float[3];
+        lowerBounds[0] = 0.00f;
+        lowerBounds[1] = 0.00f;
+        lowerBounds[2] = 0.00f;
+        upperBounds[0] = 1f;
+        upperBounds[1] = 1f;
+        upperBounds[2] = 1f;
+        FileUtil.createFileFromPath(logPath);
+        // Set up the logging.
+        PrintWriter logWriter = new PrintWriter(
+                new FileWriter(logPath, true), true);
+        // Initialize the mutation operator and the optimization framework.
+        HomogenousTwoDevsFloatMutator mutator =
+                new HomogenousTwoDevsFloatMutator(0.1f, 0.35f, 0.65f,
+                lowerBounds, upperBounds);
+        SimulatedThermicAnnealingLeap optimizer =
+                new SimulatedThermicAnnealingLeap(
+                instance, mutator, fitness, numIter);
+        optimizer.setLogger(logWriter);
+        optimizer.setLogging(true);
+        try {
+            optimizer.optimize();
+            instance = (DataInstance) optimizer.getBestInstance();
+            logWriter.println();
+            logWriter.println("Best solution: " + instance.fAttr[0] + " "
+                    + instance.fAttr[1] + " " + instance.fAttr[2]);
+            logWriter.println("Best score: " + optimizer.getBestFitness());
+            logWriter.println("Average score: "
+                    + optimizer.getAverageFitness());
+            logWriter.println("Evolution of best scores: ");
+            float[] scores = optimizer.getBestScores();
+            for (int i = 0; i < scores.length - 1; i++) {
+                logWriter.print(scores[i] + ", ");
+            }
+            logWriter.println(scores[scores.length - 1]);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            logWriter.close();
+        }
+    }
+
+    /**
+     * This script runs the optimization of SIFT feature clustering on images.
+     *
+     * @param args Command line arguments.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-imagesInput", "Path to the input folder containing the "
+                + "image data.", CommandLineParser.STRING, true, false);
+        clp.addParam("-siftInput", "Path to the input folder containing the "
+                + "sift keyfiles.", CommandLineParser.STRING, true, false);
+        clp.addParam("-segmentInput", "Path to the input folder containing the "
+                + "segmented image data.", CommandLineParser.STRING, true,
+                false);
+        clp.addParam("-logOutput", "Path to the output log file.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-numIter", "Integer that is the number of iterations.",
+                CommandLineParser.INTEGER, true, false);
+        clp.addParam("-minClust", "Integer that is the minimal number of "
+                + "clusters.", CommandLineParser.INTEGER, true, false);
+        clp.addParam("-maxClust", "Integer that is the maximal number of "
+                + "clusters.", CommandLineParser.INTEGER, true, false);
+        clp.addParam("-useRank", "Boolean that signifies whether to use ranks.",
+                CommandLineParser.INTEGER, true, false);
+        clp.parseLine(args);
+        OptimizeSIFTClustering worker = new OptimizeSIFTClustering();
+        worker.inImagesDir =
+                new File((String) clp.getParamValues("-imagesInput").get(0));
+        worker.inSIFTDir =
+                new File((String) clp.getParamValues("-siftInput").get(0));
+        worker.inSegmentDir = new File(
+                (String) clp.getParamValues("-segmentInput").get(0));
+        worker.logPath = (String) clp.getParamValues("-logOutput").get(0);
+        worker.minClusters = (Integer) clp.getParamValues("-minClust").get(0);
+        worker.maxClusters = (Integer) clp.getParamValues("-maxClust").get(0);
+        worker.numIter = (Integer) clp.getParamValues("-numIter").get(0);
+        worker.useRank = (Boolean) clp.getParamValues("-useRank").get(0);
+        worker.runOptimization();
+    }
+}
