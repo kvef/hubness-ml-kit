@@ -195,4 +195,77 @@ public class SingleImageSIFTClusterer {
                 KMeans clusterer = new KMeans(features, cmet, nClusters);
                 clusterer.cluster();
                 clusteringConfigurations[NUM_REPETITIONS
-          
+                        * (nClusters - minClusters) + rIndex] =
+                        clusterer.getClusters();
+                repetitionsArray[rIndex] = clusteringConfigurations[
+                        NUM_REPETITIONS * (nClusters - minClusters) + rIndex];
+            }
+            selector.setConfigurationList(repetitionsArray);
+            nonDuplicateConfigurationArray[nClusters - minClusters] =
+                    selector.findBestConfigurationByIndexProduct();
+        }
+        selector.setConfigurationList(nonDuplicateConfigurationArray);
+        Cluster[] bestConfig = selector.findBestConfigurationByIndexProduct();
+        return bestConfig;
+    }
+
+    /**
+     * Performs the clustering across the specified cluster range of the SIFT
+     * features of an image and finds the optimal cluster configuration
+     * according to all supported cluster validity indices. It outputs all such
+     * optimal configurations.
+     *
+     * @return Cluster[][] containing the optimal reached cluster configurations
+     * of the SIFT features of an image, for all supported cluster validity
+     * indices.
+     * @throws Exception
+     */
+    public Cluster[][] clusterImageAll() throws Exception {
+        Cluster[][] chosenConfigurations =
+                new Cluster[OptimalConfigurationFinder.NUM_INDEXES][];
+        Cluster[][] clusteringConfigurations =
+                new Cluster[(maxClusters - minClusters + 1) * NUM_REPETITIONS][];
+        Cluster[][][] nonDuplicateConfigurationArray = new Cluster[
+                OptimalConfigurationFinder.NUM_INDEXES][
+                (maxClusters - minClusters + 1)][];
+        Cluster[][] repetitionsArray;
+        selector.setDataSet(features);
+        for (int nClusters = minClusters; nClusters <= maxClusters;
+                nClusters++) {
+            System.out.println("Clustering for : " + nClusters + " clusters.");
+            repetitionsArray = new Cluster[NUM_REPETITIONS][];
+            for (int rIndex = 0; rIndex < NUM_REPETITIONS; rIndex++) {
+                KMeans clusterer = new KMeans(features, cmet, nClusters);
+                clusterer.cluster();
+                clusteringConfigurations[NUM_REPETITIONS
+                        * (nClusters - minClusters) + rIndex] =
+                        clusterer.getClusters();
+                repetitionsArray[rIndex] = clusteringConfigurations[
+                        NUM_REPETITIONS * (nClusters - minClusters) + rIndex];
+            }
+            selector.setConfigurationList(repetitionsArray);
+            for (int j = 0; j < OptimalConfigurationFinder.NUM_INDEXES; j++) {
+                selector.setConfigurationList(repetitionsArray);
+                selector.setQualityIndex(j);
+                nonDuplicateConfigurationArray[j][nClusters - minClusters] =
+                        selector.findBestConfiguration();
+            }
+        }
+        for (int j = 0; j < OptimalConfigurationFinder.NUM_INDEXES; j++) {
+            selector.setConfigurationList(nonDuplicateConfigurationArray[j]);
+            selector.setQualityIndex(j);
+            chosenConfigurations[j] = selector.findBestConfiguration();
+        }
+        return chosenConfigurations;
+    }
+
+    /**
+     * Perform clustering of the SIFT features on an image.
+     *
+     * @param bi BufferedImage object that is the image where the SIFT features
+     * are being clustered. It is used in the adapted K-means, if the 'simple'
+     * flag is set to false, for extracting color information in neighborhoods
+     * of the keypoints.
+     * @param simple Boolean flag indicating whether the basic K-means is used
+     * or the adapted version.
+     * @return Cluster[] that is the SIFT feature cluster configuration that 
