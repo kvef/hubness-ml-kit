@@ -110,4 +110,89 @@ public class SingleImageSIFTClusterer {
     /**
      * Initialization.
      *
-     * @param inPath String that is the path to 
+     * @param inPath String that is the path to the ARFF file containing the
+     * image SIFT features.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param selector OptimalConfigurationFinder for finding the optimal
+     * cluster configuration among all generated configurations.
+     * @param minClusters Integer that is the minimal number of clusters to try
+     * and use.
+     * @param maxClusters Integer that is the maximal number of clusters to try
+     * and use.
+     */
+    public SingleImageSIFTClusterer(String inPath, CombinedMetric cmet,
+            OptimalConfigurationFinder selector, int minClusters,
+            int maxClusters) {
+        loadFeatures(inPath);
+        this.selector = selector;
+        this.cmet = cmet;
+        this.minClusters = minClusters;
+        this.maxClusters = maxClusters;
+    }
+
+    /**
+     * Perform a single clustering run for a fixed number of clusters on the
+     * features loaded from an ARFF file and persist the clusters in an output
+     * ARFF file.
+     *
+     * @param inPath String that is the path to the ARFF file containing the
+     * image SIFT features.
+     * @param outPath
+     * @param numClust
+     * @throws Exception
+     */
+    public static void clusterARFFToARFF(String inPath,
+            String outPath, int numClust) throws Exception {
+        File inFile = new File(inPath);
+        if (numClust < 1) {
+            throw new Exception("Number of clusters must be positive, not "
+                    + numClust);
+        }
+        if (!inFile.exists() || !inFile.isFile()) {
+            throw new Exception("Bad input path " + inPath);
+        }
+        Cluster[] clusterConfiguration;
+        // Load the features.
+        LFeatRepresentation features = SiftUtil.importFeaturesFromArff(inPath);
+        CombinedMetric cmet = new CombinedMetric(null,
+                new MinkowskiMetric(), CombinedMetric.DEFAULT);
+        // Perform the clustering.
+        KMeans clusterer = new KMeans(features, cmet, numClust);
+        clusterer.cluster();
+        clusterConfiguration = clusterer.getClusters();
+        DataSet outDSet = new DataSet();
+        outDSet.fAttrNames =
+                clusterConfiguration[0].getDefinitionDataset().fAttrNames.
+                clone();
+        outDSet.iAttrNames = new String[1];
+        outDSet.iAttrNames[0] = "Cluster";
+        outDSet.sAttrNames = new String[1];
+        outDSet.sAttrNames[0] = "ImageName";
+        persistClusters(outPath, clusterConfiguration, outDSet);
+    }
+
+    /**
+     * This method performs the clustering and finds the optimal cluster
+     * configuration based on a product of different cluster validity indices.
+     *
+     * @return Cluster[] that is the cluster configuration produced by the
+     * clustering and selected as the optimal one.
+     * @throws Exception
+     */
+    public Cluster[] clusterImageByIndexProduct() throws Exception {
+        Cluster[][] clusteringConfigurations =
+                new Cluster[(maxClusters - minClusters + 1) *
+                NUM_REPETITIONS][];
+        Cluster[][] nonDuplicateConfigurationArray =
+                new Cluster[(maxClusters - minClusters + 1)][];
+        Cluster[][] repetitionsArray;
+        selector.setDataSet(features);
+        for (int nClusters = minClusters; nClusters <= maxClusters;
+                nClusters++) {
+            System.out.println("Clustering for : " + nClusters + " clusters.");
+            repetitionsArray = new Cluster[NUM_REPETITIONS][];
+            for (int rIndex = 0; rIndex < NUM_REPETITIONS; rIndex++) {
+                KMeans clusterer = new KMeans(features, cmet, nClusters);
+                clusterer.cluster();
+                clusteringConfigurations[NUM_REPETITIONS
+          
