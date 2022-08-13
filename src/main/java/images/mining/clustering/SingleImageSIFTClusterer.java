@@ -268,4 +268,88 @@ public class SingleImageSIFTClusterer {
      * of the keypoints.
      * @param simple Boolean flag indicating whether the basic K-means is used
      * or the adapted version.
-     * @return Cluster[] that is the SIFT feature cluster configuration that 
+     * @return Cluster[] that is the SIFT feature cluster configuration that is
+     * found to be optimal.
+     * @throws Exception
+     */
+    public Cluster[] clusterImage(BufferedImage bi,
+            boolean simple) throws Exception {
+        Cluster[][] clusteringConfigurations =
+                new Cluster[(maxClusters - minClusters + 1) *
+                NUM_REPETITIONS][];
+        Cluster[][] nonDuplicateConfigurationArray =
+                new Cluster[(maxClusters - minClusters + 1)][];
+        Cluster[][] repetitionsArray;
+        selector.setDataSet(features);
+        scaleDownDescriptor(3.7f);
+        for (int nClusters = minClusters; nClusters <= maxClusters;
+                nClusters++) {
+            System.out.println("Clustering for : " + nClusters + " clusters.");
+            repetitionsArray = new Cluster[NUM_REPETITIONS][];
+            for (int rIndex = 0; rIndex < NUM_REPETITIONS; rIndex++) {
+                KMeans km = new KMeans(features, cmet, nClusters);
+                IntraImageKMeansAdapted ikma =
+                        new IntraImageKMeansAdapted(bi, features, nClusters);
+                ClusteringAlg clusterer = simple ? km : ikma;
+                clusterer.cluster();
+                clusteringConfigurations[NUM_REPETITIONS
+                        * (nClusters - minClusters) + rIndex] =
+                        clusterer.getClusters();
+                repetitionsArray[rIndex] = clusteringConfigurations[
+                        NUM_REPETITIONS * (nClusters - minClusters) + rIndex];
+            }
+            selector.setConfigurationList(repetitionsArray);
+            nonDuplicateConfigurationArray[nClusters - minClusters] =
+                    selector.findBestConfiguration();
+        }
+        selector.setConfigurationList(nonDuplicateConfigurationArray);
+        Cluster[] bestConfig = selector.findBestConfiguration();
+        return bestConfig;
+    }
+
+    /**
+     * Persist the clusters in a specified ARFF file and at the same time fill a
+     * DataSet object from the Cluster[] cluster configuration array.
+     *
+     * @param outPath String that is the path to the output file for the cluster
+     * configuration.
+     * @param clusterConfiguration Cluster[] that is the cluster configuration
+     * to persist.
+     * @param outDSet DataSet object to fill with the features from the cluster
+     * configuration.
+     * @throws Exception
+     */
+    public static void persistClusters(String outPath,
+            Cluster[] clusterConfiguration, DataSet outDSet) throws Exception {
+        if ((clusterConfiguration != null)
+                && (clusterConfiguration.length > 0)) {
+            File outFile = new File(outPath);
+            FileUtil.createFile(outFile);
+            for (int cIndex = 0; cIndex < clusterConfiguration.length;
+                    cIndex++) {
+                for (int j = 0; j < clusterConfiguration[cIndex].size(); j++) {
+                    outDSet.data.add(
+                            clusterConfiguration[cIndex].getInstance(j));
+                    clusterConfiguration[cIndex].getInstance(j).iAttr =
+                            new int[1];
+                    clusterConfiguration[cIndex].getInstance(j).iAttr[0] =
+                            cIndex;
+                    clusterConfiguration[cIndex].getInstance(j).
+                            embedInDataset(outDSet);
+                }
+            }
+            IOARFF persister = new IOARFF();
+            persister.save(outDSet, outPath, null);
+        }
+    }
+
+    /**
+     *
+     * @param outPath
+     * @param clusterConfiguration
+     * @throws Exception
+     */
+    public static void persistClusters(String outPath,
+            Cluster[] clusterConfiguration) throws Exception {
+        if ((clusterConfiguration != null)
+                && (clusterConfigura
