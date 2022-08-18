@@ -504,4 +504,51 @@ public class SingleImageSIFTClusterer {
                 clusterConfiguration[0]);
         persistClusters(outPath + File.separator + "best_config_db.arff",
                 clusterConfiguration[1]);
-        persistClusters(outPath + File.separator + "
+        persistClusters(outPath + File.separator + "best_config_rs.arff",
+                clusterConfiguration[2]);
+        persistClusters(outPath + File.separator + "best_config_sd.arff",
+                clusterConfiguration[3]);
+        persistClusters(outPath + File.separator
+                + "best_config_silhouette.arff", clusterConfiguration[4]);
+        // Persist the drawn SIFT clusters on images.
+        drawUtil = new SIFTDraw(clusterConfiguration[0], imagePath);
+        drawUtil.drawClusters(outPath + File.separator
+                + "image_clusters_dunn.jpg");
+        drawUtil = new SIFTDraw(clusterConfiguration[1], imagePath);
+        drawUtil.drawClusters(outPath + File.separator
+                + "image_clusters_db.jpg");
+        drawUtil = new SIFTDraw(clusterConfiguration[2], imagePath);
+        drawUtil.drawClusters(outPath + File.separator
+                + "image_clusters_rs.jpg");
+        drawUtil = new SIFTDraw(clusterConfiguration[3], imagePath);
+        drawUtil.drawClusters(outPath + File.separator
+                + "image_clusters_sd.jpg");
+        drawUtil = new SIFTDraw(clusterConfiguration[4], imagePath);
+        drawUtil.drawClusters(outPath + File.separator
+                + "image_clusters_silhouette.jpg");
+    }
+
+    /**
+     * Performs intra-image SIFT feature clustering on a directory.
+     *
+     * @param args Command line parameters.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-arffInputDir", "Path to the input folder containing the "
+                + "image SIFT representation ARFF-s.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-imgInputDir", "Path to the input folder containing the "
+                + "image files.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-outDir", "Path to the output directory",
+                CommandLineParser.STRING, true, false);
+
+        clp.parseLine(args);
+        String inRepPath = (String) clp.getParamValues("-arffInputDir").get(0);
+        String inImgPath = (String) clp.getParamValues("-imgInputDir").get(0);
+        String outDirPath = (String) clp.getParamValues("-outDir").get(0);
+        clusterImageDirectory(inRepPath, outDirPath, inImgPath);
+    }
+}
