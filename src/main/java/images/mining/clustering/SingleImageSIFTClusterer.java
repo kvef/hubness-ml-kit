@@ -430,4 +430,78 @@ public class SingleImageSIFTClusterer {
      * @param scaleFactor Float value that is the scale factor.
      * @throws Exception
      */
-    private void scaleDownDescriptor(float scaleFactor) thr
+    private void scaleDownDescriptor(float scaleFactor) throws Exception {
+        for (int i = 0; i < features.data.size(); i++) {
+            // The first 4 values are the X,Y coordinates, scale and angle.
+            for (int j = 4; j < features.fAttrNames.length; j++) {
+                features.data.get(i).fAttr[j] /= scaleFactor;
+            }
+        }
+    }
+
+    /**
+     * Cluster the SIFT features in an image and use a product of cluster
+     * validity indices to decide on the optimal configuration. The clustered
+     * features are drawn on the images and this modified copy is also persisted
+     * to the output directory.
+     *
+     * @param inPath String that is path to the representational file.
+     * @param outPath String that is the path to where to persist the output.
+     * @param imagePath String that is the path to the image file.
+     * @throws Exception
+     */
+    private static void clusterImageFileByIndexProduct(String inPath,
+            String outPath, String imagePath) throws Exception {
+        int minClusters = 10;
+        int maxClusters = 30;
+        CombinedMetric cmet = CombinedMetric.FLOAT_EUCLIDEAN;
+        SingleImageSIFTClusterer imageClusterer;
+        OptimalConfigurationFinder selector;
+        Cluster[] clusterConfiguration;
+        SIFTDraw drawUtil;
+        selector = new OptimalConfigurationFinder();
+        imageClusterer = new SingleImageSIFTClusterer(inPath, cmet, selector,
+                minClusters, maxClusters);
+        imageClusterer.scaleDownDescriptor(80f);
+        clusterConfiguration = imageClusterer.clusterImageByIndexProduct();
+        // Persist the clusters.
+        persistClusters(outPath + File.separator + "best_config_product.arff",
+                clusterConfiguration);
+        drawUtil = new SIFTDraw(clusterConfiguration, imagePath);
+        // Persist the image that the clusters of SIFT features are drawn onto.
+        drawUtil.drawClusters(outPath + File.separator
+                + "image_clusters_product.jpg");
+    }
+
+    /**
+     * Cluster the SIFT features in an image and use a series of cluster
+     * validity indices to decide on the optimal configurations. The clustered
+     * features are drawn on the images and this modified copy is also persisted
+     * to the output directory.
+     *
+     * @param inPath String that is path to the representational file.
+     * @param outPath String that is the path to where to persist the output.
+     * @param imagePath String that is the path to the image file.
+     * @throws Exception
+     */
+    private static void clusterImageFileAll(String inPath, String outPath,
+            String imagePath) throws Exception {
+        int minClusters = 10;
+        int maxClusters = 30;
+        CombinedMetric cmet = CombinedMetric.FLOAT_EUCLIDEAN;
+        SingleImageSIFTClusterer imageClusterer;
+        OptimalConfigurationFinder selector;
+        Cluster[][] clusterConfiguration;
+        SIFTDraw drawUtil;
+        selector = new OptimalConfigurationFinder();
+        imageClusterer = new SingleImageSIFTClusterer(inPath, cmet, selector,
+                minClusters, maxClusters);
+        imageClusterer.scaleDownDescriptor(80f);
+        // Persist the optimal cluster configuration according to each of the
+        // used cluster validity indices.
+        clusterConfiguration = imageClusterer.clusterImageAll();
+        persistClusters(outPath + File.separator + "best_config_dunn.arff",
+                clusterConfiguration[0]);
+        persistClusters(outPath + File.separator + "best_config_db.arff",
+                clusterConfiguration[1]);
+        persistClusters(outPath + File.separator + "
