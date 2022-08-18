@@ -218,4 +218,76 @@ public class SIFTCodeBook {
      * @throws Exception
      */
     public int getIndexOfClosestCodebook(LFeatVector vect) throws Exception {
-        
+        // Only the desciptors are taken into account in distance calculations.
+        int closest = -1;
+        LocalImageFeatureMetric smet = new LocalImageFeatureMetric();
+        float currMinDist = Float.MAX_VALUE;
+        float tempDist;
+        for (int i = 0; i < codebook.size(); i++) {
+            tempDist = smet.dist(vect, codebook.get(i));
+            if (tempDist < currMinDist) {
+                currMinDist = tempDist;
+                closest = i;
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * Persists the codebook data.
+     *
+     * @param outCodebookFile File to write the codebook to.
+     * @throws Exception
+     */
+    public void writeCodeBookToFile(File outCodebookFile) throws Exception {
+        PrintWriter pw = new PrintWriter(new FileWriter(outCodebookFile));
+        try {
+            pw.println("codebook_size:" + codebook.size());
+            for (LFeatVector sift : codebook) {
+                pw.println(sift.toCSVString());
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            pw.close();
+        }
+    }
+
+    /**
+     * Loads the codebook data from a file.
+     *
+     * @param inCodebookFile File to load the codebook data from.
+     * @throws Exception
+     */
+    public void loadCodeBookFromFile(File inCodebookFile) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(inCodebookFile)));
+        try {
+            String s = br.readLine();
+            while ((s != null) && !(s.contains("codebook_size"))) {
+                s = br.readLine();
+            }
+            if (s == null) {
+                throw new Exception("Could not find 'codebook_size' within"
+                        + " file: " + inCodebookFile.getPath());
+            }
+            s = s.trim();
+            String[] pair = s.split(":");
+            int size = Integer.parseInt(pair[1]);
+            codebook = new ArrayList<>(size);
+            s = br.readLine();
+            LFeatVector tempVector;
+            while (s != null) {
+                tempVector = new LFeatVector();
+                tempVector.fillFromCSVString(s);
+                tempVector.setContext(null);
+                codebook.add(tempVector);
+                s = br.readLine();
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            br.close();
+        }
+    }
+}
