@@ -116,4 +116,106 @@ public class SIFTCodeBook {
             return qih;
         }
         qih.setPath(rep.getPath());
-        for (int i = 0; i < rep.data
+        for (int i = 0; i < rep.data.size(); i++) {
+            qih.iAttr[getIndexOfClosestCodebook((LFeatVector) (
+                    rep.data.get(i)))]++;
+        }
+        return qih;
+    }
+
+    /**
+     * Generates a quantized image representation.
+     *
+     * @param rep SIFTRepresentation of the image to quantize.
+     * @return QuantizedImageHistogram that is the quantized image
+     * representation.
+     * @throws Exception
+     */
+    public QuantizedImageHistogram getHistogramForImageRepresentation(
+            LFeatRepresentation rep) throws Exception {
+        QuantizedImageHistogramDataSet qihDSet =
+                new QuantizedImageHistogramDataSet(codebook.size());
+        QuantizedImageHistogram qih = new QuantizedImageHistogram(qihDSet);
+        if (rep == null || rep.isEmpty()) {
+            return null;
+        }
+        qih.setPath(rep.getPath());
+        for (int i = 0; i < rep.data.size(); i++) {
+            qih.iAttr[getIndexOfClosestCodebook((LFeatVector) (
+                    rep.data.get(i)))]++;
+        }
+        return qih;
+    }
+
+    /**
+     * Generates a quantized image representation, normalized to a probability
+     * distribution.
+     *
+     * @param rep SIFTRepresentation of the image to quantize.
+     * @return QuantizedImageHistogram that is the quantized image
+     * representation, normalized to a probability distribution.
+     * @throws Exception
+     */
+    public QuantizedImageDistribution getDistributionForImageRepresentation(
+            LFeatRepresentation rep) throws Exception {
+        QuantizedImageDistributionDataSet qidDSet =
+                new QuantizedImageDistributionDataSet(codebook.size());
+        QuantizedImageDistribution qid = new QuantizedImageDistribution(
+                qidDSet);
+        if (rep == null || rep.isEmpty()) {
+            return null;
+        }
+        qid.setPath(rep.getPath());
+        for (int i = 0; i < rep.data.size(); i++) {
+            qid.fAttr[getIndexOfClosestCodebook((LFeatVector) (
+                    rep.data.get(i)))]++;
+        }
+        // Normalization to get a probability distribution over codebooks.
+        for (int i = 0; i < codebook.size(); i++) {
+            qid.fAttr[i] /= rep.data.size();
+        }
+        return qid;
+    }
+
+    /**
+     * Generates a quantized image representation, normalized to a probability
+     * distribution.
+     *
+     * @param rep SIFTRepresentation of the image to quantize.
+     * @param qidDSet QuantizedImageDistributionDataSet data context.
+     * @return QuantizedImageHistogram that is the quantized image
+     * representation, normalized to a probability distribution.
+     * @throws Exception
+     */
+    public QuantizedImageDistribution getDistributionForImageRepresentation(
+            LFeatRepresentation rep, QuantizedImageDistributionDataSet qidDSet)
+            throws Exception {
+        QuantizedImageDistribution qid =
+                new QuantizedImageDistribution(qidDSet);
+        if (rep != null) {
+            qid.setPath(rep.getPath());
+        }
+        if (rep == null || rep.isEmpty()) {
+            return qid;
+        }
+        for (int i = 0; i < rep.data.size(); i++) {
+            qid.fAttr[getIndexOfClosestCodebook((LFeatVector) (
+                    rep.data.get(i)))]++;
+        }
+        //normalization to get a probability distribution over codebooks
+        for (int i = 0; i < codebook.size(); i++) {
+            qid.fAttr[i] /= rep.data.size();
+        }
+        return qid;
+
+    }
+
+    /**
+     * Returns the index of the closest codebook vector.
+     *
+     * @param vect SIFTVector to find the corresponding codebook vector for.
+     * @return Integer that is the index of the closest codebook vector.
+     * @throws Exception
+     */
+    public int getIndexOfClosestCodebook(LFeatVector vect) throws Exception {
+        
