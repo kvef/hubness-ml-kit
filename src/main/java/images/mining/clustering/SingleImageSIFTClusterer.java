@@ -352,4 +352,82 @@ public class SingleImageSIFTClusterer {
     public static void persistClusters(String outPath,
             Cluster[] clusterConfiguration) throws Exception {
         if ((clusterConfiguration != null)
-                && (clusterConfigura
+                && (clusterConfiguration.length > 0)) {
+            File outFile = new File(outPath);
+            FileUtil.createFile(outFile);
+            DataSet outDSet = new DataSet();
+            outDSet.fAttrNames =
+                    clusterConfiguration[0].getDefinitionDataset().fAttrNames;
+            outDSet.sAttrNames =
+                    clusterConfiguration[0].getDefinitionDataset().sAttrNames;
+            // As SIFT features don't have categories, this way of handling it
+            // is not entirely necessary, instance labels could be used instead.
+            outDSet.iAttrNames = new String[1];
+            outDSet.iAttrNames[0] = "Cluster";
+            outDSet.identifiers = clusterConfiguration[0].
+                    getDefinitionDataset().identifiers;
+            for (int cIndex = 0; cIndex < clusterConfiguration.length;
+                    cIndex++) {
+                for (int j = 0; j < clusterConfiguration[cIndex].size(); j++) {
+                    outDSet.data.add(
+                            clusterConfiguration[cIndex].getInstance(j));
+                    clusterConfiguration[cIndex].getInstance(j).iAttr =
+                            new int[1];
+                    clusterConfiguration[cIndex].getInstance(j).iAttr[0] =
+                            cIndex;
+                    clusterConfiguration[cIndex].getInstance(j).
+                            embedInDataset(outDSet);
+                }
+            }
+            IOARFF persister = new IOARFF();
+            persister.save(outDSet, outPath, null);
+        }
+    }
+
+    /**
+     * Recursively intra-cluster SIFT features in a directory of images.
+     *
+     * @param inPath Current input path to the features.
+     * @param outPath Current output path for the cluster configurations.
+     * @param imagePath Current image path.
+     * @throws Exception
+     */
+    public static void clusterImageDirectory(String inPath, String outPath,
+            String imagePath) throws Exception {
+        File inFile = new File(inPath);
+        File outFile = new File(outPath);
+        if (inFile.isDirectory()) {
+            File[] children = inFile.listFiles();
+            if (children != null) {
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i].isFile()) {
+                        clusterImageFileByIndexProduct(children[i].getPath(),
+                                outPath + File.separator
+                                + children[i].getName().substring(0,
+                                children[i].getName().length() - 5),
+                                imagePath + File.separator
+                                + children[i].getName().substring(0,
+                                children[i].getName().length() - 4) + "jpg");
+                    } else {
+                        clusterImageDirectory(children[i].getPath(),
+                                outPath + File.separator
+                                + children[i].getName(), imagePath
+                                + File.separator + children[i].getName());
+                    }
+                }
+            }
+        } else if (outFile.isDirectory()) {
+            clusterImageFileAll(inPath, outPath, imagePath);
+        }
+    }
+
+    /**
+     * When the adaptive clustering approach is used, it is prudent to scale
+     * down the descriptor a bit, because of the way the weights are set up and
+     * the preferences between proximity-based and descriptor-based
+     * similarities.
+     *
+     * @param scaleFactor Float value that is the scale factor.
+     * @throws Exception
+     */
+    private void scaleDownDescriptor(float scaleFactor) thr
