@@ -111,4 +111,97 @@ public class SIFTDraw {
                         randa.nextFloat(), randa.nextFloat(), 0.5f);
             }
         }
-        for (int i = 0; i < ellipses.lengt
+        for (int i = 0; i < ellipses.length; i++) {
+            ellipses[i].setColor(ellipseColors[i]);
+            if (!useGradientDraw) {
+                ellipses[i].drawOnGraphics(graphics);
+            } else {
+                ellipses[i].drawWithGradient(graphics);
+            }
+        }
+        return newImage;
+    }
+
+    /**
+     * This method draws the ellipses that correspond to SIFT clusters on top of
+     * an image.
+     *
+     * @param features ClusteredSIFTRepresentation object representing clusters
+     * of SIFT features.
+     * @param image Image that the ellipses will be drawn on top of.
+     * @param outImagePath String that is the path where the new image will be
+     * persisted.
+     * @param useGradientDraw Whether to use gradients when drawing the
+     * ellipses.
+     * @throws Exception
+     */
+    public static void drawClustersOnImageAsEllipses(
+            ClusteredSIFTRepresentation features, BufferedImage image,
+            String outImagePath, boolean useGradientDraw) throws Exception {
+        if (image == null) {
+            return;
+        }
+        if (features == null || features.isEmpty()) {
+            return;
+        }
+        // Get the cluster configuration.
+        Cluster[] clusters = features.representAsClusters();
+        Color[] clusterColors = new Color[clusters.length];
+        Graphics2D graphics = image.createGraphics();
+        // Assign random colors to the clusters for display.
+        Random randa = new Random();
+        for (int i = 0; i < clusterColors.length; i++) {
+            if (useGradientDraw) {
+                clusterColors[i] = new Color(randa.nextFloat(),
+                        randa.nextFloat(), randa.nextFloat(), 0.75f);
+            } else {
+                clusterColors[i] = new Color(randa.nextFloat(),
+                        randa.nextFloat(), randa.nextFloat(), 0.5f);
+            }
+        }
+        // Find the variance vectors.
+        Variance2D var = new Variance2D();
+        RotatedEllipse[] ellipses = var.
+                findVarianceEllipseForSIFTCLusterConfiguration(clusters);
+        for (int i = 0; i < clusters.length; i++) {
+            ellipses[i].setColor(clusterColors[i]);
+            if (!useGradientDraw) {
+                ellipses[i].drawOnGraphics(graphics);
+            } else {
+                ellipses[i].drawWithGradient(graphics);
+            }
+        }
+        // Persist the resulting image.
+        File outImageFile = new File(outImagePath);
+        ImageIO.write(image, "jpg", outImageFile);
+    }
+
+    /**
+     * This method draws the ellipses that correspond to SIFT clusters on top of
+     * an image.
+     *
+     * @param arffPath String that is the path to the .arff file containing the
+     * ClusteredSIFTRepresentation that describes SIFT clusters on an image.
+     * @param image Image that the ellipses will be drawn on top of.
+     * @param outImagePath String that is the path where the new image will be
+     * persisted.
+     * @param useGradientDraw Whether to use gradients when drawing the
+     * ellipses.
+     * @throws Exception
+     */
+    public static void drawClustersOnImageAsEllipses(
+            String arffPath, BufferedImage image,
+            String outImagePath, boolean useGradientDraw) throws Exception {
+        IOARFF arff = new IOARFF();
+        ClusteredSIFTRepresentation features = new ClusteredSIFTRepresentation(
+                new LFeatRepresentation(arff.load(arffPath)));
+        drawClustersOnImageAsEllipses(features, image, outImagePath,
+                useGradientDraw);
+    }
+
+    /**
+     * This method draws the ellipses that correspond to SIFT clusters on top of
+     * an image.
+     *
+     * @param arffPath String that is the path to the .arff file containing the
+     * ClusteredSIFTRepresent
