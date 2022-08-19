@@ -281,4 +281,85 @@ public class SIFTDraw {
      * @param oldImage Image that the arrows will be drawn on top of.
      * @return BufferedImage object that is the original image with the arrows
      * corresponding to SIFT feature drawn on top, colored according to their
-     * respective clu
+     * respective clusters.
+     * @throws Exception
+     */
+    public static BufferedImage drawClusteredSIFTImage(Cluster[] siftClusters,
+            BufferedImage oldImage) throws Exception {
+        if (siftClusters == null || siftClusters.length == 0) {
+            if (oldImage == null) {
+                return null;
+            } else {
+                return ImageUtil.copyImage(oldImage);
+            }
+        }
+        BufferedImage newImage = ImageUtil.copyImage(oldImage);
+        Graphics2D graphics = newImage.createGraphics();
+        // Assign random colors.
+        Color[] clusterColors = new Color[siftClusters.length];
+        Random randa = new Random();
+        for (int i = 0; i < clusterColors.length; i++) {
+            clusterColors[i] = new Color(randa.nextFloat(), randa.nextFloat(),
+                    randa.nextFloat());
+        }
+        for (int i = 0; i < siftClusters.length; i++) {
+            if (siftClusters[i] != null) {
+                for (int j = 0; j < siftClusters[i].size(); j++) {
+                    LFeatVector v = new LFeatVector(
+                            siftClusters[i].getInstance(j));
+                    graphics.setColor(clusterColors[i]);
+                    transformAndDrawLine(graphics, v, 0.f, 0.f, 1.f, 0.f);
+                    transformAndDrawLine(graphics, v, 0.85f, 0.1f, 1.f, 0.f);
+                    transformAndDrawLine(graphics, v, 0.85f, -0.1f, 1.f, 0.f);
+                }
+            }
+        }
+        return newImage;
+    }
+
+    /**
+     * Draws arrows corresponding to SIFT features on an image and colors them
+     * according to their clusters. The arrow length corresponds to the scale at
+     * which the particular SIFT feature was found.
+     *
+     * @param arffPath String that is the path to the .arff file containing the
+     * ClusteredSIFTRepresentation that describes SIFT clusters on an image.
+     * @param image Image that the arrows will be drawn on top of.
+     * @param outImagePath String that is the path where the new image will be
+     * persisted.
+     * @throws Exception
+     */
+    public static void drawClusteredSIFTImage(
+            String arffPath, BufferedImage image, String outImagePath)
+            throws Exception {
+        IOARFF persister = new IOARFF();
+        ClusteredSIFTRepresentation features = new ClusteredSIFTRepresentation(
+                new LFeatRepresentation(persister.load(arffPath)));
+        File outImageFile = new File(outImagePath);
+        Graphics2D graphics = image.createGraphics();
+        int maxClusterIndex = -1;
+        for (int i = 0; i < features.size(); i++) {
+            int tmpClusterIndex = (features.data.get(i)).iAttr[0];
+            if (tmpClusterIndex > maxClusterIndex) {
+                maxClusterIndex = tmpClusterIndex;
+            }
+        }
+        // Assign random colors.
+        Color[] clusterColors = new Color[maxClusterIndex + 1];
+        Random randa = new Random();
+        for (int i = 0; i < clusterColors.length; i++) {
+            clusterColors[i] = new Color(randa.nextFloat(), randa.nextFloat(),
+                    randa.nextFloat());
+        }
+        for (int i = 0; i < features.size(); i++) {
+            LFeatVector v = new LFeatVector(features.data.get(i));
+            graphics.setColor(clusterColors[(features.data.get(i)).iAttr[0]]);
+            transformAndDrawLine(graphics, v, 0.f, 0.f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, 0.1f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, -0.1f, 1.f, 0.f);
+        }
+        ImageIO.write(image, "jpg", outImageFile);
+    }
+
+    /**
+     * Draws arrows corresponding to SIFT features on an i
