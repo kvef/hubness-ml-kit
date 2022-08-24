@@ -362,4 +362,83 @@ public class SIFTDraw {
     }
 
     /**
-     * Draws arrows corresponding to SIFT features on an i
+     * Draws arrows corresponding to SIFT features on an image. The arrow length
+     * corresponds to the scale at which the particular SIFT feature was found.
+     *
+     * @param arffPath String that is the path to the .arff file containing the
+     * corresponding SIFTRepresentation.
+     * @param inImagePath String that is the path to the original image file.
+     * @param outImagePath String that is the path to where the new image is to
+     * be saved.
+     * @throws Exception
+     */
+    public static void drawSIFTImage(String arffPath, String inImagePath,
+            String outImagePath) throws Exception {
+        LFeatRepresentation features = SiftUtil.importFeaturesFromArff(arffPath);
+        File outImageFile = new File(outImagePath);
+        BufferedImage image = null;
+        try {
+            image = ImageIO.read(new File(inImagePath));
+        } catch (Exception e) {
+            throw new Exception("Error in reading image file " + inImagePath
+                    + " " + e.getMessage());
+        }
+        Graphics2D graphics = image.createGraphics();
+        for (int i = 0; i < features.size(); i++) {
+            LFeatVector v = new LFeatVector((DataInstance) (
+                    features.data.get(i)));
+            transformAndDrawLine(graphics, v, 0.f, 0.f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, 0.1f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, -0.1f, 1.f, 0.f);
+        }
+        ImageIO.write(image, "jpg", outImageFile);
+    }
+
+    /**
+     * Draws arrows corresponding to SIFT features on an image. The arrow length
+     * corresponds to the scale at which the particular SIFT feature was found.
+     *
+     * @param features SIFTRepresentation object holding the features to be
+     * drawn.
+     * @param inImage BufferedImage as the basis for the drawing. This object is
+     * not modified by the method, as the copy is made prior to the drawing.
+     * @return BufferedImage that the features have been drawn on.
+     * @throws Exception
+     */
+    public static BufferedImage drawSIFTImage(LFeatRepresentation features,
+            BufferedImage inImage) throws Exception {
+        if (inImage == null) {
+            return null;
+        }
+        BufferedImage outImage = ImageUtil.copyImage(inImage);
+        Graphics2D graphics = outImage.createGraphics();
+        for (int i = 0; i < features.data.size(); i++) {
+            LFeatVector v = new LFeatVector(features.data.get(i));
+            transformAndDrawLine(graphics, v, 0.f, 0.f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, 0.1f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, -0.1f, 1.f, 0.f);
+        }
+        return outImage;
+    }
+
+    /**
+     * Draw a red-green overlay on top of an image where the landscape
+     * corresponds to the utility of visual words occurring in certain image
+     * regions.
+     *
+     * @param features SIFTRepresentation that holds the features of the image.
+     * @param featureGoodness Array of float values between zero and one.
+     * @param inImage BufferedImage holding the image that is to be processed.
+     * @return BufferedImage object that is the new image.
+     * @throws Exception
+     */
+    public static BufferedImage drawSIFTGoodnessOnImage(
+            LFeatRepresentation features, float[] featureGoodness,
+            BufferedImage inImage) throws Exception {
+        BufferedImage outImage = ImageUtil.copyImage(inImage);
+        Graphics2D graphics = outImage.createGraphics();
+        // The image is divided into buckets and the goodness of each bucket
+        // is determined.
+        int val;
+        int width = inImage.getWidth();
+        int heigh
