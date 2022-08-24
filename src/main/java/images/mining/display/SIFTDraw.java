@@ -441,4 +441,89 @@ public class SIFTDraw {
         // is determined.
         int val;
         int width = inImage.getWidth();
-        int heigh
+        int height = inImage.getHeight();
+        // Step is the bucket width and height.
+        int step = 40;
+        int steppedWidth = width / step;
+        if (width % step != 0) {
+            steppedWidth++;
+        }
+        int steppedHeight = height / step;
+        if (height % step != 0) {
+            steppedHeight++;
+        }
+        int bucketX, bucketY;
+        // Buckets hold a list of indexes of the image features.
+        ArrayList<Integer>[][] bucketedData =
+                new ArrayList[steppedWidth][steppedHeight];
+        // Bucket initialization.
+        for (int i = 0; i < steppedWidth; i++) {
+            for (int j = 0; j < steppedHeight; j++) {
+                bucketedData[i][j] = new ArrayList<>(5);
+            }
+        }
+        // Fill the buckets.
+        for (int i = 0; i < features.size(); i++) {
+            bucketX = (int) (((LFeatVector) (
+                    features.data.get(i))).getX() / step);
+            bucketY = (int) (((LFeatVector) (
+                    features.data.get(i))).getY() / step);
+            bucketedData[bucketX][bucketY].add(i);
+        }
+        int[] goodnessByteArr = new int[width * height];
+        double weight;
+        double sigma = 0.05;
+        // X and Y coordinates of individual pixels.
+        int pX;
+        int pY;
+        int fIndex;
+        double gh;
+        double bh;
+        for (int i = 0; i < goodnessByteArr.length; i++) {
+            pX = i % width;
+            pY = i / width;
+            bucketX = (pX) / step;
+            bucketY = (pY) / step;
+            gh = 0;
+            bh = 0;
+            for (int j = 0; j < bucketedData[bucketX][bucketY].size(); j++) {
+                // Index of the feature.
+                fIndex = bucketedData[bucketX][bucketY].get(j);
+                // Weight that measures the influence of that feature from the
+                // bucket on the currently considered pixel.
+                weight = Math.min(Math.exp(-sigma
+                        * ((((LFeatVector) (
+                        features.data.get(fIndex))).getX() - pX)
+                        * (((LFeatVector) (features.data.get(fIndex))).getX()
+                        - pX) + (((LFeatVector) (
+                        features.data.get(fIndex))).getY()
+                        - pY) * (((LFeatVector) (features.data.get(fIndex)))
+                        .getY() - pY))), 1);
+                // Update the good and bad totals.
+                gh += weight * featureGoodness[fIndex];
+                bh += weight * (1 - featureGoodness[fIndex]);
+            }
+            if (gh > 0 || bh > 0) {
+                val = (int) (255 * ((gh) / (gh + bh)));
+                goodnessByteArr[i] = val << 8 | (255 - val) << 16 | 180 << 24;
+            } else {
+                goodnessByteArr[i] = 0x50809080;
+            }
+        }
+        BufferedImage overlay = new BufferedImage(width, height,
+                BufferedImage.TYPE_INT_ARGB);
+        // Now perform smoothing by applying several passes of box blur.
+        BoxBlur bb = new BoxBlur(8);
+        bb.blurPixelsWithAlpha(goodnessByteArr, new int[goodnessByteArr.length],
+                new Dimension(width, height));
+        bb = new BoxBlur(9);
+        bb.blurPixelsWithAlpha(goodnessByteArr,
+                new int[goodnessByteArr.length], new Dimension(width, height));
+        bb = new BoxBlur(7);
+        bb.blurPixelsWithAlpha(goodnessByteArr, new int[goodnessByteArr.length],
+                new Dimension(width, height));
+        overlay.setRGB(0, 0, width, height, goodnessByteArr, 0, width);
+        // Now draw the feature utility landscape over the original image.
+        graphics.drawImage(overlay, 0, 0, null);
+        // In the end, also draw individual features by applying the same color
+        // schem
