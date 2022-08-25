@@ -615,4 +615,6 @@ public class SIFTDraw {
             info();
             return;
         }
-        drawCluster
+        drawClustersOnImageAsEllipses(args[0], args[1], args[2], true);
+    }
+}
