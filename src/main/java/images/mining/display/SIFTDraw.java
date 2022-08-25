@@ -526,4 +526,93 @@ public class SIFTDraw {
         // Now draw the feature utility landscape over the original image.
         graphics.drawImage(overlay, 0, 0, null);
         // In the end, also draw individual features by applying the same color
-        // schem
+        // scheme as for the regions.
+        for (int i = 0; i < features.data.size(); i++) {
+            LFeatVector v = new LFeatVector(features.data.get(i));
+            val = (int) (255 * (Math.min(1, featureGoodness[i])));
+            Color col = new Color(val << 8 | (255 - val) << 16);
+            graphics.setColor(col);
+            transformAndDrawLine(graphics, v, 0.f, 0.f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, 0.1f, 1.f, 0.f);
+            transformAndDrawLine(graphics, v, 0.85f, -0.1f, 1.f, 0.f);
+        }
+        return outImage;
+    }
+
+    /**
+     * Draw clustered SIFT features on an image and save the result.
+     *
+     * @param outPath String that is the file path denoting where to save the
+     * resulting image.
+     * @throws Exception
+     */
+    public void drawClusters(String outPath) throws Exception {
+        File outImageFile = new File(outPath);
+        BufferedImage imageCopy = ImageUtil.copyImage(image);
+        Graphics2D graphics = imageCopy.createGraphics();
+        Random randa = new Random();
+        Color col;
+        for (int i = 0; i < visualObjectClusters.length; i++) {
+            col = new Color(randa.nextFloat(), randa.nextFloat(),
+                    randa.nextFloat());
+            graphics.setColor(col);
+            for (int j = 0; j < visualObjectClusters[i].size(); j++) {
+                LFeatVector v = new LFeatVector(
+                        visualObjectClusters[i].getInstance(j));
+                transformAndDrawLine(graphics, v, 0.f, 0.f, 1.f, 0.f);
+                transformAndDrawLine(graphics, v, 0.85f, 0.1f, 1.f, 0.f);
+                transformAndDrawLine(graphics, v, 0.85f, -0.1f, 1.f, 0.f);
+            }
+        }
+        ImageIO.write(imageCopy, "jpg", outImageFile);
+    }
+
+    /**
+     * Draws a line at a location specified by the X,Y coordinates in the
+     * feature vector.
+     *
+     * @param graphics Graphics2D object to draw the line on.
+     * @param v SIFTVector feature object.
+     * @param xFirst X coordinate of the first point.
+     * @param yFirst Y coordinate of the first point.
+     * @param xSecond X coordinate of the second point.
+     * @param ySecond Y coordinate of the second point.
+     */
+    private static void transformAndDrawLine(Graphics2D graphics, LFeatVector v,
+            float xFirst, float yFirst, float xSecond, float ySecond) {
+        float x = v.getX();
+        float y = v.getY();
+        float scale = v.getScale();
+        float angle = v.getAngle();
+        float len = 6f * scale;
+        float s = (float) Math.sin(angle);
+        float c = (float) Math.cos(angle);
+        int r1 = (int) (x + len * (c * xFirst - s * yFirst));
+        int c1 = (int) (y + len * (s * xFirst + c * yFirst));
+        int r2 = (int) (x + len * (c * xSecond - s * ySecond));
+        int c2 = (int) (y + len * (s * xSecond + c * ySecond));
+        graphics.drawLine(r1, c1, r2, c2);
+    }
+
+    /**
+     * Prints out the usage information.
+     */
+    public static void info() {
+        System.out.println("arg0: Input arff of clustered SIFT features.");
+        System.out.println("arg1: Input image.");
+        System.out.println("arg2: Output image.");
+    }
+
+    /**
+     * Reads in an arff file of clustered SIFT features and draws the
+     * corresponding cluster ellipses on an image and saves the resulting image.
+     *
+     * @param args Command line arguments, as specified in the info() method.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length != 3) {
+            info();
+            return;
+        }
+        drawCluster
