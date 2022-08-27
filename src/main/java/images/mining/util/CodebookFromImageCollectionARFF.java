@@ -104,4 +104,47 @@ public class CodebookFromImageCollectionARFF {
         // compatibility issues. One can simply provide one descriptor per line
         // and avoid the complications.
         int times = dset.getNumFloatAttr() / descLength;
-        features.data = new Array
+        features.data = new ArrayList<>(times * dset.size());
+        DataInstance tempInstance;
+        for (int i = 0; i < dset.size(); i++) {
+            for (int j = 0; j < times; j++) {
+                tempInstance = new DataInstance(features);
+                for (int k = 0; k < descLength; k++) {
+                    tempInstance.fAttr[k] =
+                            dset.data.get(i).fAttr[j * descLength + k];
+                }
+                features.addDataInstance(tempInstance);
+                tempInstance.embedInDataset(features);
+            }
+        }
+        // Take a sample prior to clustering.
+        UniformSampler sampler = new UniformSampler(false);
+        DataSet clusteringSample = sampler.getSample(features, sampleSize);
+        // Initialize the metric.
+        CombinedMetric cmet = CombinedMetric.FLOAT_MANHATTAN;
+        // Cluster the feature sample.
+        FastKMeans clusterer = new FastKMeans(clusteringSample,
+                cmet, codebookSize);
+        clusterer.cluster();
+        Cluster[] clusters = clusterer.getClusters();
+        // Obtain the codebook vectors.
+        DataInstance[] cbVectors = new DataInstance[codebookSize];
+        for (int i = 0; i < codebookSize; i++) {
+            cbVectors[i] = clusters[i].getMedoid();
+        }
+        // Print the codebook to a file.
+        try (PrintWriter pw = new PrintWriter(new FileWriter(outFile));) {
+            pw.println("codebook_size:" + codebookSize);
+            for (int i = 0; i < codebookSize; i++) {
+                pw.print(cbVectors[i].fAttr[0]);
+                for (int j = 1; j < descLength; j++) {
+                    pw.print("," + cbVectors[i].fAttr[j]);
+                }
+                pw.println();
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            throw e;
+        }
+    }
+}
