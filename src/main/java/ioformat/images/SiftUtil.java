@@ -261,3 +261,239 @@ public class SiftUtil {
         File inDirectory = new File(inPath);
         File outFile = new File(outPath);
         if (!(inDirectory.exists() && inDirectory.isDirectory())) {
+            throw new Exception("Bad input directory " + inPath);
+        }
+        FileUtil.createFile(outFile);
+        PrintWriter pw = new PrintWriter(new FileWriter(outFile, true), true);
+        generateARFFHeaderForSIFT(pw, descSize);
+        try {
+            siftDirectoryToArffStreamAppend(inPath, descSize, pw);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            pw.close();
+        }
+    }
+
+    /**
+     * Generates an ARFF header for a SIFT feature DataSet.
+     *
+     * @param pw PrintWriter that is the output stream.
+     * @param descSize Integer that is the SIFT descriptor size.
+     * @throws Exception
+     */
+    public static void generateARFFHeaderForSIFT(PrintWriter pw, int descSize)
+            throws Exception {
+        pw.println("@ATTRIBUTE image NOMINAL");
+        pw.println("@ATTRIBUTE y NUMERIC");
+        pw.println("@ATTRIBUTE x NUMERIC");
+        pw.println("@ATTRIBUTE scale NUMERIC");
+        pw.println("@ATTRIBUTE rotation NUMERIC");
+        for (int i = 1; i <= descSize; i++) {
+            pw.println("@ATTRIBUTE desc" + i + " NUMERIC");
+        }
+        pw.println();
+        pw.println("@DATA");
+    }
+
+    /**
+     * Recursively loads the data from a directory of SiftWin generated SIFT
+     * keyfiles into a stream in the data format for inclusion in the final
+     * combined ARFF file that would contain all of the SIFT data from all the
+     * files.
+     *
+     * @param inPath String that is the path to the input directory.
+     * @param descSize Integer that is the SIFT descriptor size.
+     * @param pw PrintWriter that is the current output stream.
+     * @throws Exception
+     */
+    public static void siftDirectoryToArffStreamAppend(String inPath,
+            int descSize, PrintWriter pw) throws Exception {
+        File inDir = new File(inPath);
+        if (inDir.exists() && inDir.isDirectory()) {
+            File[] children;
+            children = inDir.listFiles();
+            for (int i = 0; i < children.length; i++) {
+                if (children[i].isFile()) {
+                    if ((children[i].getName().substring(children[i].getName().
+                            length() - 3, children[i].getName().length())).
+                            equalsIgnoreCase("key")) {
+                        siftFileToArffStreamAppend(children[i].getPath(),
+                                descSize, pw);
+                    }
+                } else {
+                    siftDirectoryToArffStreamAppend(children[i].getPath(),
+                            descSize, pw);
+                }
+            }
+        } else {
+            throw new Exception("Bad folder path " + inDir.getPath());
+        }
+    }
+
+    /**
+     * Recursively loads the data from a single file of SiftWin generated SIFT
+     * keyfiles into a stream in the data format for inclusion in the final
+     * combined ARFF file that would contain all of the SIFT data from all the
+     * files.
+     *
+     * @param inFilePath String that is the path to the input file.
+     * @param descSize Integer that is the SIFT descriptor size.
+     * @param pw PrintWriter that is the current output stream.
+     * @throws Exception
+     */
+    public static void siftFileToArffStreamAppend(String inFilePath,
+            int descSize, PrintWriter pw) throws Exception {
+        File inFile = new File(inFilePath);
+        if (inFile.exists() && inFile.isFile()) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(inFile)));
+            String line;
+            try {
+                pw.println("%Title " + inFile.getName().substring(0,
+                        inFile.getName().length() - 4)
+                        + " image SIFT features");
+                line = br.readLine();
+                line = line.trim();
+                int sepIndex = line.indexOf(' ');
+                if (sepIndex == -1) {
+                    throw new Exception("Wrong file format for file "
+                            + inFile.getName());
+                }
+                String numFeatString = line.substring(0, sepIndex);
+                int numSIFT = Integer.parseInt(numFeatString);
+                for (int i = 0; i < numSIFT; i++) {
+                    line = br.readLine();
+                    line = line.trim();
+                    pw.print(inFile.getName().substring(0, inFile.getName().
+                            length() - 4) + ",");
+                    sepIndex = line.indexOf(' ');
+                    pw.print(line.substring(0, sepIndex));
+                    line = line.substring(sepIndex + 1, line.length());
+                    sepIndex = line.indexOf(' ');
+                    pw.print("," + line.substring(0, sepIndex));
+                    line = line.substring(sepIndex + 1, line.length());
+                    sepIndex = line.indexOf(' ');
+                    pw.print("," + line.substring(0, sepIndex));
+                    pw.print("," + line.substring(sepIndex + 1, line.length()));
+                    line = null;
+                    for (int j = 0; j < descSize; j++) {
+                        if (line == null) {
+                            line = br.readLine();
+                            line = line.trim();
+                        }
+                        sepIndex = line.indexOf(' ');
+                        if (sepIndex != -1) {
+                            pw.print("," + line.substring(0, sepIndex));
+                            line = line.substring(sepIndex + 1, line.length());
+                        } else {
+                            pw.print("," + line);
+                            line = null;
+                        }
+                    }
+                    pw.println();
+                }
+            } catch (Exception e) {
+                throw e;
+            } finally {
+                br.close();
+            }
+        } else {
+            throw new Exception("SIFT key file " + inFile.getPath()
+                    + " does not exist");
+        }
+    }
+
+    /**
+     * Extracts SIFT features from a directory of image files.
+     *
+     * @param inputDirectory Input directory.
+     * @param displayDirectory File that is the directory to be used for PGM
+     * images that have to be generated as a step in the process.
+     * @param resultDirectory Directory where to store the extracted featues.
+     * @throws Exception
+     */
+    public static void siftDirectory(File inputDirectory,
+            File displayDirectory, File resultDirectory) throws Exception {
+        File[] children = inputDirectory.listFiles();
+        File displayDirNew;
+        File resultDirNew;
+        if (children != null) {
+            for (int i = 0; i < children.length; i++) {
+                if (children[i].isFile()) {
+                    siftFile(children[i], new File(
+                            resultDirectory.getPath() + File.separator
+                            + children[i].getName().substring(0,
+                            children[i].getName().length() - 3) + "key"), "");
+                    siftFile(children[i], new File(displayDirectory.getPath()
+                            + File.separator + children[i].getName().
+                            substring(0, children[i].getName().length() - 3)
+                            + "pgm"), " -display");
+                } else {
+                    displayDirNew = new File(displayDirectory,
+                            children[i].getName());
+                    if (!(displayDirNew.exists())) {
+                        displayDirNew.mkdir();
+                    }
+                    resultDirNew = new File(resultDirectory,
+                            children[i].getName());
+                    if (!(resultDirNew.exists())) {
+                        resultDirNew.mkdir();
+                    }
+                    siftDirectory(children[i], displayDirNew, resultDirNew);
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     * @param inputDirectoryPath Path to the input directory.
+     * @param displayDirectoryPath Path for storing the generated PGM files.
+     * @param resultDirectoryPath Path for storing the SIFT features.
+     * @throws Exception
+     */
+    static void sift(String inputDirectoryPath, String displayDirectoryPath,
+            String resultDirectoryPath) throws Exception {
+        siftDirectory(new File(inputDirectoryPath),
+                new File(displayDirectoryPath), new File(resultDirectoryPath));
+    }
+
+    /**
+     * This method calls the SiftWin binary and extracts the SIFT features.
+     *
+     * @param inputPath Path to the input image files.
+     * @param outputPath Path to the output extracted feature file.
+     * @param paramString String holding the additional parameters.
+     * @throws Exception
+     */
+    static void callSIFT(String inputPath, String outputPath,
+            String paramString) throws Exception {
+        String cline = "cmd /c siftWin32" + paramString + " <"
+                + inputPath + " >" + outputPath;
+        Runtime rt = Runtime.getRuntime();
+        Process proc = rt.exec(cline, null, null);
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(proc.getInputStream()))) {
+            proc.getErrorStream().close();
+            int exitVal = proc.waitFor();
+            proc.destroy();
+            String s = br.readLine();
+        }
+    }
+
+    /**
+     * This method extracts the SIFT features from a file.
+     *
+     * @param inputFile Input image file.
+     * @param outputFile Output file for the features.
+     * @param paramsString String holding additional command line parameters for
+     * SiftWin.
+     * @throws Exception
+     */
+    public static void siftFile(File inputFile, File outputFile,
+            String paramsString) throws Exception {
+        callSIFT(inputFile.getAbsolutePath(), outputFile.getAbsolutePath(),
+                paramsString);
+    }
+}
