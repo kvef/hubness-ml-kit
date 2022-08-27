@@ -43,4 +43,29 @@ public class JPEGToJPGRenamer {
                     convertDir(children[i]);
                 } else {
                     if (children[i].getPath().endsWith(".JPEG")
-                          
+                            || children[i].getPath().endsWith(".jpeg")) {
+                        index = children[i].getPath().lastIndexOf('.');
+                        newName = children[i].getPath().substring(0, index)
+                                + ".jpg";
+                        children[i].renameTo(new File(newName));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Perform the jpeg to jpg renaming.
+     *
+     * @param args One command line argument - the target directory path.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            System.out.println("directory where jpeg files will be renamed to "
+                    + "jpg files recursively");
+        } else {
+            convertDir(new File(args[0]));
+        }
+    }
+}
