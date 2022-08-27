@@ -611,3 +611,289 @@ public class IOARFFDiscretized {
                             floatIntervalDivisions[floatIndex] =
                                     new float[Integer.parseInt(line)];
                         } else if (line.startsWith("%@VOCABULARY_SIZE ")) {
+                            line = line.substring(18, line.length());
+                            line = line.trim();
+                            ++nominalIndex;
+                            initialVocabularySize = Integer.parseInt(line);
+                            nominalHashes[nominalIndex] = new HashMap<>(
+                                    2 * initialVocabularySize);
+                            nominalVocabularies[nominalIndex] =
+                                    new ArrayList<>(initialVocabularySize);
+                        } else if (line.startsWith("%@INT_SP_ARRAY ")) {
+                            line = line.substring(15, line.length());
+                            line = line.trim();
+                            lineItems = line.split(" ");
+                            for (int i = 0; i < lineItems.length; i++) {
+                                intIntervalDivisions[intIndex][i] =
+                                        Integer.parseInt(lineItems[i]);
+                            }
+                        } else if (line.startsWith("%@FLOAT_SP_ARRAY ")) {
+                            line = line.substring(17, line.length());
+                            line = line.trim();
+                            lineItems = line.split(" ");
+                            for (int i = 0; i < lineItems.length; i++) {
+                                floatIntervalDivisions[floatIndex][i] =
+                                        Float.parseFloat(lineItems[i]);
+                            }
+                        } else if (line.startsWith("%@VOCABULARY ")) {
+                            line = line.substring(13, line.length());
+                            line = line.trim();
+                            lineItems = line.split(" ");
+                            for (int i = 0; i < lineItems.length; i++) {
+                                nominalVocabularies[nominalIndex].add(
+                                        lineItems[i]);
+                                nominalHashes[nominalIndex].put(lineItems[i],
+                                        new Integer(i));
+                            }
+                        } else {
+                        }
+                    } else {
+                        // The assumption is that first all the integer
+                        // discretizations are given, then the float
+                        // discretizations and then the nominal discretizations.
+                        if (line.startsWith("@RELATION")) {
+                            // Do nothing (might be changed to read in a
+                            // separate relation name).
+                        } else if (line.startsWith("@ATTRIBUTE")) {
+                            // All the definition data is loaded from the
+                            // comments above, so there is no need to go though
+                            // this formal definition here again.
+                        } else if (line.startsWith("@DATA")) {
+                            dataMode = true;
+                            if (result.data == null) {
+                                result.data = new ArrayList<>(1000);
+                            }
+                        }
+                    }
+                }
+                line = newLine(br);
+            }
+            result.setIntIntervalDivisions(intIntervalDivisions);
+            result.setFloatIntervalDivisions(floatIntervalDivisions);
+            result.setNominalHashes(nominalHashes);
+            result.setNominalVocabularies(nominalVocabularies);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            throw e;
+        }
+        return result;
+    }
+
+    /**
+     * Reads a new line from the stream while ignoring ARFF comments.
+     *
+     * @param br BufferedReader input stream.
+     * @return String that is the next line in the file, ignoring ARFF comments.
+     * @throws Exception
+     */
+    private String newLine(BufferedReader br) throws Exception {
+        String line = br.readLine();
+        while (line != null && line.startsWith("%") && !line.startsWith("%@")) {
+            line = br.readLine();
+        }
+        return line;
+    }
+
+    /**
+     * Loads the discretized dataset from a file. This method ignores the
+     * labels.
+     *
+     * @param inFile File that contains the target data.
+     * @param nonDiscreteData DataSet the contains the non-discrete data that
+     * this data is based upon.
+     * @return DiscretizedDataSet object that is loaded from the file.
+     * @throws Exception
+     */
+    public DiscretizedDataSet loadLabeled(File inFile,
+            DataSet nonDiscreteData) throws Exception {
+        DiscretizedDataSet result = new DiscretizedDataSet(nonDiscreteData);
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                     new FileInputStream(inFile)))) {
+            // This flag is set when the read enters the part of the file where
+            // the values are.
+            boolean dataMode = false;
+            // Variables that hold the number of discretized int, float and
+            // nominal features.
+            int intSize = 0;
+            int floatSize = 0;
+            int nominalSize = 0;
+            int intIndex = -1;
+            int floatIndex = -1;
+            int nominalIndex = -1;
+            String[] lineItems;
+            String line = newLine(br);
+            String token;
+            int dataIndex = -1;
+            int initialVocabularySize;
+            HashMap<String, Integer> classNameToIndexMap = new HashMap<>(100);
+            int maxClassIndex = -1;
+
+            HashMap[] nominalHashes = null;
+            ArrayList<String>[] nominalVocabularies = null;
+            // By convention, they define [) intervals and are supposed to be
+            // ordered.
+            int[][] intIntervalDivisions = null;
+            float[][] floatIntervalDivisions = null;
+
+            while (line != null) {
+                if (dataMode) {
+                    if (!line.startsWith("%")) {
+                        ++dataIndex;
+                        DiscretizedDataInstance instance =
+                                new DiscretizedDataInstance(result, true);
+                        lineItems = line.split(",");
+                        for (int i = 0; i < lineItems.length; i++) {
+                            token = lineItems[i].trim();
+                            if (i < intSize) {
+                                instance.integerIndexes[i] =
+                                        Integer.parseInt(token);
+                            } else if (i < intSize + floatSize) {
+                                // It is a float discretizer.
+                                instance.floatIndexes[i - intSize] =
+                                        Integer.parseInt(token);
+                            } else if (i < intSize + floatSize + nominalSize) {
+                                // It is a nominal discretizer.
+                                instance.nominalIndexes[i - intSize -
+                                        floatSize] = Integer.parseInt(token);
+                            } else {
+                                // Class information is at the end.
+                                if (!classNameToIndexMap.containsKey(token)) {
+                                    ++maxClassIndex;
+                                    classNameToIndexMap.put(token,
+                                            maxClassIndex);
+                                }
+                                instance.setCategory(classNameToIndexMap.get(
+                                        token));
+                            }
+                        }
+                        instance.setOriginalInstance(result.
+                                getOriginalData().data.get(dataIndex));
+                        result.data.add(instance);
+                    }
+                } else {
+                    // Because of how newLine(BufferedReader br) works, this is
+                    // not a comment line - either data definition or basically
+                    // the beginning of the data part.
+                    if (line.startsWith("%")) {
+                        if (line.startsWith("%@COLLECTION")) {
+                            line = line.substring(12, line.length());
+                            line = line.trim();
+                            // If no corresponding non-discrete data was
+                            // provided, try to loaded it from this path.
+                            if (nonDiscreteData == null) {
+                                try {
+                                    IOARFF persister = new IOARFF();
+                                    result.setOriginalData(
+                                            persister.load(line));
+                                    result.data = new ArrayList<>(
+                                            result.getOriginalData().size());
+                                } catch (Exception e) {
+                                }
+                            }
+                        } else if (line.startsWith("%@INT_ATTRIBUTE_NUMBER ")) {
+                            line = line.substring(23, line.length());
+                            line = line.trim();
+                            intSize = Integer.parseInt(line);
+                            if (intSize > 0) {
+                                intIntervalDivisions = new int[intSize][];
+                            }
+                            result.setIntIntervalDivisions(
+                                    intIntervalDivisions);
+                        } else if (line.startsWith(
+                                "%@FLOAT_ATTRIBUTE_NUMBER ")) {
+                            line = line.substring(25, line.length());
+                            line = line.trim();
+                            floatSize = Integer.parseInt(line);
+                            if (floatSize > 0) {
+                                floatIntervalDivisions = new float[floatSize][];
+                            }
+                            result.setFloatIntervalDivisions(
+                                    floatIntervalDivisions);
+                        } else if (line.startsWith(
+                                "%@NOMINAL_ATTRIBUTE_NUMBER ")) {
+                            line = line.substring(27, line.length());
+                            line = line.trim();
+                            nominalSize = Integer.parseInt(line);
+                            if (nominalSize > 0) {
+                                nominalHashes = new HashMap[nominalSize];
+                                nominalVocabularies =
+                                        new ArrayList[nominalSize];
+                            }
+                            result.setNominalHashes(nominalHashes);
+                            result.setNominalVocabularies(nominalVocabularies);
+                        } else if (line.startsWith("%@INT_SP_NUMBER ")) {
+                            line = line.substring(16, line.length());
+                            line = line.trim();
+                            ++intIndex;
+                            intIntervalDivisions[intIndex] =
+                                    new int[Integer.parseInt(line)];
+                        } else if (line.startsWith("%@FLOAT_SP_NUMBER ")) {
+                            line = line.substring(18, line.length());
+                            line = line.trim();
+                            ++floatIndex;
+                            floatIntervalDivisions[floatIndex] =
+                                    new float[Integer.parseInt(line)];
+                        } else if (line.startsWith("%@VOCABULARY_SIZE ")) {
+                            line = line.substring(18, line.length());
+                            line = line.trim();
+                            ++nominalIndex;
+                            initialVocabularySize = Integer.parseInt(line);
+                            nominalHashes[nominalIndex] =
+                                    new HashMap<>(2 * initialVocabularySize);
+                            nominalVocabularies[nominalIndex] =
+                                    new ArrayList<>(initialVocabularySize);
+                        } else if (line.startsWith("%@INT_SP_ARRAY ")) {
+                            line = line.substring(15, line.length());
+                            line = line.trim();
+                            lineItems = line.split(" ");
+                            for (int i = 0; i < lineItems.length; i++) {
+                                intIntervalDivisions[intIndex][i] =
+                                        Integer.parseInt(lineItems[i]);
+                            }
+                        } else if (line.startsWith("%@FLOAT_SP_ARRAY ")) {
+                            line = line.substring(17, line.length());
+                            line = line.trim();
+                            lineItems = line.split(" ");
+                            for (int i = 0; i < lineItems.length; i++) {
+                                floatIntervalDivisions[floatIndex][i] =
+                                        Float.parseFloat(lineItems[i]);
+                            }
+                        } else if (line.startsWith("%@VOCABULARY ")) {
+                            line = line.substring(13, line.length());
+                            line = line.trim();
+                            lineItems = line.split(" ");
+                            for (int i = 0; i < lineItems.length; i++) {
+                                nominalVocabularies[nominalIndex].add(
+                                        lineItems[i]);
+                                nominalHashes[nominalIndex].put(lineItems[i],
+                                        new Integer(i));
+                            }
+                        } else {
+                        }
+                    } else {
+                        // The assumption is that first all the integer
+                        // discretizations are given, then the float
+                        // discretizations and then the nominal discretizations.
+                        if (line.startsWith("@RELATION")) {
+                            // Do nothing (might be changed to read in a
+                            // separate relation name).
+                        } else if (line.startsWith("@ATTRIBUTE")) {
+                            // All the definition data is loaded from the
+                            // comments above, so there is no need to go though
+                            // this formal definition here again.
+                        } else if (line.startsWith("@DATA")) {
+                            dataMode = true;
+                            if (result.data == null) {
+                                result.data = new ArrayList<>(1000);
+                            }
+                        }
+                    }
+                }
+                line = newLine(br);
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return result;
+    }
+}
