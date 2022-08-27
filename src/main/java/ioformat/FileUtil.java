@@ -106,4 +106,53 @@ public class FileUtil {
 
     /**
      * Creates the target directory, regardless of whether its parent
-     * director
+     * directories exist. It creates them if they don't.
+     *
+     * @param targetDir File that is the target directory to create.
+     * @throws IOException
+     */
+    public static void createDirectory(File targetDir) throws IOException {
+        if (!targetDir.exists()) {
+            Stack parents = new Stack();
+            File targetParent = targetDir.getParentFile();
+            while (targetParent != null) {
+                parents.push(targetParent);
+                targetParent = targetParent.getParentFile();
+            }
+            while (!parents.empty()) {
+                targetParent = (File) parents.pop();
+                if (!targetParent.exists()) {
+                    targetParent.mkdir();
+                }
+            }
+            targetDir.mkdir();
+        } else {
+            targetDir.delete();
+            targetDir.mkdir();
+        }
+    }
+
+    /**
+     * Fetch file names recursively and print them to a stream.
+     *
+     * @param dirPath Directory to fetch the names from.
+     * @param pw PrintWriter that is the stream to write the names to.
+     * @throws Exception
+     */
+    public static void fetchFileNamesRecursively(String dirPath, PrintWriter pw)
+            throws Exception {
+        File dir = new File(dirPath);
+        if (dir.exists() && dir.isDirectory()) {
+            File[] children = dir.listFiles();
+            if (children != null) {
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i].isFile()) {
+                        pw.println(children[i].getName());
+                    } else {
+                        fetchFileNamesRecursively(children[i].getPath(), pw);
+                    }
+                }
+            }
+        }
+    }
+}
