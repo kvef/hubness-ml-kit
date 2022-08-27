@@ -154,3 +154,4 @@ public class DistanceMatrixIO {
         }
         return dMatLoaded;
     }
+}
