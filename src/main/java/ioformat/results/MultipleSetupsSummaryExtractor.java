@@ -137,3 +137,85 @@ public class MultipleSetupsSummaryExtractor {
                             + "totalSummary.txt").getPath());
                 } finally {
                     if (br != null) {
+                        br.close();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * This method reads the experiment configuration from a prepared
+     * configuration file that should be provided with the following bullets for
+     * all the algorithms, datasets and setups: "
+     *
+     * @algorithm alg_name",
+     * "
+     * @ds_name ds_name", "
+     * @setup setup_path", where the last bullet contains the path to a folder
+     * representing a setup which contains all the data subdirectories with the
+     * results. Multiple setups can be defined and this is the point of this
+     * script.
+     * @param configFile File that contains the experimental configuration.
+     */
+    public void readConfig(File configFile) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(configFile)));
+        String line = br.readLine();
+        String[] pair;
+        algHash = new HashMap<>(200, 20);
+        datasetHash = new HashMap<>(200, 200);
+        algNames = new ArrayList<>(50);
+        dsNames = new ArrayList<>(100);
+        experimentalSetupPaths = new ArrayList<>(50);
+        try {
+            while (line != null) {
+                line = line.trim();
+                if (line.startsWith("@algorithm")) {
+                    pair = line.split(" ");
+                    String algName = pair[1].trim();
+                    algHash.put(algName, algNames.size());
+                    algNames.add(algName);
+                } else if (line.startsWith("@ds_name")) {
+                    pair = line.split(" ");
+                    String dsName = pair[1].trim();
+                    datasetHash.put(dsName, dsNames.size());
+                    dsNames.add(dsName);
+                } else if (line.startsWith("@setup_path")) {
+                    pair = line.split(" ");
+                    String settingPath = pair[1].trim();
+                    experimentalSetupPaths.add(settingPath);
+                }
+                line = br.readLine();
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            br.close();
+        }
+    }
+
+    /**
+     * This script extracts the result summaries from multiple experimental
+     * setups.
+     *
+     * @param args Command line parameters, as specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-config", "Path to the configuration file.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-outDir", "Path to the output directory.",
+                CommandLineParser.STRING, true, false);
+        clp.parseLine(args);
+        File configFile = new File((String) clp.getParamValues("-config").
+                get(0));
+        File outDir = new File((String) clp.getParamValues("-outDir").get(0));
+        MultipleSetupsSummaryExtractor extractor =
+                new MultipleSetupsSummaryExtractor();
+        extractor.readConfig(configFile);
+        extractor.getAllAccuracies();
+        extractor.writeSummaries(outDir);
+    }
+}
