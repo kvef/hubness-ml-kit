@@ -82,3 +82,94 @@ public class InstanceSelectionLatexTableSummarizer {
         this.outputFile = outputFile;
     }
 
+    /**
+     * Just a handle to quickly obtain the reader.
+     *
+     * @param inFile File that is to be read.
+     * @return Reader for the specified file.
+     * @throws Exception
+     */
+    private static BufferedReader getReader(File inFile) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(inFile)));
+        return br;
+    }
+
+    /**
+     * Parse all the configuration and specification files, in order to extract
+     * selection method, dataset and classifier names.
+     *
+     * @throws Exception
+     */
+    private void parseSpecifications() throws Exception {
+        BufferedReader br = null;
+        try {
+            br = getReader(selectionMethodsFile);
+            selectionMethods = br.readLine().split(",");
+            for (int sIndex = 0; sIndex < selectionMethods.length; sIndex++) {
+                selectionMethods[sIndex] = selectionMethods[sIndex].trim();
+            }
+            System.out.println(selectionMethods.length
+                    + " selection methods: ");
+            for (String s : selectionMethods) {
+                System.out.print(s + " ");
+            }
+            System.out.println();
+            br.close();
+            br = getReader(datasetListFile);
+            datasetList = br.readLine().split(",");
+            for (int dIndex = 0; dIndex < datasetList.length; dIndex++) {
+                datasetList[dIndex] = datasetList[dIndex].trim();
+            }
+            System.out.println(datasetList.length + " datasets: ");
+            for (String s : datasetList) {
+                System.out.print(s + " ");
+            }
+            System.out.println();
+            br.close();
+            br = getReader(classifierFile);
+            classifiers = br.readLine().split(",");
+            for (int cIndex = 0; cIndex < classifiers.length; cIndex++) {
+                classifiers[cIndex] = classifiers[cIndex].trim();
+            }
+            System.out.println(classifiers.length + " classifiers: ");
+            for (String s : classifiers) {
+                System.out.print(s + " ");
+            }
+            System.out.println();
+            br.close();
+            accTableBiased = new float[classifiers.length][datasetList.length][
+                    selectionMethods.length];
+            accTableUnbiased = new float[classifiers.length][
+                    datasetList.length][selectionMethods.length];
+            boldUnbiased = new boolean[classifiers.length][datasetList.length][
+                    selectionMethods.length];
+            stDevTableBiased = new float[classifiers.length][
+                    datasetList.length][selectionMethods.length];
+            stDevTableUnbiased = new float[classifiers.length][
+                    datasetList.length][selectionMethods.length];
+            avgAccBiased = new float[classifiers.length][
+                    selectionMethods.length];
+            avgAccUnbiased = new float[classifiers.length][
+                    selectionMethods.length];
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (br != null) {
+                br.close();
+            }
+        }
+    }
+
+    /**
+     * Fetches the experiment values for the biased and non-biased case.
+     *
+     * @throws Exception
+     */
+    private void getValues() throws Exception {
+        File[] selMetDirs = parentDir.listFiles();
+        for (int i = 0; i < selectionMethods.length; i++) {
+            String method = selectionMethods[i];
+            // Directories for the biased and non-biased case end in different
+            // ways and this is used here. This is idiosyncratic to how the
+            // experimen
