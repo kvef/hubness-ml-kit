@@ -247,4 +247,88 @@ public class InstanceSelectionLatexTableSummarizer {
                                 line = br.readLine();
                             }
                             if (line != null) {
-                                line =
+                                line = br.readLine();
+                            }
+                            // This is not null due to the way the result files
+                            // are set up.
+                            if (line == null) {
+                                throw new Exception("Bad result file format.");
+                            }
+                            lineItems = line.split(",");
+                            stDevTable[methodIndex][dataIndex][selMetIndex] =
+                                    Float.parseFloat(lineItems[0]);
+                        } catch (Exception e) {
+                            System.err.println(e.getMessage());
+                            throw e;
+                        } finally {
+                            if (br != null) {
+                                br.close();
+                            }
+                        }
+                    }
+                    avgAcc[methodIndex][selMetIndex] +=
+                            (accTable[methodIndex][dataIndex][selMetIndex]
+                            / (float) (datasetList.length));
+                }
+            }
+        }
+    }
+
+    /**
+     * This method compares the biased and non-biased accuracy tables and
+     * determines what is to be shown in bold in the LaTeX table.
+     */
+    private void compareTables() {
+        for (int i = 0; i < classifiers.length; i++) {
+            for (int j = 0; j < datasetList.length; j++) {
+                for (int p = 0; p < selectionMethods.length; p++) {
+                    if (accTableBiased[i][j][p] < accTableUnbiased[i][j][p]) {
+                        boldUnbiased[i][j][p] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * This method prints the tables themselves.
+     *
+     * @throws Exception
+     */
+    private void outputSummaries() throws Exception {
+        FileUtil.createFile(outputFile);
+        PrintWriter pw = new PrintWriter(new FileWriter(outputFile));
+        try {
+            for (int cIndex = 0; cIndex < classifiers.length; cIndex++) {
+                pw.println();
+                pw.println("---------------------------------------");
+                pw.println(classifiers[cIndex]);
+                pw.println("BIASED");
+                pw.println("---------------------------------------");
+                pw.println();
+                pw.print("Data set & \\multicolumn{3}{c}{None}");
+                for (int sIndex = 0; sIndex < selectionMethods.length;
+                        sIndex++) {
+                    pw.print(" & \\multicolumn{4}{c}{");
+                    pw.print(selectionMethods[sIndex]);
+                    pw.println("}");
+                }
+                for (int dIndex = 0; dIndex < datasetList.length; dIndex++) {
+                    // The first place is for the none selection entry which is
+                    // manually inserted later.
+                    pw.print(datasetList[dIndex] + " & & $\\pm$ & & ");
+                    for (int sIndex = 0; sIndex < selectionMethods.length;
+                            sIndex++) {
+                        if (DataMineConstants.isNonZero(accTableBiased[
+                                cIndex][dIndex][sIndex])) {
+                            int num = (int) (accTableBiased[cIndex][dIndex][
+                                    sIndex] * 1000);
+                            int decim = num % 10;
+                            num = num / 10;
+                            int ones = num % 10;
+                            num = num / 10;
+                            int tens = num % 10;
+                            if (tens > 0) {
+                                pw.print(Integer.toString(tens)
+                                        + Integer.toString(ones) + "."
+                              
