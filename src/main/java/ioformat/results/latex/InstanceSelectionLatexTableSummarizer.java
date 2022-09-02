@@ -172,4 +172,79 @@ public class InstanceSelectionLatexTableSummarizer {
             String method = selectionMethods[i];
             // Directories for the biased and non-biased case end in different
             // ways and this is used here. This is idiosyncratic to how the
-            // experimen
+            // experiments were performed and would not hold in the general 
+            // case.
+            for (File f : selMetDirs) {
+                if (f.getName().toLowerCase().startsWith(method.toLowerCase())
+                        && f.getName().toLowerCase().endsWith("red")) {
+                    getValues(i, f, accTableBiased, stDevTableBiased,
+                            avgAccBiased);
+                }
+                if (f.getName().toLowerCase().startsWith(method.toLowerCase())
+                        && f.getName().toLowerCase().endsWith("all")) {
+                    getValues(i, f, accTableUnbiased, stDevTableUnbiased,
+                            avgAccUnbiased);
+                }
+            }
+        }
+    }
+
+    /**
+     * Fetches the values from a directory of results into the specified result
+     * tables for a particular selection method.
+     *
+     * @param selMetIndex Index of the selection method that is currently being
+     * traversed.
+     * @param resultDirectory Directory of the results.
+     * @param accTable float[][][] that is the accuracy table to use for storing
+     * the parsed values.
+     * @param stDevTable float[][][] that is the target table of accuracy
+     * standard deviations.
+     * @param avgAcc float[][] that is the target table of average accuracies.
+     * @throws Exception
+     */
+    private void getValues(int selMetIndex, File resultDirectory,
+            float[][][] accTable, float[][][] stDevTable, float[][] avgAcc)
+            throws Exception {
+        if (!resultDirectory.getName().toLowerCase().contains("test")
+                && resultDirectory.listFiles() != null
+                && resultDirectory.listFiles().length > 0) {
+            File[] tsDirs = resultDirectory.listFiles();
+            for (File f : tsDirs) {
+                if (f.getName().toLowerCase().
+                        contains("test")) {
+                    getValues(selMetIndex, f, accTable, stDevTable, avgAcc);
+                    break;
+                }
+            }
+        } else {
+            // Now we are in the test result directory for a given selection
+            // method.
+            for (int dataIndex = 0; dataIndex < datasetList.length;
+                    dataIndex++) {
+                String dName = datasetList[dataIndex];
+                for (int methodIndex = 0; methodIndex < classifiers.length;
+                        methodIndex++) {
+                    String cName = classifiers[methodIndex];
+                    File resFile = new File(resultDirectory, dName
+                            + File.separator + "k" + k + File.separator
+                            + "ml0.0" + File.separator + "noise0.0"
+                            + File.separator + cName + File.separator
+                            + "avg.txt");
+                    if (resFile.exists()) {
+                        BufferedReader br = getReader(resFile);
+                        String line;
+                        String[] lineItems;
+                        try {
+                            line = br.readLine(); // The header.
+                            line = br.readLine(); // The values.
+                            lineItems = line.split(",");
+                            accTable[methodIndex][dataIndex][selMetIndex] =
+                                    Float.parseFloat(lineItems[0]);
+                            line = br.readLine();
+                            while (line != null && !line.startsWith(
+                                    "accuracyStDev")) {
+                                line = br.readLine();
+                            }
+                            if (line != null) {
+                                line =
