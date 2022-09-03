@@ -477,4 +477,83 @@ public class InstanceSelectionLatexTableSummarizer {
                 for (int sIndex = 0; sIndex < selectionMethods.length;
                         sIndex++) {
                     if (avgAccUnbiased[cIndex][sIndex] > avgAccBiased[cIndex][
-                       
+                            sIndex]) {
+                        pw.print("\\textbf{");
+                    }
+
+                    int num = (int) (avgAccUnbiased[cIndex][sIndex] * 1000);
+                    int decim = num % 10;
+                    num = num / 10;
+                    int ones = num % 10;
+                    num = num / 10;
+                    int tens = num % 10;
+                    if (tens > 0) {
+                        pw.print(Integer.toString(tens)
+                                + Integer.toString(ones) + "."
+                                + Integer.toString(decim));
+                    } else {
+                        pw.print(Integer.toString(ones) + "."
+                                + Integer.toString(decim));
+                    }
+                    if (avgAccUnbiased[cIndex][sIndex] > avgAccBiased[cIndex][
+                            sIndex]) {
+                        pw.print("}");
+                    }
+                    if (sIndex < selectionMethods.length - 1) {
+                        pw.print("& & & &");
+                    } else {
+                        pw.print("& & &");
+                    }
+                }
+                pw.println("\\\\");
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            pw.close();
+        }
+    }
+
+    /**
+     * This script creates a LaTeX table based on instance selection experiment
+     * results.
+     *
+     * @param args Command line parameters, as specified.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        CommandLineParser clp = new CommandLineParser(true);
+        clp.addParam("-parentDir", "Parent directory for the experiments.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-selMethods", "File containing a list of comma-separated"
+                + "instance selection methods in one line, that will define"
+                + "the order in which they will appear in the table.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-datasetList", "File containing a list of comma-separated"
+                + "datasets in one line, that will define the order in which "
+                + "they will appear in the table.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-classifiers", "File containing a list of comma-separated"
+                + " classification methods in one line, that will define the "
+                + "order in which they will appear.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-outFile", "Output file.",
+                CommandLineParser.STRING, true, false);
+        clp.addParam("-k", "Neighborhood size.",
+                CommandLineParser.INTEGER, true, false);
+        clp.parseLine(args);
+        File parentDir = new File((String) clp.getParamValues("-parentDir").
+                get(0));
+        File selMethodsFile = new File((String) clp.getParamValues(
+                "-selMethods").get(0));
+        File classificationMethodsFile = new File((String) clp.getParamValues(
+                "-classifiers").get(0));
+        File datasetsFile = new File((String) clp.getParamValues(
+                "-datasetList").get(0));
+        File outFile = new File((String) clp.getParamValues("-outFile").get(0));
+        int k = (Integer) clp.getParamValues("-k").get(0);
+        InstanceSelectionLatexTableSummarizer summarizer =
+                new InstanceSelectionLatexTableSummarizer(parentDir,
+                selMethodsFile,
+                datasetsFile, classificationMethodsFile, k, outFile);
+        summarizer.parseSpecificat
