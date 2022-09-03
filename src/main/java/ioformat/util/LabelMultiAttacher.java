@@ -76,4 +76,16 @@ public class LabelMultiAttacher {
                         labelOption]));
             }
             // Generate the file for the current labeling.
-            IOARFF persiste
+            IOARFF persister = new IOARFF();
+            if (isSparse) {
+                persister.saveSparseLabeled((BOWDataSet) dset,
+                        (new File(outDir, dsetName + "l" + labelOption
+                        + ".arff")).getPath());
+            } else {
+                persister.saveLabeledWithIdentifiers(dset,
+                        (new File(outDir, dsetName + "l" + labelOption
+                        + ".arff")).getPath(), null);
+            }
+        }
+    }
+}
