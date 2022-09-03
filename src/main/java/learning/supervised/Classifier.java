@@ -164,4 +164,123 @@ public abstract class Classifier implements ValidateableInterface,
     }
 
     /**
- 
+     * @return Category[] representing the training data.
+     */
+    public Category[] getClasses() {
+        return trainingClasses;
+    }
+
+    /**
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public void setCombinedMetric(CombinedMetric cmet) {
+        this.cmet = cmet;
+    }
+
+    /**
+     * @return CombinedMetric object for distance calculations.
+     */
+    public CombinedMetric getCombinedMetric() {
+        return cmet;
+    }
+
+    /**
+     * This method runs the classifier training.
+     */
+    public void run() {
+        try {
+            train();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    @Override
+    public abstract void train() throws Exception;
+
+    @Override
+    public void trainOnReducedData(InstanceSelector reducer) throws Exception {
+        train();
+    }
+
+    public abstract int classify(DataInstance instance) throws Exception;
+
+    public abstract float[] classifyProbabilistically(DataInstance instance)
+            throws Exception;
+
+    /**
+     * This method performs batch classification of an array of DataInstance
+     * objects.
+     *
+     * @param instances DataInstance[] array to classify.
+     * @return int[] that are the resulting predicted class affiliations.
+     * @throws Exception
+     */
+    public int[] classify(DataInstance[] instances) throws Exception {
+        int[] classificationResults;
+        if ((instances == null) || (instances.length == 0)) {
+            return null;
+        } else {
+            classificationResults = new int[instances.length];
+            for (int i = 0; i < instances.length; i++) {
+                classificationResults[i] = classify(instances[i]);
+            }
+            return classificationResults;
+        }
+    }
+
+    /**
+     * This method performs batch classification of an array of DataInstance
+     * objects.
+     *
+     * @param instances DataInstance[] array to classify.
+     * @return float[][] that are the resulting predicted probabilistic class
+     * assignments.
+     * @throws Exception
+     */
+    public float[][] classifyProbabilistically(DataInstance[] instances)
+            throws Exception {
+        float[][] classificationResults;
+        if ((instances == null) || (instances.length == 0)) {
+            return null;
+        } else {
+            classificationResults = new float[instances.length][];
+            for (int i = 0; i < instances.length; i++) {
+                classificationResults[i] = classifyProbabilistically(
+                        instances[i]);
+            }
+            return classificationResults;
+        }
+    }
+
+    /**
+     * This method performs batch classification of a list of DataInstance
+     * objects.
+     *
+     * @param instances ArrayList<DataInstance> to classify.
+     * @return int[] that are the resulting predicted class affiliations.
+     * @throws Exception
+     */
+    public int[] classify(ArrayList<DataInstance> instances) throws Exception {
+        int[] classificationResults;
+        if ((instances == null) || (instances.isEmpty())) {
+            return null;
+        } else {
+            classificationResults = new int[instances.size()];
+            for (int i = 0; i < instances.size(); i++) {
+                classificationResults[i] = classify(instances.get(i));
+            }
+            return classificationResults;
+        }
+    }
+
+    /**
+     * This method performs batch classification of a list of DataInstance
+     * objects.
+     *
+     * @param instances ArrayList<DataInstance> to classify.
+     * @return float[][] that are the resulting predicted probabilistic class
+     * assignments.
+     * @throws Exception
+     */
+    publ
