@@ -67,4 +67,9 @@ public class IOSparseMatrix {
         File inFile = new File((String) clp.getParamValues(
                 "-inFile").get(0));
         File outFile = new File((String) clp.getParamValues("-outFile").get(0));
-        int docOffset = (Integer)
+        int docOffset = (Integer) clp.getParamValues("-docOffset").get(0);
+        int featureOffset = (Integer) clp.getParamValues("-featureOffset").
+                get(0);
+        transformSparseFormats(inFile, outFile, docOffset, featureOffset);
+    }
+}
