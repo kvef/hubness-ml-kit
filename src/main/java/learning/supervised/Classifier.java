@@ -71,4 +71,97 @@ public abstract class Classifier implements ValidateableInterface,
                         new ArrayList<>(currentIndexes.size());
                 for (int i = 0; i < currentIndexes.size(); i++) {
                     trueDataVect.add(dset.data.get(currentIndexes.get(i)));
-              
+                }
+                setData(trueDataVect, dataType);
+            }
+        }
+    }
+
+    @Override
+    public void setData(ArrayList data, Object dataType) {
+        if (data != null && !data.isEmpty()) {
+            Category[] catArray = null;
+            int numClasses = 0;
+            int currClass;
+            if (data.get(0) instanceof BOWInstance) {
+                BOWInstance instance;
+                BOWDataSet bowDSet = (BOWDataSet) dataType;
+                BOWDataSet bowDSetCopy = bowDSet.cloneDefinition();
+                bowDSetCopy.data = data;
+                for (int i = 0; i < data.size(); i++) {
+                    if (data.get(i) != null) {
+                        instance = (BOWInstance) (data.get(i));
+                        currClass = instance.getCategory();
+                        if (currClass > numClasses) {
+                            numClasses = currClass;
+                        }
+                    }
+                }
+                numClasses = numClasses + 1;
+                catArray = new Category[numClasses];
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    catArray[cIndex] = new Category("number" + cIndex, 200,
+                            bowDSet);
+                    catArray[cIndex].setDefinitionDataset(bowDSetCopy);
+                }
+                for (int i = 0; i < data.size(); i++) {
+                    if (data.get(i) != null) {
+                        instance = (BOWInstance) (data.get(i));
+                        currClass = instance.getCategory();
+                        catArray[currClass].addInstance(i);
+                    }
+                }
+            } else if (data.get(0) instanceof DataInstance) {
+                DataInstance instance;
+                DataSet dset = (DataSet) dataType;
+                DataSet dsetCopy = dset.cloneDefinition();
+                dsetCopy.data = data;
+                for (int i = 0; i < data.size(); i++) {
+                    if (data.get(i) != null) {
+                        instance = (DataInstance) (data.get(i));
+                        currClass = instance.getCategory();
+                        if (currClass > numClasses) {
+                            numClasses = currClass;
+                        }
+                    }
+                }
+                numClasses = numClasses + 1;
+                catArray = new Category[numClasses];
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    catArray[cIndex] = new Category("number" + cIndex, 200,
+                            dset);
+                    catArray[cIndex].setDefinitionDataset(dsetCopy);
+                }
+                for (int i = 0; i < data.size(); i++) {
+                    if (data.get(i) != null) {
+                        instance = (DataInstance) (data.get(i));
+                        currClass = instance.getCategory();
+                        catArray[currClass].addInstance(i);
+                    }
+                }
+            }
+            setClasses(catArray);
+        }
+    }
+
+    @Override
+    public void setClasses(Object[] dataClasses) {
+        if (dataClasses == null || dataClasses.length == 0) {
+            return;
+        }
+        Category[] catArray = new Category[dataClasses.length];
+        for (int cIndex = 0; cIndex < dataClasses.length; cIndex++) {
+            catArray[cIndex] = (Category) (dataClasses[cIndex]);
+        }
+        setClasses(catArray);
+    }
+
+    /**
+     * @param dataClasses Category[] representing the training data.
+     */
+    public void setClasses(Category[] dataClasses) {
+        this.trainingClasses = dataClasses;
+    }
+
+    /**
+ 
