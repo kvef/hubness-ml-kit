@@ -407,4 +407,74 @@ public class InstanceSelectionLatexTableSummarizer {
                     pw.println("}");
                 }
                 for (int dIndex = 0; dIndex < datasetList.length; dIndex++) {
-                    // 
+                    // The first place is for the none selection entry which is
+                    // manually inserted later.
+                    pw.print(datasetList[dIndex] + " & & $\\pm$ & & ");
+                    for (int sIndex = 0; sIndex < selectionMethods.length;
+                            sIndex++) {
+                        if (DataMineConstants.isNonZero(accTableUnbiased[
+                                cIndex][dIndex][sIndex])) {
+                            int num = (int) (accTableUnbiased[cIndex][dIndex][
+                                    sIndex] * 1000);
+                            int decim = num % 10;
+                            num = num / 10;
+                            int ones = num % 10;
+                            num = num / 10;
+                            int tens = num % 10;
+                            if (boldUnbiased[cIndex][dIndex][sIndex]) {
+                                pw.print("\\textbf{");
+                            }
+                            if (tens > 0) {
+                                pw.print(Integer.toString(tens)
+                                        + Integer.toString(ones) + "."
+                                        + Integer.toString(decim));
+                            } else {
+                                pw.print(Integer.toString(ones) + "."
+                                        + Integer.toString(decim));
+                            }
+                            if (boldUnbiased[cIndex][dIndex][sIndex]) {
+                                pw.print("}");
+                            }
+                            pw.print("& $\\pm$ &");
+                            num = (int) (stDevTableUnbiased[cIndex][dIndex][
+                                    sIndex] * 1000);
+                            decim = num % 10;
+                            num = num / 10;
+                            ones = num % 10;
+                            num = num / 10;
+                            tens = num % 10;
+                            if (boldUnbiased[cIndex][dIndex][sIndex]) {
+                                pw.print("\\textbf{");
+                            }
+                            if (tens > 0) {
+                                pw.print(Integer.toString(tens)
+                                        + Integer.toString(ones) + "."
+                                        + Integer.toString(decim));
+                            } else {
+                                pw.print(Integer.toString(ones) + "."
+                                        + Integer.toString(decim));
+                            }
+                            if (boldUnbiased[cIndex][dIndex][sIndex]) {
+                                pw.print("}");
+                            }
+                            if (sIndex < selectionMethods.length - 1) {
+                                // The space for $\bullet$, if needed.
+                                pw.print(" & & ");
+                            } else {
+                                pw.print(" & ");
+                            }
+                        } else {
+                            if (sIndex < selectionMethods.length - 1) {
+                                pw.print(" & $\\pm$ &  & & ");
+                            } else {
+                                pw.print(" & $\\pm$ &  & ");
+                            }
+                        }
+                    }
+                    pw.println("\\\\");
+                }
+                pw.print("AVG & & & &");
+                for (int sIndex = 0; sIndex < selectionMethods.length;
+                        sIndex++) {
+                    if (avgAccUnbiased[cIndex][sIndex] > avgAccBiased[cIndex][
+                       
