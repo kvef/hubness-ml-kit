@@ -283,4 +283,94 @@ public abstract class Classifier implements ValidateableInterface,
      * assignments.
      * @throws Exception
      */
-    publ
+    public float[][] classifyProbabilistically(
+            ArrayList<DataInstance> instances) throws Exception {
+        float[][] classificationResults;
+        if ((instances == null) || (instances.isEmpty())) {
+            return null;
+        } else {
+            classificationResults = new float[instances.size()][];
+            for (int i = 0; i < instances.size(); i++) {
+                classificationResults[i] =
+                        classifyProbabilistically(instances.get(i));
+            }
+            return classificationResults;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(Object[] testClasses) throws Exception {
+        return test((Category[]) testClasses);
+    }
+
+    /**
+     * This method tests and evaluates the classifier.
+     *
+     * @param dataClasses Array of data categories representing the test data.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(Category[] dataClasses) throws Exception {
+        if ((dataClasses == null) || (dataClasses.length == 0)) {
+            return null;
+        } else {
+            int[] classificationResult;
+            float[][] confusionMatrix = new float[dataClasses.length][
+                    dataClasses.length];
+            for (int cIndex = 0; cIndex < dataClasses.length; cIndex++) {
+                classificationResult = classify(dataClasses[cIndex].
+                        getAllInstances());
+                if (classificationResult != null) {
+                    for (int i = 0; i < classificationResult.length; i++) {
+                        confusionMatrix[classificationResult[i]][cIndex]++;
+                    }
+                }
+            }
+            ClassificationEstimator estimator =
+                    new ClassificationEstimator(confusionMatrix);
+            estimator.calculateEstimates();
+            return estimator;
+        }
+    }
+
+    /**
+     * This method tests and evaluates the classifier.
+     *
+     * @param correctPointClassificationArray float[] that is updated with the
+     * total point-wise classification precision.
+     * @param dataClasses Array of data categories representing the test data.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(float[] correctPointClassificationArray,
+            Category[] dataClasses) throws Exception {
+        if ((dataClasses == null) || (dataClasses.length == 0)) {
+            return null;
+        } else {
+            int[] classificationResult;
+            float[][] confusionMatrix = new float[dataClasses.length][
+                    dataClasses.length];
+            for (int Cindex = 0; Cindex < dataClasses.length; Cindex++) {
+                classificationResult = classify(dataClasses[Cindex].
+                        getAllInstances());
+                if (classificationResult != null) {
+                    for (int i = 0; i < classificationResult.length; i++) {
+                        confusionMatrix[classificationResult[i]][Cindex]++;
+                        if (classificationResult[i] == Cindex) {
+                            correctPointClassificationArray[
+                                    dataClasses[Cindex].indexes.get(i)]++;
+                        }
+                    }
+                }
+            }
+            ClassificationEstimator estimator =
+                    new ClassificationEstimator(confusionMatrix);
+            estimator.calculateEstimates();
+            return estimator;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> index
