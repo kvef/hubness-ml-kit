@@ -556,4 +556,9 @@ public class InstanceSelectionLatexTableSummarizer {
                 new InstanceSelectionLatexTableSummarizer(parentDir,
                 selMethodsFile,
                 datasetsFile, classificationMethodsFile, k, outFile);
-        summarizer.parseSpecificat
+        summarizer.parseSpecifications();
+        summarizer.getValues();
+        summarizer.compareTables();
+        summarizer.outputSummaries();
+    }
+}
