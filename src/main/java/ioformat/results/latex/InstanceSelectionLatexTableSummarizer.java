@@ -331,4 +331,80 @@ public class InstanceSelectionLatexTableSummarizer {
                             if (tens > 0) {
                                 pw.print(Integer.toString(tens)
                                         + Integer.toString(ones) + "."
-                              
+                                        + Integer.toString(decim));
+                            } else {
+                                pw.print(Integer.toString(ones) + "."
+                                        + Integer.toString(decim));
+                            }
+                            pw.print("& $\\pm$ &");
+                            num = (int) (stDevTableBiased[cIndex][dIndex][
+                                    sIndex] * 1000);
+                            decim = num % 10;
+                            num = num / 10;
+                            ones = num % 10;
+                            num = num / 10;
+                            tens = num % 10;
+                            if (tens > 0) {
+                                pw.print(Integer.toString(tens)
+                                        + Integer.toString(ones) + "."
+                                        + Integer.toString(decim));
+                            } else {
+                                pw.print(Integer.toString(ones) + "."
+                                        + Integer.toString(decim));
+                            }
+                            if (sIndex < selectionMethods.length - 1) {
+                                // The space for $\bullet$, if needed.
+                                pw.print(" & & "); //
+                            } else {
+                                pw.print(" & ");
+                            }
+                        } else {
+                            if (sIndex < selectionMethods.length - 1) {
+                                pw.print(" & $\\pm$ &  & & ");
+                            } else {
+                                pw.print(" & $\\pm$ &  & ");
+                            }
+                        }
+                    }
+                    pw.println("\\\\");
+                }
+                pw.print("AVG & & & &");
+                for (int sIndex = 0; sIndex < selectionMethods.length;
+                        sIndex++) {
+                    int num = (int) (avgAccBiased[cIndex][sIndex] * 1000);
+                    int decim = num % 10;
+                    num = num / 10;
+                    int ones = num % 10;
+                    num = num / 10;
+                    int tens = num % 10;
+                    if (tens > 0) {
+                        pw.print(Integer.toString(tens)
+                                + Integer.toString(ones) + "."
+                                + Integer.toString(decim));
+                    } else {
+                        pw.print(Integer.toString(ones) + "."
+                                + Integer.toString(decim));
+                    }
+                    if (sIndex < selectionMethods.length - 1) {
+                        pw.print("& & & &");
+                    } else {
+                        pw.print("& & &");
+                    }
+                }
+                pw.println("\\\\");
+                pw.println();
+                pw.println("---------------------------------------");
+                pw.println(classifiers[cIndex]);
+                pw.println("UNBIASED");
+                pw.println("---------------------------------------");
+                pw.println();
+                pw.print("Data set & \\multicolumn{3}{c}{None}");
+                for (int sIndex = 0; sIndex < selectionMethods.length;
+                        sIndex++) {
+                    pw.print(" & \\multicolumn{4}{c}{");
+                    pw.print(
+                            selectionMethods[sIndex]);
+                    pw.println("}");
+                }
+                for (int dIndex = 0; dIndex < datasetList.length; dIndex++) {
+                    // 
