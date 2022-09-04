@@ -373,4 +373,84 @@ public abstract class Classifier implements ValidateableInterface,
     }
 
     @Override
-    public ClassificationEstimator test(ArrayList<Integer> index
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int numClasses, float[][] pointDistances)
+            throws Exception {
+        int[] classificationResult = null;
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof DistToPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((DistToPointsQueryUserInterface) this).classify(
+                        ((DataSet) dataType).getInstance(indexes.get(i)),
+                        pointDistances[i]);
+            } else {
+                classificationResult[i] = classify(((DataSet) dataType).
+                        getInstance(indexes.get(i)));
+            }
+            confusionMatrix[classificationResult[i]][((DataSet) dataType).
+                    getLabelOf(indexes.get(i))]++;
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int[] testLabelArray, int numClasses,
+            float[][] pointDistances) throws Exception {
+        int[] classificationResult = new int[indexes.size()];
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof DistToPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((DistToPointsQueryUserInterface) this).classify(
+                        ((DataSet) dataType).getInstance(indexes.get(i)),
+                        pointDistances[i]);
+            } else {
+                classificationResult[i] = classify(((DataSet) dataType).
+                        getInstance(indexes.get(i)));
+            }
+            confusionMatrix[classificationResult[i]][testLabelArray[
+                    indexes.get(i)]]++;
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int[] testLabelArray, int numClasses,
+            float[][] pointDistances, int[][] pointNeighbors) throws Exception {
+        int[] classificationResult = new int[indexes.size()];
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof NeighborPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((NeighborPointsQueryUserInterface) this).classify(
+                        ((DataSet) dataType).getInstance(indexes.get(i)),
+                        pointDistances[i], pointNeighbors[i]);
+            } else if (this instanceof DistToPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((DistToPointsQueryUserInterface) this).classify(
+                        ((DataSet) dataType).getInstance(indexes.get(i)),
+                        pointDistances[i]);
+            } else {
+                classificationResult[i] =
+                        classify(((DataSet) dataType).getInstance(
+                        indexes.get(i)));
+            }
+            confusionMatrix[classificationResult[i]][testLabelArray[
+                    indexes.get(i)]]++;
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+
+    public Classi
