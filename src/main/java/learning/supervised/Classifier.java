@@ -453,4 +453,86 @@ public abstract class Classifier implements ValidateableInterface,
         return estimator;
     }
 
-    public Classi
+    public ClassificationEstimator test(DataSet dset) throws Exception {
+        ArrayList<Integer> indexes = new ArrayList<>(dset.size());
+        for (int i = 0; i < dset.size(); i++) {
+            indexes.add(i);
+        }
+        return test(indexes, dset, dset.countCategories());
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int numClasses) throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            Category[] testClasses = null;
+            if (dataType instanceof BOWDataSet) {
+                BOWInstance instance;
+                BOWDataSet bowDset = (BOWDataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, bowDset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    instance = (BOWInstance) bowDset.data.get(indexes.get(i));
+                    testClasses[instance.getCategory()].addInstance(
+                            indexes.get(i));
+                }
+            } else if (dataType instanceof DataSet) {
+                DataInstance instance;
+                DataSet dset = (DataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, dset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    instance = dset.data.get(indexes.get(i));
+                    testClasses[instance.getCategory()].addInstance(
+                            indexes.get(i));
+                }
+            }
+            return test(testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int[] testLabelArray, int numClasses) throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            Category[] testClasses = null;
+            if (dataType instanceof BOWDataSet) {
+                BOWDataSet bowDset = (BOWDataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, bowDset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    testClasses[testLabelArray[indexes.get(i)]].addInstance(
+                            indexes.get(i));
+                }
+            } else if (dataType instanceof DataSet) {
+                DataSet dset = (DataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, dset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    testClasses[testLabelArray[indexes.get(i)]].addInstance(
+                            indexes.get(i));
+                }
+            }
+            return test(testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int numClasses,
+            float[][] pointDistances) throws Exception {
+        int[] classificationResult = new int[indexes.size()];
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+    
