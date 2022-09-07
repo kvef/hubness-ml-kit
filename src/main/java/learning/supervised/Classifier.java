@@ -611,4 +611,81 @@ public abstract class Classifier implements ValidateableInterface,
                         classify(((DataSet) dataType).getInstance(
                         indexes.get(i)));
             }
-            confusionMatrix[classificationResul
+            confusionMatrix[classificationResult[i]][((DataSet) dataType).
+                    getLabelOf(indexes.get(i))]++;
+            if (classificationResult[i] == ((DataSet) dataType).getLabelOf(
+                    indexes.get(i))) {
+                correctPointClassificationArray[indexes.get(i)]++;
+            }
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+
+    @Override
+    public ClassificationEstimator test(
+            float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType,
+            int[] testLabelArray, int numClasses, float[][] pointDistances,
+            int[][] pointNeighbors) throws Exception {
+        int[] classificationResult = new int[indexes.size()];
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof NeighborPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((NeighborPointsQueryUserInterface) this).classify(
+                        ((DataSet) dataType).getInstance(indexes.get(i)),
+                        pointDistances[i], pointNeighbors[i]);
+            } else if (this instanceof DistToPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((DistToPointsQueryUserInterface) this).classify(
+                        ((DataSet) dataType).getInstance(indexes.get(i)),
+                        pointDistances[i]);
+            } else {
+                classificationResult[i] =
+                        classify(((DataSet) dataType).getInstance(
+                        indexes.get(i)));
+            }
+            confusionMatrix[classificationResult[i]][testLabelArray[
+                    indexes.get(i)]]++;
+            if (classificationResult[i] == testLabelArray[indexes.get(i)]) {
+                correctPointClassificationArray[indexes.get(i)]++;
+            }
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+
+    @Override
+    public ClassificationEstimator test(float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int numClasses)
+            throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            Category[] testClasses = null;
+            if (dataType instanceof BOWDataSet) {
+                BOWInstance instance;
+                BOWDataSet bowDSet = (BOWDataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, bowDSet);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    instance = (BOWInstance) bowDSet.data.get(indexes.get(i));
+                    testClasses[instance.getCategory()].addInstance(
+                            indexes.get(i));
+                }
+            } else if (dataType instanceof DataSet) {
+                DataInstance instance;
+                DataSet dset = (DataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, dset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    instance = dset.data.get(indexes.get(i));
+                    testClasses[instance.getCategory()].addInstance(
+                            index
