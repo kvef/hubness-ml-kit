@@ -688,4 +688,85 @@ public abstract class Classifier implements ValidateableInterface,
                 for (int i = 0; i < indexes.size(); i++) {
                     instance = dset.data.get(indexes.get(i));
                     testClasses[instance.getCategory()].addInstance(
-                            index
+                            indexes.get(i));
+                }
+            }
+            return test(correctPointClassificationArray, testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int[] testLabelArray,
+            int numClasses) throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            Category[] testClasses = null;
+            if (dataType instanceof BOWDataSet) {
+                BOWDataSet bowDSet = (BOWDataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, bowDSet);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    testClasses[testLabelArray[indexes.get(i)]].addInstance(
+                            indexes.get(i));
+                }
+            } else if (dataType instanceof DataSet) {
+                DataSet dset = (DataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, dset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    testClasses[testLabelArray[indexes.get(i)]].addInstance(
+                            indexes.get(i));
+                }
+            }
+            return test(correctPointClassificationArray, testClasses);
+        } else {
+            return null;
+        }
+    }
+    
+    @Override
+    public ClassificationEstimator test(float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int numClasses,
+            float[][] pointDistances) throws Exception {
+        float[][] probClassifications = new float[indexes.size()][];
+        int[] classificationResult = new int[indexes.size()];
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof DistToPointsQueryUserInterface) {
+                probClassifications[i] =
+                        ((DistToPointsQueryUserInterface) this).
+                        classifyProbabilistically(((DataSet) dataType).
+                        getInstance(indexes.get(i)), pointDistances[i]);
+                classificationResult[i] = ArrayUtil.indexOfMax(
+                        probClassifications[i]);
+            } else {
+                probClassifications[i] = classifyProbabilistically(
+                        ((DataSet) dataType).getInstance(indexes.get(i)));
+                classificationResult[i] = ArrayUtil.indexOfMax(
+                        probClassifications[i]);
+            }
+            confusionMatrix[classificationResult[i]][((DataSet) dataType).
+                    getLabelOf(indexes.get(i))]++;
+            if (classificationResult[i] == ((DataSet) dataType).getLabelOf(
+                    indexes.get(i))) {
+                correctPointClassificationArray[indexes.get(i)]++;
+            }
+            predictedProbLabelsAllData[indexes.get(i)] = probClassifications[i];
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+
+    @Override
+    public ClassificationEstimator test(float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationArray,
+            ArrayList<Intege
