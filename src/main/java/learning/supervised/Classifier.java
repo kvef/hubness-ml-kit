@@ -913,4 +913,82 @@ public abstract class Classifier implements ValidateableInterface,
                 }
             } else if (dataType instanceof DataSet) {
                 DataInstance instance;
-       
+                DataSet dset = (DataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, dset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    instance = dset.data.get(indexes.get(i));
+                    testClasses[instance.getCategory()].addInstance(
+                            indexes.get(i));
+                }
+            }
+            return test(predictedProbLabelsAllData,
+                    correctPointClassificationArray, testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int[] testLabelArray,
+            int numClasses) throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            Category[] testClasses = null;
+            if (dataType instanceof BOWDataSet) {
+                BOWDataSet bowDSet = (BOWDataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, bowDSet);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    testClasses[testLabelArray[indexes.get(i)]].addInstance(
+                            indexes.get(i));
+                }
+            } else if (dataType instanceof DataSet) {
+                DataSet dset = (DataSet) dataType;
+                testClasses = new Category[numClasses];
+                for (int i = 0; i < numClasses; i++) {
+                    testClasses[i] = new Category("number" + i, 200, dset);
+                }
+                for (int i = 0; i < indexes.size(); i++) {
+                    testClasses[testLabelArray[indexes.get(i)]].addInstance(
+                            indexes.get(i));
+                }
+            }
+            return test(predictedProbLabelsAllData,
+                    correctPointClassificationArray, testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * This method tests and evaluates the classifier.
+     *
+     * @param predictedProbLabelsAllData float[][] representing the current
+     * predicted fuzzy labels for all data points (not only the test points in
+     * the current iteration, but rather all points from the original data.)
+     * @param correctPointClassificationArray float[] that is updated with the
+     * total point-wise classification precision.
+     * @param dataClasses Array of data categories representing the test data.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationArray,
+            Category[] dataClasses) throws Exception {
+        if ((dataClasses == null) || (dataClasses.length == 0)) {
+            return null;
+        } else {
+            float[][] probClassifications;
+            int[] classificationResult;
+            float[][] confusionMatrix = new float[dataClasses.length][
+                    dataClasses.length];
+            for (int Cindex = 0; Cindex < dataClasses.length; Cindex++) {
+                probClassifications = classifyProbabilistically(
+                        dataClasses[Cindex].getAllInstance
