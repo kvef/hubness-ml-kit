@@ -991,4 +991,81 @@ public abstract class Classifier implements ValidateableInterface,
                     dataClasses.length];
             for (int Cindex = 0; Cindex < dataClasses.length; Cindex++) {
                 probClassifications = classifyProbabilistically(
-                        dataClasses[Cindex].getAllInstance
+                        dataClasses[Cindex].getAllInstances());
+                if (probClassifications != null) {
+                    classificationResult = new int[probClassifications.length];
+                    for (int i = 0; i < probClassifications.length; i++) {
+                        classificationResult[i] = ArrayUtil.indexOfMax(
+                                probClassifications[i]);
+                        confusionMatrix[classificationResult[i]][Cindex]++;
+                        if (classificationResult[i] == Cindex) {
+                            correctPointClassificationArray[
+                                    dataClasses[Cindex].indexes.get(i)]++;
+                        }
+                        predictedProbLabelsAllData[
+                                dataClasses[Cindex].indexes.get(i)] =
+                                probClassifications[i];
+                    }
+                }
+            }
+            ClassificationEstimator estimator =
+                    new ClassificationEstimator(confusionMatrix);
+            estimator.calculateEstimates();
+            return estimator;
+        }
+    }
+    
+    /**
+     * This method saves the classifier model.
+     * 
+     * @param ous OutputStream to write the model to.
+     * @throws Exception 
+     */
+    public void save(ObjectOutputStream ous) throws Exception {
+        ous.writeObject(this);
+    }
+
+    /**
+     * This method loads the classifier.
+     * 
+     * @param ins InputStream to read the model from.
+     * @return Classifier that is the loaded model.
+     * @throws Exception 
+     */
+    public static Classifier load(ObjectInputStream ins)
+            throws Exception {
+        Classifier loadedModel = (Classifier)ins.readObject();
+        return loadedModel;
+    }
+    
+    /**
+     * This method saves the classifier model.
+     * 
+     * @param outFile File to write the model to.
+     * @throws Exception 
+     */
+    public void save(File outFile) throws Exception {
+        FileUtil.createFile(outFile);
+        try (ObjectOutputStream ous =
+                new ObjectOutputStream(new FileOutputStream(outFile))) {
+            save(ous);
+        }
+    }
+
+    /**
+     * This method loads the classifier.
+     * 
+     * @param inFile File to load the model from.
+     * @return Classifier that is the loaded model.
+     * @throws Exception 
+     */
+    public static Classifier load(File inFile)
+            throws Exception {
+        Classifier loadedModel;
+        try (ObjectInputStream reader = new ObjectInputStream(
+                     new FileInputStream(inFile))) {
+            loadedModel = load(reader);
+        }
+        return loadedModel;
+    }
+}
