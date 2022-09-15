@@ -157,4 +157,82 @@ public class ClassifierFactory {
                 || classifierName.equalsIgnoreCase("learning.supervised."
                 + "methods.knn.HIKNNNonDw")) {
             classAlg = new HIKNNNonDW(k, cmet, numCategories);
-            ((HIKNNNonDW) classAl
+            ((HIKNNNonDW) classAlg).noRecalcs();
+        } else if (classifierName.equalsIgnoreCase("RRKNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.RRKNN")) {
+            classAlg = new RRKNN(k, cmet, numCategories);
+            ((RRKNN) classAlg).noRecalcs();
+        } else if (classifierName.equalsIgnoreCase("RSLVQ")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.RSLVQ")) {
+            classAlg = new RSLVQ(numCategories, cmet);
+        } else if (classifierName.equalsIgnoreCase("FNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.FNN")) {
+            classAlg = new FNN(k, cmet, numCategories);
+        } else if (classifierName.equalsIgnoreCase("KNNNB")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.discrete.KNNNB")) {
+            classAlg = new KNNNB(k, cmet);
+        } else if (classifierName.equalsIgnoreCase("LWNB")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.discrete.LWNB")) {
+            classAlg = new LWNB(k, cmet);
+        } else if (classifierName.equalsIgnoreCase("ID3")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.discrete.trees.DCT_ID3")) {
+            classAlg = new DCT_ID3();
+        } else if (classifierName.equalsIgnoreCase("DZeroRule")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.discrete.DZeroRule")) {
+            classAlg = new DZeroRule();
+        } else if (classifierName.equalsIgnoreCase("DOneRule")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.discrete.DOneRule")) {
+            classAlg = new DOneRule();
+        } else {
+            return null;
+        }
+        return classAlg;
+    }
+
+    /**
+     * This method generates a list of all possible classifiers for the given
+     * configuration parameters, which can be useful in testing.
+     *
+     * @param numCategories Integer that is the number of categories in the
+     * data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     * @return ArrayList<ValidateableInterface> representing a list of
+     * classifiers corresponding to the parameter configuration.
+     */
+    public static ArrayList<ValidateableInterface> getAllClassifierInstances(
+            int numCategories, CombinedMetric cmet, int k) {
+        ArrayList<ValidateableInterface> classifierList = new ArrayList<>(50);
+        ValidateableInterface classAlg;
+        classAlg = new DNaiveBayes();
+        classifierList.add(classAlg);
+        classAlg = new DWeightedNaiveBayes();
+        classifierList.add(classAlg);
+        classAlg = new KNN(k, cmet);
+        classifierList.add(classAlg);
+        classAlg = new DWKNN(k, cmet);
+        classifierList.add(classAlg);
+        classAlg = new AKNN(k, cmet, numCategories);
+        classifierList.add(classAlg);
+        classAlg = new NWKNN(k, cmet, numCategories);
+        classifierList.add(classAlg);
+        classAlg = new HwKNN(numCategories, cmet, k);
+        classifierList.add(classAlg);
+        classAlg = new CBWkNN(numCategories, cmet, k);
+        classifierList.add(classAlg);
+        classAlg = new DWHFNN(k, cmet, numCategories);
+        ((DWHFNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new HFNN(k, cmet, numCategories);
+        ((HFNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new DWHFNNBoostable(
+                k, cmet, numCateg
