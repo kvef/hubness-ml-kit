@@ -95,4 +95,66 @@ public class ClassifierFactory {
                 + "methods.knn.NWKNN")) {
             classAlg = new NWKNN(k, cmet, numCategories);
         } else if (classifierName.equalsIgnoreCase("hwKNN")
-      
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.HwKNN")) {
+            classAlg = new HwKNN(numCategories, cmet, k);
+        } else if (classifierName.equalsIgnoreCase("CBWkNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.CBWkNN")) {
+            classAlg = new CBWkNN(numCategories, cmet, k);
+        } else if (classifierName.equalsIgnoreCase("DWHFNN")
+                || classifierName.equalsIgnoreCase("DWH-FNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.DWHFNN")) {
+            classAlg = new DWHFNN(k, cmet, numCategories);
+            ((DWHFNN) classAlg).noRecalcs();
+        } else if (classifierName.equalsIgnoreCase("hFNN")
+                || classifierName.equalsIgnoreCase("h-FNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.HFNN")) {
+            classAlg = new HFNN(k, cmet, numCategories);
+            ((HFNN) classAlg).noRecalcs();
+        } else if (classifierName.equalsIgnoreCase("B1dwh-FNN")) {
+            classAlg = new AdaBoostM2(new DWHFNNBoostable(
+                    k, cmet, numCategories, DWHFNNBoostable.B1));
+        } else if (classifierName.equalsIgnoreCase("B2dwh-FNN")) {
+            classAlg = new AdaBoostM2(new DWHFNNBoostable(
+                    k, cmet, numCategories, DWHFNNBoostable.B2));
+        } else if (classifierName.equalsIgnoreCase("B1h-FNN")) {
+            classAlg = new AdaBoostM2(new HFNNBoostable(
+                    k, cmet, numCategories, HFNNBoostable.B1));
+        } else if (classifierName.equalsIgnoreCase("B2h-FNN")) {
+            classAlg = new AdaBoostM2(new HFNNBoostable(
+                    k, cmet, numCategories, HFNNBoostable.B2));
+        } else if (classifierName.equalsIgnoreCase("B1HIKNN")) {
+            classAlg = new AdaBoostM2(new HIKNNBoostable(
+                    k, cmet, numCategories, HIKNNBoostable.B1));
+        } else if (classifierName.equalsIgnoreCase("B2HIKNN")) {
+            classAlg = new AdaBoostM2(new HIKNNBoostable(
+                    k, cmet, numCategories, HIKNNBoostable.B2));
+        } else if (classifierName.equalsIgnoreCase("B1HWKNN")) {
+            classAlg = new AdaBoostM2(new HwKNNBoostable(
+                    numCategories, cmet, k, HwKNNBoostable.B1));
+        } else if (classifierName.equalsIgnoreCase("B2HWKNN")) {
+            classAlg = new AdaBoostM2(new HwKNNBoostable(
+                    numCategories, cmet, k, HwKNNBoostable.B2));
+        } else if (classifierName.equalsIgnoreCase("NHBNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.NHBNN")) {
+            classAlg = new NHBNN(k, cmet, numCategories);
+            ((NHBNN) classAlg).noRecalcs();
+        } else if (classifierName.equalsIgnoreCase("ANHBNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.ANHBNN")) {
+            classAlg = new ANHBNN(k, cmet, numCategories);
+            ((ANHBNN) classAlg).noRecalcs();
+        } else if (classifierName.equalsIgnoreCase("HIKNN")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.HIKNN")) {
+            classAlg = new HIKNN(k, cmet, numCategories);
+            ((HIKNN) classAlg).noRecalcs();
+        } else if (classifierName.equalsIgnoreCase("HIKNNnondw")
+                || classifierName.equalsIgnoreCase("learning.supervised."
+                + "methods.knn.HIKNNNonDw")) {
+            classAlg = new HIKNNNonDW(k, cmet, numCategories);
+            ((HIKNNNonDW) classAl
