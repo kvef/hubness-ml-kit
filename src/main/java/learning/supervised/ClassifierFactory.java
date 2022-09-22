@@ -317,4 +317,87 @@ public class ClassifierFactory {
         classifierList.add(classAlg);
         classAlg = new CBWkNN(numCategories, cmet, k);
         classifierList.add(classAlg);
-        class
+        classAlg = new DWHFNN(k, cmet, numCategories);
+        ((DWHFNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new HFNN(k, cmet, numCategories);
+        ((HFNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new DWHFNNBoostable(
+                k, cmet, numCategories, DWHFNNBoostable.B1));
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new DWHFNNBoostable(
+                k, cmet, numCategories, DWHFNNBoostable.B2));
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new HFNNBoostable(
+                k, cmet, numCategories, HFNNBoostable.B1));
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new HFNNBoostable(
+                k, cmet, numCategories, HFNNBoostable.B2));
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new HIKNNBoostable(
+                k, cmet, numCategories, HIKNNBoostable.B1));
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new HIKNNBoostable(
+                k, cmet, numCategories, HIKNNBoostable.B2));
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new HwKNNBoostable(
+                numCategories, cmet, k, HwKNNBoostable.B1));
+        classifierList.add(classAlg);
+        classAlg = new AdaBoostM2(new HwKNNBoostable(
+                numCategories, cmet, k, HwKNNBoostable.B2));
+        classifierList.add(classAlg);
+        classAlg = new NHBNN(k, cmet, numCategories);
+        ((NHBNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new ANHBNN(k, cmet, numCategories);
+        ((ANHBNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new HIKNN(k, cmet, numCategories);
+        ((HIKNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new HIKNNNonDW(k, cmet, numCategories);
+        ((HIKNNNonDW) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new RRKNN(k, cmet, numCategories);
+        ((RRKNN) classAlg).noRecalcs();
+        classifierList.add(classAlg);
+        classAlg = new RSLVQ(numCategories, cmet);
+        classifierList.add(classAlg);
+        classAlg = new FNN(k, cmet, numCategories);
+        classifierList.add(classAlg);
+        return classifierList;
+    }
+    
+    /**
+     * This method generates a list of all possible discrete classifiers for the
+     * given configuration parameters, which can be useful in testing.
+     *
+     * @param numCategories Integer that is the number of categories in the
+     * data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     * @return ArrayList<DiscreteClassifier> representing a list of
+     * classifiers corresponding to the parameter configuration.
+     */
+    public static ArrayList<DiscreteClassifier> getAllDiscClassifierInstances(
+            int numCategories, CombinedMetric cmet, int k) {
+        ArrayList<DiscreteClassifier> classifierList = new ArrayList<>(50);
+        DiscreteClassifier classAlg;
+        classAlg = new DNaiveBayes();
+        classifierList.add(classAlg);
+        classAlg = new DWeightedNaiveBayes();
+        classifierList.add(classAlg);
+        classAlg = new KNNNB(k, cmet);
+        classifierList.add(classAlg);
+        classAlg = new LWNB(k, cmet);
+        classifierList.add(classAlg);
+        classAlg = new DCT_ID3();
+        classifierList.add(classAlg);
+        classAlg = new DZeroRule();
+        classifierList.add(classAlg);
+        classAlg = new DOneRule();
+        classifierList.add(classAlg);
+        return classifierList;
+    }
+}
