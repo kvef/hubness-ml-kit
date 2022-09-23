@@ -1,0 +1,87 @@
+/**
+* Hub Miner: a hubness-aware machine learning experimentation library.
+* Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
+* 
+* This program is free software: you can redistribute it and/or modify it under
+* the terms of the GNU General Public License as published by the Free Software
+* Foundation, either version 3 of the License, or (at your option) any later
+* version.
+* 
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with
+* this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package learning.supervised;
+
+import algref.Citable;
+import data.representation.discrete.DiscretizedDataInstance;
+import data.representation.discrete.DiscretizedDataSet;
+import data.representation.DataSet;
+import learning.supervised.evaluation.ClassificationEstimator;
+import learning.supervised.evaluation.ValidateableInterface;
+import java.util.ArrayList;
+import preprocessing.instance_selection.InstanceSelector;
+import distances.primary.CombinedMetric;
+import ioformat.FileUtil;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import learning.supervised.interfaces.DiscreteDistToPointsQueryUserInterface;
+import learning.supervised.interfaces.DiscreteNeighborPointsQueryUserInterface;
+import learning.supervised.interfaces.DistToPointsQueryUserInterface;
+import util.ArrayUtil;
+
+/**
+ * This class implements the methods used for classifier training and testing on
+ * discretized data instances.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public abstract class DiscreteClassifier implements ValidateableInterface,
+        Serializable, Citable {
+    
+    private static final long serialVersionUID = 1L;
+
+    private DiscreteCategory[] tainingClasses = null;
+    private DiscretizedDataSet dataType = null;
+    // In case of hybrid learning from both discretized and non-discretized
+    // data sources.
+    private CombinedMetric cmet;
+
+    @Override
+    public void trainOnReducedData(InstanceSelector reducer) throws Exception {
+        setDataIndexes(reducer.getPrototypeIndexes(),
+                reducer.getReducedDataSet(true));
+        train();
+    }
+
+    @Override
+    public void setData(ArrayList data, Object dataType) {
+        if (data != null && data.size() > 0) {
+            ArrayList<DiscretizedDataInstance> dataVect =
+                    new ArrayList<>(data.size());
+            for (int i = 0; i < data.size(); i++) {
+                dataVect.add((DiscretizedDataInstance) (data.get(i)));
+            }
+            DiscretizedDataSet definition = (DiscretizedDataSet) dataType;
+            this.dataType = definition.cloneDefinition();
+            this.dataType.data = dataVect;
+            this.dataType.setOriginalData(definition.getOriginalData());
+            generateClassesFromDataType();
+        }
+    }
+
+    @Override
+    public void setDataIndexes(ArrayList<Integer> currentIndexes,
+            Object objectType) {
+        if (currentIndexes != null && currentIndexes.size() > 0) {
+            DiscretizedDataSet definition = (DiscretizedDataSet) objectType;
+            DataSet originalDefinition = definition.getOriginalData();
+            DataSet originalDataSubset = originalDefinition.cloneDefinition();
+            dataType = definition.cloneDefinition();

@@ -18,3 +18,101 @@
 package learning.supervised;
 
 import data.representation.discrete.DiscretizedDataInstance;
+import data.representation.discrete.DiscretizedDataSet;
+import java.io.Serializable;
+import java.util.ArrayList;
+
+/**
+ * This class represents a category of discretized data instances.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class DiscreteCategory extends Category implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
+
+    private DiscretizedDataSet discDSet;
+    public ArrayList<DiscretizedDataInstance> instances;
+    private static final int DEFAULT_SIZE = 500;
+
+    /**
+     * The default constructor.
+     */
+    public DiscreteCategory() {
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param categoryName String that is the category name.
+     * @param dset DataSet that is the data context.
+     */
+    public DiscreteCategory(String categoryName, DiscretizedDataSet dset) {
+        setName(categoryName);
+        this.discDSet = dset;
+        indexes = new ArrayList<>(DEFAULT_SIZE);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param categoryName String that is the category name.
+     * @param dset DataSet object that is the data context.
+     * @param initSize Integer that is the initialization size.
+     */
+    public DiscreteCategory(String categoryName, DiscretizedDataSet dset,
+            int initSize) {
+        setName(categoryName);
+        this.discDSet = dset;
+        indexes = new ArrayList<>(initSize);
+    }
+
+    /**
+     * @return ArrayList<DiscretizedDataInstance> representing the data points
+     * that belong to this data class.
+     */
+    public ArrayList<DiscretizedDataInstance> getData() {
+        if (indexes == null && discDSet == null && discDSet.isEmpty()) {
+            return null;
+        }
+        if (instances != null) {
+            return instances;
+        }
+        ArrayList<DiscretizedDataInstance> data =
+                new ArrayList<>(indexes.size());
+        for (int i = 0; i < indexes.size(); i++) {
+            data.add(discDSet.data.get(indexes.get(i)));
+        }
+        return data;
+    }
+
+    @Override
+    public DiscreteCategory copy() {
+        DiscreteCategory discCatCopy = new DiscreteCategory(getName(),
+                discDSet);
+        for (int i = 0; i < size(); i++) {
+            discCatCopy.addInstanceIndex(indexes.get(i));
+        }
+        return discCatCopy;
+    }
+
+    /**
+     * This method adds a data index and a corresponding data point to this
+     * discretized category object.
+     *
+     * @param index Integer that is the index of the instance to add to the
+     * category.
+     */
+    public void addInstanceIndex(int index) {
+        if (indexes == null) {
+            indexes = new ArrayList<>(DEFAULT_SIZE);
+        }
+        if (instances == null) {
+            instances = new ArrayList<>(DEFAULT_SIZE);
+        }
+        indexes.add(index);
+        if (discDSet != null) {
+            instances.add(discDSet.getInstance(index));
+        }
+    }
+}
