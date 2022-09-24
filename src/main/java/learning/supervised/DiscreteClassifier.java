@@ -85,3 +85,111 @@ public abstract class DiscreteClassifier implements ValidateableInterface,
             DataSet originalDefinition = definition.getOriginalData();
             DataSet originalDataSubset = originalDefinition.cloneDefinition();
             dataType = definition.cloneDefinition();
+            dataType.setOriginalData(originalDataSubset);
+            dataType.data = new ArrayList<>(currentIndexes.size());
+            originalDataSubset.data = new ArrayList<>(currentIndexes.size());
+            for (int i = 0; i < currentIndexes.size(); i++) {
+                dataType.data.add(definition.data.get(currentIndexes.get(i)));
+                originalDataSubset.data.add(originalDefinition.data.get(
+                        currentIndexes.get(i)));
+            }
+            generateClassesFromDataType();
+        }
+    }
+
+    /**
+     * Generate the discrete category array as a training data representation,
+     * instead of the discretized data sets.
+     */
+    public void generateClassesFromDataType() {
+        int numClasses = 0;
+        int currClass;
+        DiscretizedDataInstance instance;
+        DiscretizedDataSet discDSet = (DiscretizedDataSet) dataType;
+        for (int i = 0; i < dataType.data.size(); i++) {
+            if (dataType.data.get(i) != null) {
+                instance = (DiscretizedDataInstance) (dataType.data.get(i));
+                currClass = instance.getCategory();
+                if (currClass > numClasses) {
+                    numClasses = currClass;
+                }
+            }
+        }
+        numClasses = numClasses + 1;
+        tainingClasses = new DiscreteCategory[numClasses];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            tainingClasses[cIndex] =
+                    new DiscreteCategory("number" + cIndex, discDSet, 200);
+        }
+        for (int i = 0; i < dataType.data.size(); i++) {
+            if (dataType.data.get(i) != null) {
+                instance = (DiscretizedDataInstance) (dataType.data.get(i));
+                currClass = instance.getCategory();
+                tainingClasses[currClass].indexes.add(new Integer(i));
+            }
+        }
+    }
+
+    @Override
+    public void setClasses(Object[] dataClasses) {
+        if (dataClasses == null || dataClasses.length == 0) {
+            return;
+        }
+        DiscreteCategory[] dClasses = new DiscreteCategory[dataClasses.length];
+        for (int cIndex = 0; cIndex < dataClasses.length; cIndex++) {
+            dClasses[cIndex] = (DiscreteCategory) (dataClasses[cIndex]);
+        }
+        setClasses(dClasses);
+    }
+
+    /**
+     * @param dataClasses DiscreteCategory[] representing the discretized
+     * training data.
+     */
+    public void setClasses(DiscreteCategory[] dataClasses) {
+        this.tainingClasses = dataClasses;
+    }
+
+    /**
+     * @return DiscreteCategory[] representing the discretized training data.
+     */
+    public DiscreteCategory[] getClasses() {
+        return tainingClasses;
+    }
+
+    /**
+     * @param dataType DiscretizedDataSet object representing the training data.
+     */
+    public void setDataType(DiscretizedDataSet dataType) {
+        this.dataType = dataType;
+    }
+
+    /**
+     * @return DiscretizedDataSet object representing the training data.
+     */
+    public DiscretizedDataSet getDataType() {
+        return dataType;
+    }
+
+    /**
+     * @return DataSet object that the training data was discretized from.
+     */
+    public DataSet getOriginalDataType() {
+        if (dataType != null) {
+            return dataType.getOriginalData();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public abstract ValidateableInterface copyConfiguration();
+
+    @Override
+    public abstract void train() throws Exception;
+
+    public abstract int classify(DiscretizedDataInstance instance)
+            throws Exception;
+
+    public abstract float[] classifyProbabilistically(
+            DiscretizedDataInstance instance) throws Excep
