@@ -192,4 +192,109 @@ public abstract class DiscreteClassifier implements ValidateableInterface,
             throws Exception;
 
     public abstract float[] classifyProbabilistically(
-            DiscretizedDataInstance instance) throws Excep
+            DiscretizedDataInstance instance) throws Exception;
+
+    /**
+     * This method performs batch classification of DiscretizedDataInstance
+     * objects.
+     *
+     * @param instances DiscretizedDataInstance[] that is the discretized data
+     * to classify.
+     * @return int[] corresponding the the classification results.
+     * @throws Exception
+     */
+    public int[] classify(DiscretizedDataInstance[] instances)
+            throws Exception {
+        int[] classificationResults = null;
+        if ((instances == null) || (instances.length == 0)) {
+            return null;
+        } else {
+            classificationResults = new int[instances.length];
+            for (int i = 0; i < instances.length; i++) {
+                classificationResults[i] = classify(instances[i]);
+
+            }
+            return classificationResults;
+        }
+    }
+
+    /**
+     * This method performs batch classification of DiscretizedDataInstance
+     * objects.
+     *
+     * @param instances DiscretizedDataInstance[] that is the discretized data
+     * to classify.
+     * @return float[][] corresponding the the classification results.
+     * @throws Exception
+     */
+    public float[][] classifyProbabilistically(
+            DiscretizedDataInstance[] instances) throws Exception {
+        float[][] classificationResults;
+        if ((instances == null) || (instances.length == 0)) {
+            return null;
+        } else {
+            classificationResults = new float[instances.length][];
+            for (int i = 0; i < instances.length; i++) {
+                classificationResults[i] =
+                        classifyProbabilistically(instances[i]);
+            }
+            return classificationResults;
+        }
+    }
+
+    /**
+     * This method performs batch classification of DiscretizedDataInstance
+     * objects.
+     *
+     * @param instances ArrayList<DiscretizedDataInstance> that is the
+     * discretized data to classify.
+     * @return int[] corresponding the the classification results.
+     * @throws Exception
+     */
+    public int[] classify(ArrayList<DiscretizedDataInstance> instances)
+            throws Exception {
+        int[] classificationResults;
+        if ((instances == null) || (instances.isEmpty())) {
+            return null;
+        } else {
+            classificationResults = new int[instances.size()];
+            for (int i = 0; i < instances.size(); i++) {
+                classificationResults[i] = classify(instances.get(i));
+
+            }
+            return classificationResults;
+        }
+    }
+
+    /**
+     * This method performs batch classification of DiscretizedDataInstance
+     * objects.
+     *
+     * @param instances ArrayList<DiscretizedDataInstance> that is the
+     * discretized data to classify.
+     * @return float[][] corresponding the the classification results.
+     * @throws Exception
+     */
+    public float[][] classifyProbabilistically(
+            ArrayList<DiscretizedDataInstance> instances) throws Exception {
+        float[][] classificationResults;
+        if ((instances == null) || (instances.isEmpty())) {
+            return null;
+        } else {
+            classificationResults = new float[instances.size()][];
+            for (int i = 0; i < instances.size(); i++) {
+                classificationResults[i] =
+                        classifyProbabilistically(instances.get(i));
+            }
+            return classificationResults;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(Object[] testClasses) throws Exception {
+        return test((DiscreteCategory[]) testClasses);
+    }
+
+    public ClassificationEstimator test(DiscretizedDataSet testDiscDSet,
+            int numClasses) throws Exception {
+ 
