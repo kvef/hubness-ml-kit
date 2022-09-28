@@ -384,4 +384,87 @@ public abstract class DiscreteClassifier implements ValidateableInterface,
     }
 
     @Override
-    public ClassificationEstimator test(ArrayList<Integer> i
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int numClasses) throws Exception {
+        if (indexes != null && indexes.isEmpty()) {
+            DiscreteCategory[] testClasses;
+            DiscretizedDataInstance instance;
+            DiscretizedDataSet discDSet = (DiscretizedDataSet) dataType;
+            testClasses = new DiscreteCategory[numClasses];
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                testClasses[cIndex] =
+                        new DiscreteCategory("number" + cIndex, discDSet, 200);
+            }
+            for (int i = 0; i < indexes.size(); i++) {
+                instance = discDSet.data.get(indexes.get(i));
+                testClasses[instance.getCategory()].indexes.add(indexes.get(i));
+            }
+            return test(testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int[] testLabelArray, int numClasses)
+            throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            DiscreteCategory[] testClasses;
+            DiscretizedDataInstance instance;
+            DiscretizedDataSet discDSet = (DiscretizedDataSet) dataType;
+            testClasses = new DiscreteCategory[numClasses];
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                testClasses[cIndex] =
+                        new DiscreteCategory("number" + cIndex, discDSet, 200);
+            }
+            for (int i = 0; i < indexes.size(); i++) {
+                instance = discDSet.data.get(indexes.get(i));
+                testClasses[testLabelArray[indexes.get(i)]].indexes.add(
+                        indexes.get(i));
+                testClasses[instance.getCategory()].indexes.add(indexes.get(i));
+            }
+            return test(testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int numClasses)
+            throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            DiscreteCategory[] testClasses;
+            DiscretizedDataInstance instance;
+            DiscretizedDataSet discDSet = (DiscretizedDataSet) dataType;
+            testClasses = new DiscreteCategory[numClasses];
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                testClasses[cIndex] =
+                        new DiscreteCategory("number" + cIndex, discDSet, 200);
+            }
+            for (int i = 0; i < indexes.size(); i++) {
+                instance = discDSet.data.get(indexes.get(i));
+                testClasses[instance.getCategory()].indexes.add(indexes.get(i));
+            }
+            return test(correctPointClassificationArray, testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int[] testLabelArray,
+            int numClasses) throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            DiscreteCategory[] testClasses;
+            DiscretizedDataInstance instance;
+            DiscretizedDataSet discDSet = (DiscretizedDataSet) dataType;
+            testClasses = new DiscreteCategory[numClasses];
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                testClasses[cIndex] =
+                        new DiscreteCategory("number" + cIndex, discDSet, 200);
+            }
+            for (int i = 0; i < indexes.size(); i++) {
+                insta
