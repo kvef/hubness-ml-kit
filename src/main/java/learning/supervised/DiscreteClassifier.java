@@ -297,4 +297,91 @@ public abstract class DiscreteClassifier implements ValidateableInterface,
 
     public ClassificationEstimator test(DiscretizedDataSet testDiscDSet,
             int numClasses) throws Exception {
- 
+        DiscretizedDataInstance instance;
+        int classificationResult;
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        if (testDiscDSet.size() > 0) {
+            for (int i = 0; i < testDiscDSet.size(); i++) {
+                instance = testDiscDSet.data.get(i);
+                classificationResult = classify(instance);
+                confusionMatrix[instance.getCategory()][classificationResult]++;
+            }
+            ClassificationEstimator estimator =
+                    new ClassificationEstimator(confusionMatrix);
+            estimator.calculateEstimates();
+            return estimator;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * This method evaluates the trained model on the test data.
+     *
+     * @param testClasses DiscreteCategory[] representing the test data.
+     * @return ClassificationEstimator holding the classifier evaluation quality
+     * metrics.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(DiscreteCategory[] testClasses)
+            throws Exception {
+        if ((testClasses == null) || (testClasses.length == 0)) {
+            return null;
+        } else {
+            int[] classificationResult;
+            float[][] confusionMatrix = new float[testClasses.length][
+                    testClasses.length];
+            for (int cIndex = 0; cIndex < testClasses.length; cIndex++) {
+                classificationResult = classify(testClasses[cIndex].getData());
+                if (classificationResult != null) {
+                    for (int i = 0; i < classificationResult.length; i++) {
+                        confusionMatrix[cIndex][classificationResult[i]]++;
+                    }
+                }
+            }
+            ClassificationEstimator estimator =
+                    new ClassificationEstimator(confusionMatrix);
+            estimator.calculateEstimates();
+            return estimator;
+        }
+    }
+
+    /**
+     * This method evaluates the trained model on the test data.
+     *
+     * @param correctPointClassificationArray float[] that is updated with the
+     * total point-wise classification precision.
+     * @param testClasses DiscreteCategory[] representing the test data.
+     * @return ClassificationEstimator holding the classifier evaluation quality
+     * metrics.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(float[] correctPointClassificationArray,
+            DiscreteCategory[] testClasses) throws Exception {
+        if ((testClasses == null) || (testClasses.length == 0)) {
+            return null;
+        } else {
+            int[] classificationResult;
+            float[][] confusionMatrix = new float[testClasses.length][
+                    testClasses.length];
+            for (int cIndex = 0; cIndex < testClasses.length; cIndex++) {
+                classificationResult = classify(testClasses[cIndex].getData());
+                if (classificationResult != null) {
+                    for (int i = 0; i < classificationResult.length; i++) {
+                        confusionMatrix[cIndex][classificationResult[i]]++;
+                        if (classificationResult[i] == cIndex) {
+                            correctPointClassificationArray[
+                                    testClasses[cIndex].indexes.get(i)]++;
+                        }
+                    }
+                }
+            }
+            ClassificationEstimator estimator =
+                    new ClassificationEstimator(confusionMatrix);
+            estimator.calculateEstimates();
+            return estimator;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> i
