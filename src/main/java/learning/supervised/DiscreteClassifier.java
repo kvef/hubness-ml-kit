@@ -633,4 +633,77 @@ public abstract class DiscreteClassifier implements ValidateableInterface,
             int numClasses, float[][] pointDistances, int[][] pointNeighbors)
             throws Exception {
         int[] classificationResult = new int[indexes.size()];
-        float[][] confusionMatrix 
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof DiscreteNeighborPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((DiscreteNeighborPointsQueryUserInterface) this).
+                        classify(((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)), pointDistances[i], pointNeighbors[i]);
+            } else if (this instanceof DiscreteDistToPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((DiscreteDistToPointsQueryUserInterface) this).
+                        classify(((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)), pointDistances[i]);
+            } else {
+                classificationResult[i] = classify(
+                        ((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)));
+            }
+            confusionMatrix[classificationResult[i]][
+                    testLabelArray[indexes.get(i)]]++;
+            if (classificationResult[i] == testLabelArray[indexes.get(i)]) {
+                correctPointClassificationArray[indexes.get(i)]++;
+            }
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+
+    @Override
+    public ClassificationEstimator test(ArrayList<Integer> indexes,
+            Object dataType, int[] testLabelArray, int numClasses,
+            float[][] pointDistances, int[][] pointNeighbors) throws Exception {
+        int[] classificationResult = new int[indexes.size()];
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof DiscreteNeighborPointsQueryUserInterface) {
+                classificationResult[i] =
+                        ((DiscreteNeighborPointsQueryUserInterface) this).
+                        classify(((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)), pointDistances[i], pointNeighbors[i]);
+            } else if (this instanceof DiscreteDistToPointsQueryUserInterface) {
+                classificationResult[i] = (
+                        (DistToPointsQueryUserInterface) this).classify(
+                        ((DataSet) dataType).getInstance(indexes.get(i)),
+                        pointDistances[i]);
+            } else {
+                classificationResult[i] = classify(
+                        ((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)));
+            }
+            confusionMatrix[classificationResult[i]][testLabelArray[
+                    indexes.get(i)]]++;
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+    
+    /**
+     * This method evaluates the trained model on the test data.
+     *
+     * @param predictedProbLabelsAllData  float[][] representing the current
+     * predicted fuzzy labels for all data points (not only the test points in
+     * the current iteration, but rather all points from the original data.)
+     * @param correctPointClassificationArray float[] that is updated with the
+     * total point-wise classification precision.
+     * @param testClasses DiscreteCategory[] representing the test data.
+     * @return ClassificationEstimator holding the classifier evaluation quality
+     * metrics.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(float[][] predictedProbLa
