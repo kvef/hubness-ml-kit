@@ -706,4 +706,80 @@ public abstract class DiscreteClassifier implements ValidateableInterface,
      * metrics.
      * @throws Exception
      */
-    public ClassificationEstimator test(float[][] predictedProbLa
+    public ClassificationEstimator test(float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationArray,
+            DiscreteCategory[] testClasses) throws Exception {
+        if ((testClasses == null) || (testClasses.length == 0)) {
+            return null;
+        } else {
+            int[] classificationResult;
+            float[][] probClassifications;
+            float[][] confusionMatrix = new float[testClasses.length][
+                    testClasses.length];
+            for (int cIndex = 0; cIndex < testClasses.length; cIndex++) {
+                probClassifications = classifyProbabilistically(
+                        testClasses[cIndex].getData());
+                if (probClassifications != null) {
+                    classificationResult = new int[probClassifications.length];
+                    for (int i = 0; i < probClassifications.length; i++) {
+                        classificationResult[i] = ArrayUtil.indexOfMax(
+                                probClassifications[i]);
+                        confusionMatrix[cIndex][classificationResult[i]]++;
+                        if (classificationResult[i] == cIndex) {
+                            correctPointClassificationArray[
+                                    testClasses[cIndex].indexes.get(i)]++;
+                        }
+                        predictedProbLabelsAllData[
+                                testClasses[cIndex].indexes.get(i)] =
+                                probClassifications[i];
+                    }
+                }
+            }
+            ClassificationEstimator estimator =
+                    new ClassificationEstimator(confusionMatrix);
+            estimator.calculateEstimates();
+            return estimator;
+        }
+    }
+    
+    @Override
+    public ClassificationEstimator test(float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int numClasses)
+            throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            DiscreteCategory[] testClasses;
+            DiscretizedDataInstance instance;
+            DiscretizedDataSet discDSet = (DiscretizedDataSet) dataType;
+            testClasses = new DiscreteCategory[numClasses];
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                testClasses[cIndex] =
+                        new DiscreteCategory("number" + cIndex, discDSet, 200);
+            }
+            for (int i = 0; i < indexes.size(); i++) {
+                instance = discDSet.data.get(indexes.get(i));
+                testClasses[instance.getCategory()].indexes.add(indexes.get(i));
+            }
+            return test(predictedProbLabelsAllData,
+                    correctPointClassificationArray, testClasses);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public ClassificationEstimator test(float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationArray,
+            ArrayList<Integer> indexes, Object dataType, int[] testLabelArray,
+            int numClasses) throws Exception {
+        if (indexes != null && !indexes.isEmpty()) {
+            DiscreteCategory[] testClasses;
+            DiscretizedDataInstance instance;
+            DiscretizedDataSet discDSet = (DiscretizedDataSet) dataType;
+            testClasses = new DiscreteCategory[numClasses];
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                testClasses[cIndex] =
+                        new DiscreteCategory("number" + cIndex, discDSet, 200);
+            }
+            for (int i = 0; i < indexes.size(); i++) {
+                instance = di
