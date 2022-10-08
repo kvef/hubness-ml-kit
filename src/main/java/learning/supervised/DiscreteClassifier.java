@@ -927,4 +927,96 @@ public abstract class DiscreteClassifier implements ValidateableInterface,
             int numClasses, float[][] pointDistances, int[][] pointNeighbors)
             throws Exception {
         float[][] probClassifications = new float[indexes.size()][];
-        int[] classificationResult = new
+        int[] classificationResult = new int[indexes.size()];
+        float[][] confusionMatrix = new float[numClasses][numClasses];
+        for (int i = 0; i < indexes.size(); i++) {
+            if (this instanceof DiscreteNeighborPointsQueryUserInterface) {
+                probClassifications[i] =
+                        ((DiscreteNeighborPointsQueryUserInterface) this).
+                        classifyProbabilistically(
+                        ((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)), pointDistances[i], pointNeighbors[i]);
+                classificationResult[i] = ArrayUtil.indexOfMax(
+                        probClassifications[i]);
+            } else if (this instanceof DiscreteDistToPointsQueryUserInterface) {
+                probClassifications[i] =
+                        ((DiscreteDistToPointsQueryUserInterface) this).
+                        classifyProbabilistically(
+                        ((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)), pointDistances[i]);
+                classificationResult[i] = ArrayUtil.indexOfMax(
+                        probClassifications[i]);
+            } else {
+                probClassifications[i] = classifyProbabilistically(
+                        ((DiscretizedDataSet) dataType).getInstance(
+                        indexes.get(i)));
+                classificationResult[i] = ArrayUtil.indexOfMax(
+                        probClassifications[i]);
+            }
+            confusionMatrix[classificationResult[i]][
+                    testLabelArray[indexes.get(i)]]++;
+            if (classificationResult[i] == testLabelArray[indexes.get(i)]) {
+                correctPointClassificationArray[indexes.get(i)]++;
+            }
+            predictedProbLabelsAllData[indexes.get(i)] = probClassifications[i];
+        }
+        ClassificationEstimator estimator =
+                new ClassificationEstimator(confusionMatrix);
+        estimator.calculateEstimates();
+        return estimator;
+    }
+    
+    /**
+     * This method saves the classifier model.
+     * 
+     * @param ous OutputStream to write the model to.
+     * @throws Exception 
+     */
+    public void save(ObjectOutputStream ous) throws Exception {
+        ous.writeObject(this);
+    }
+
+    /**
+     * This method loads the classifier.
+     * 
+     * @param ins InputStream to read the model from.
+     * @return DiscreteClassifier that is the loaded model.
+     * @throws Exception 
+     */
+    public static DiscreteClassifier load(ObjectInputStream ins)
+            throws Exception {
+        DiscreteClassifier loadedModel = (DiscreteClassifier)ins.readObject();
+        return loadedModel;
+    }
+    
+    /**
+     * This method saves the classifier model.
+     * 
+     * @param outFile File to write the model to.
+     * @throws Exception 
+     */
+    public void save(File outFile) throws Exception {
+        FileUtil.createFile(outFile);
+        try (ObjectOutputStream ous =
+                new ObjectOutputStream(new FileOutputStream(outFile))) {
+            save(ous);
+        }
+    }
+
+    /**
+     * This method loads the classifier.
+     * 
+     * @param inFile File to load the model from.
+     * @return DiscreteClassifier that is the loaded model.
+     * @throws Exception 
+     */
+    public static DiscreteClassifier load(File inFile)
+            throws Exception {
+        DiscreteClassifier loadedModel;
+        try (ObjectInputStream reader = new ObjectInputStream(
+                     new FileInputStream(inFile))) {
+            loadedModel = load(reader);
+        }
+        return loadedModel;
+    }
+}
