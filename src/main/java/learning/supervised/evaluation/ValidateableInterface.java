@@ -1,0 +1,83 @@
+/**
+* Hub Miner: a hubness-aware machine learning experimentation library.
+* Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
+* 
+* This program is free software: you can redistribute it and/or modify it under
+* the terms of the GNU General Public License as published by the Free Software
+* Foundation, either version 3 of the License, or (at your option) any later
+* version.
+* 
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with
+* this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package learning.supervised.evaluation;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import preprocessing.instance_selection.InstanceSelector;
+
+/**
+ * This interface declares the methods needed for successful classifier
+ * evaluation, for both continuous and discretized data classifiers.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public interface ValidateableInterface {
+    
+    /**
+     * @return HashMap<String, String> that maps the parameters used in the
+     * algorithm to their descriptions.
+     */
+    public abstract HashMap<String, String> getParameterNamesAndDescriptions();
+    
+    /**
+     * @return Long value that is the current version of the implementation. 
+     */
+    public abstract long getVersion();
+
+    /**
+     * @return String that is the classifier name.
+     */
+    public String getName();
+
+    /**
+     * @param dataClasses Array of categories to set as the training data. It
+     * can correspond to continuous or discretized categories.
+     */
+    public void setClasses(Object[] dataClasses);
+
+    /**
+     * This method sets the training data array to the classifier.
+     *
+     * @param data ArrayList of data points.
+     * @param dataType Object that is the data context. It can correspond to
+     * dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     */
+    public void setData(ArrayList data, Object dataType);
+
+    /**
+     * This method sets the training data by indexes pointing to the data
+     * context.
+     *
+     * @param currentIndexes ArrayList<Integer> of training data indexes.
+     * @param dataType Object that is the data context. It can correspond to
+     * dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     */
+    public void setDataIndexes(ArrayList<Integer> currentIndexes,
+            Object dataType);
+
+    /**
+     * This method tests and evaluates the classifier.
+     *
+     * @param indexes ArrayList<Integer> of test data indexes.
+     * @param dataType Object that is the test data context. It can correspond
+     * to dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @return Classi
