@@ -165,4 +165,80 @@ public interface ValidateableInterface {
 
     /**
      * This method tests and evaluates the classifier, while keeping track of
- 
+     * correct classifications for each class.
+     *
+     * @param correctPointClassificationCounter float[] representing the counter
+     * of correct class-specific classifications, for latter analysis.
+     * @param indexes ArrayList<Integer> of test data indexes.
+     * @param dataType Object that is the test data context. It can correspond
+     * to dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     * @param testLabelArray int[] representing the separate test data label
+     * array.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(
+            float[] correctPointClassificationCounter,
+            ArrayList<Integer> indexes, Object dataType,
+            int[] testLabelArray, int numClasses) throws Exception;
+
+    /**
+     * This method tests and evaluates the classifier, while keeping track of
+     * correct classifications for each class.
+     *
+     * @param correctPointClassificationCounter float[] representing the counter
+     * of correct class-specific classifications, for latter analysis.
+     * @param indexes ArrayList<Integer> of test data indexes.
+     * @param dataType Object that is the test data context. It can correspond
+     * to dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param trainingToTestDistances float[][] representing a matrix of
+     * distances from the training points to the test points.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(
+            float[] correctPointClassificationCounter,
+            ArrayList<Integer> indexes, Object dataType,
+            int numClasses, float[][] trainingToTestDistances) throws Exception;
+
+    /**
+     * This method tests and evaluates the classifier, while keeping track of
+     * correct classifications for each class.
+     *
+     * @param correctPointClassificationCounter float[] representing the counter
+     * of correct class-specific classifications, for latter analysis.
+     * @param indexes ArrayList<Integer> of test data indexes.
+     * @param dataType Object that is the test data context. It can correspond
+     * to dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     * @param testLabelArray int[] representing the separate test data label
+     * array.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param trainingToTestDistances float[][] representing a matrix of
+     * distances from the training points to the test points.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(
+            float[] correctPointClassificationCounter,
+            ArrayList<Integer> indexes, Object dataType,
+            int[] testLabelArray, int numClasses,
+            float[][] trainingToTestDistances) throws Exception;
+
+    /**
+     * This method tests and evaluates the classifier.
+     *
+     * @param indexes ArrayList<Integer> of test data indexes.
+     * @param dataType Object that is the test data context. It can correspond
+     * to dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     * @param testLabelArray int[] representing the separate test data label
+     * array.
+   
