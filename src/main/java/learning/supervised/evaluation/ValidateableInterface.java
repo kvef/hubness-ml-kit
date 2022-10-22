@@ -316,3 +316,85 @@ public interface ValidateableInterface {
      * This method tests and evaluates the classifier.
      *
      * @param dataClasses Array of data categories representing the test data.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(Object[] dataClasses) throws Exception;
+
+    /**
+     * This method copies the initial classifier configuration, without copying
+     * the entire trained model. It essentially copies the parametrized
+     * classifier type.
+     *
+     * @return ValidateableInterface that is the copy of the parametrized
+     * initial classifier configuration.
+     */
+    public ValidateableInterface copyConfiguration();
+
+    /**
+     * This method trains the classification model, based on the provided
+     * training data and parameters.
+     *
+     * @throws Exception
+     */
+    public void train() throws Exception;
+
+    /**
+     * This method trains the classification model on the reduced dataset, based
+     * on the reduced training data and the additional information contained in
+     * the InstanceSelector object.
+     *
+     * @param reducer InstanceSelector object containing the additional data
+     * reduction - related information, including the unbiased neighbor
+     * occurrence frequency estimates.
+     * @throws Exception
+     */
+    public void trainOnReducedData(InstanceSelector reducer) throws Exception;
+    
+    /**
+     * This method tests and evaluates the classifier, while keeping track of
+     * correct classifications for each class.
+     *
+     * @param predictedProbLabelsAllData float[][] representing the current
+     * predicted fuzzy labels for all data points (not only the test points in
+     * the current iteration, but rather all points from the original data.)
+     * @param correctPointClassificationCounter float[] representing the counter
+     * of correct class-specific classifications, for latter analysis.
+     * @param indexes ArrayList<Integer> of test data indexes.
+     * @param dataType Object that is the test data context. It can correspond
+     * to dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(
+            float[][] predictedProbLabelsAllData,
+            float[] correctPointClassificationCounter,
+            ArrayList<Integer> indexes, Object dataType, int numClasses)
+            throws Exception;
+
+    /**
+     * This method tests and evaluates the classifier, while keeping track of
+     * correct classifications for each class.
+     *
+     * @param predictedProbLabelsAllData float[][] representing the current
+     * predicted fuzzy labels for all data points (not only the test points in
+     * the current iteration, but rather all points from the original data.)
+     * @param correctPointClassificationCounter float[] representing the counter
+     * of correct class-specific classifications, for latter analysis.
+     * @param indexes ArrayList<Integer> of test data indexes.
+     * @param dataType Object that is the test data context. It can correspond
+     * to dense and sparse DataSet objects, as well as a DiscretizedDataSet data
+     * context.
+     * @param testLabelArray int[] representing the separate test data label
+     * array.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @return ClassificationEstimator containing the resulting classification
+     * quality measures.
+     * @throws Exception
+     */
+    public ClassificationEstimator test(
+            float[][] predictedProbLabel
