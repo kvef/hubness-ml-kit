@@ -175,4 +175,96 @@ public class BatchClassifierTester {
     private float alphaAppKNNs = 1f;
     private boolean approximateKNNs = false;
     // Current instance selector.
-    private InstanceSel
+    private InstanceSelector selector = null;
+    // Current selection rate.
+    private float selectorRate = 0.1f;
+    // Hubness estimation mode for the prototypes in instance selection. It can
+    // be estimated from all the training data (retained and rejected), which
+    // is an unbiased approach to hubness estimation in instance selection - or
+    // it can be simply estimated from the selected prototype set, which is
+    // simpler but introduces a bias in the estimates.
+    private int protoHubnessMode = MultiCrossValidation.PROTO_UNBIASED;
+    // The number of threads used for distance matrix and kNN set calculations.
+    private int numCommonThreads = 8;
+    // OpenML taskID-s and a map that checks whether a particular dataset is a
+    // OpenML data source.
+    public ArrayList<Integer> openMLTaskIDList;
+    public HashMap<Integer, Integer> dataIndexToOpenMLCounterMap =
+            new HashMap<>();
+    private ExternalExperimentalContext contextObjects; 
+
+    /**
+     * Get the human-readable name of a secondary distance type.
+     *
+     * @param dType SecondaryDistance to get the name of.
+     * @return String that is the secondary distance name.
+     */
+    private String getSecondaryDistanceName(SecondaryDistance dType) {
+        switch (dType) {
+            case SIMCOS: {
+                return "simcos";
+            }
+            case SIMHUB: {
+                return "simhub";
+            }
+            case MP: {
+                return "mutualproximity";
+            }
+            case LS: {
+                return "localscaling";
+            }
+            case NICDM: {
+                return "nicdm";
+            }
+            default: {
+                return "none";
+            }
+        }
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param inConfigFile File that contains the experimental configuration.
+     */
+    public BatchClassifierTester(File inConfigFile) {
+        this.inConfigFile = inConfigFile;
+    }
+
+    /**
+     * This method runs all the experiments that were specified in the
+     * configuration.
+     */
+    public void runAllTests() throws Exception {
+        int datasetIndex = 0;
+        DataSet labelCol = null;
+        if (multiLabelMode) {
+            // Each label array is a column in the label file.
+            if (inLabelFile.getPath().endsWith(".arff")) {
+                IOARFF aPers = new IOARFF();
+                labelCol = aPers.load(inLabelFile.getPath());
+            } else if (inLabelFile.getPath().endsWith(".csv")) {
+                IOCSV reader = new IOCSV(false, lsep,
+                        DataMineConstants.INTEGER);
+                labelCol = reader.readData(inLabelFile);
+            } else {
+                System.out.println("Wrong label format");
+                throw new Exception();
+            }
+            // The number of different classification problems defined on top
+            // of the data.
+            numDifferentLabelings = labelCol.getNumIntAttr();
+        }
+        // Iterate over all data representations / datasets.
+        for (String dsPath : dsPaths) {
+            cmet = dsMetric.get(datasetIndex);
+            File dsFile = new File(dsPath);
+            originalDSet = SupervisedLoader.loadData(dsFile, multiLabelMode);
+            System.out.println("Testing on: " + dsPath);
+            // Make all category indexes be in the range [0 .. numCategores - 1]
+            originalDSet.standardizeCategories();
+            // Perform feature normalization, if specified.
+            if (normType != Normalization.NONE) {
+                System.out.print("Normalizing features-");
+                if (normType == Normalization.NORM_01) {
+               
