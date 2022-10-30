@@ -267,4 +267,77 @@ public class BatchClassifierTester {
             if (normType != Normalization.NONE) {
                 System.out.print("Normalizing features-");
                 if (normType == Normalization.NORM_01) {
-               
+                    // Normalization to the 0-1 range.
+                    originalDSet.normalizeFloats();
+                } else if (normType == Normalization.STANDARDIZE) {
+                    // Feature standardization.
+                    originalDSet.standardizeAllFloats();
+                } else if (normType == Normalization.TFIDF) {
+                    // TFIDF normalization.
+                    boolean[] fBool;
+                    if (originalDSet instanceof BOWDataSet) {
+                        fBool = new boolean[((BOWDataSet) originalDSet).
+                                getNumDifferentWords()];
+                    } else {
+                        fBool = new boolean[originalDSet.getNumFloatAttr()];
+                    }
+                    Arrays.fill(fBool, true);
+                    TFIDF filterTFIDF = new TFIDF(fBool,
+                            DataMineConstants.FLOAT);
+                    if (originalDSet instanceof BOWDataSet) {
+                        filterTFIDF.setSparse(true);
+                    }
+                    filterTFIDF.filter(originalDSet);
+                }
+                System.out.println("-Normalization complete.");
+            } else {
+                System.out.println("Skipping feature normalization.");
+            }
+            // Get the original label array.
+            originalLabels = originalDSet.obtainLabelArray();
+            // Get the number of classes in the data.
+            numCategories = originalDSet.countCategories();
+
+            // Initialize the discrete classifier flag array.
+            for (int cIndex = 0; cIndex < classifierNames.size(); cIndex++) {
+                String cName = classifierNames.get(cIndex);
+                if (isDiscrete(cName)) {
+                    discreteExists = true;
+                    break;
+                }
+            }
+            dsFolds = null;
+            if (allDataSetFolds == null && foldsDir != null) {
+                File foldsFile = new File(foldsDir,
+                        dsFile.getName().substring(0, dsFile.getName().
+                        lastIndexOf(".")) + "_cv_" + numTimes + "_" + numFolds +
+                        ".json");
+                if (foldsFile.exists()) {
+                    System.out.println("Loading the existing folds from: " +
+                            foldsFile.getPath());
+                    dsFolds = CVFoldsIO.loadAllFolds(foldsFile);
+                }
+            } else {
+                dsFolds = allDataSetFolds[datasetIndex];
+            }
+            int memCleanCount = 0;
+            // Iterate over all the noise and mislabeling rates, for all the
+            // label assignments (if in the multi-label mode).
+            for (float noise = noiseMin; noise <= noiseMax;
+                    noise += noiseStep) {
+                for (int lIndex = 0; lIndex < numDifferentLabelings; lIndex++) {
+                    for (float ml = mlMin; ml <= mlMax; ml += mlStep) {
+                        if (++memCleanCount % 5 == 0) {
+                            // Try initiating some clean-up periodically.
+                            System.gc();
+                        }
+                        if (ml > 0 || noise > 0) {
+                            // If some noise or mislabeling is to be applied,
+                            // first make a copy of the original data.
+                            currDSet = originalDSet.copy();
+                        } else {
+                            currDSet = originalDSet;
+                        }
+                        if (multiLabelMode && labelCol != null) {
+                            // If in the multi-label mode, assign the
+                            // appropriate labels to
