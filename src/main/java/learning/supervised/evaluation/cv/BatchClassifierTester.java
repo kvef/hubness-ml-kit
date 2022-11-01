@@ -576,4 +576,58 @@ public class BatchClassifierTester {
                                             case NORM_01:
                                                 dMatPath = "NORM01" +
                                                         File.separator +
-                               
+                                                        metricDir +
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                            case STANDARDIZE:
+                                                dMatPath = "STANDARDIZED" +
+                                                        File.separator +
+                                                        metricDir +
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                            case TFIDF:
+                                                dMatPath = "TFIDF" +
+                                                        File.separator +
+                                                        metricDir +
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                        }
+                                    } else {
+                                        switch (normType) {
+                                            case NONE:
+                                                dMatPath = "NO" +
+                                                        File.separator +
+                                                        ((SparseCombinedMetric)
+                                                        cmet).getSparseMetric().
+                                                        getClass().getName() +
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                            case NORM_01:
+                                                dMatPath = "NORM01" +
+                                                        File.separator +
+                                                        ((SparseCombinedMetric)
+                                                        cmet).getSparseMetric().
+                                                        getClass().getName() +
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                            case STANDARDIZE:
+                                                dMatPath = "STANDARDIZED" +
+                                                        File.separator +
+                                                        ((SparseCombinedMetric)
+                                                        cmet).getSparseMetric().
+                                                        getClass().getName() +
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                            case TFIDF:
+                                                dMatPath = "TFIDF" +
+                                                        File.separator +
+                                                        ((SparseCombinedMetric)
+                                                        cmet).getSparseMetric().
+                                                        getClass().getName() +
+                            
