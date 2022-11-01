@@ -457,4 +457,63 @@ public class BatchClassifierTester {
                             currDiscDSet = new DiscretizedDataSet(currDSet);
                             EntropyMDLDiscretizer discretizer =
                                     new EntropyMDLDiscretizer(
-                                    currDSet, currDiscD
+                                    currDSet, currDiscDSet, numCategories);
+                            discretizer.discretizeAll();
+                            currDiscDSet.discretizeDataSet(currDSet);
+                        }
+                        for (int k = kMax; k >= kMin; k -= kStep) {
+                            // Iterate over different neighborhood sizes.
+                            if (multiLabelMode) {
+                                currOutDSDir = new File(outDir,
+                                        dsFile.getName().substring(0,
+                                        dsFile.getName().lastIndexOf(".")) +
+                                        "L" + lIndex + File.separator + "k" +
+                                        k + File.separator + "ml" + ml +
+                                        File.separator + "noise" + noise);
+                            } else {
+                                currOutDSDir = new File(outDir,
+                                        dsFile.getName().substring(0,
+                                        dsFile.getName().lastIndexOf(".")) +
+                                        File.separator + "k" + k +
+                                        File.separator + "ml" + ml +
+                                        File.separator + "noise" + noise);
+                            }
+                            FileUtil.createDirectory(currOutDSDir);
+                            isDiscreteAlgorithm =
+                                    new boolean[classifierNames.size()];
+                            // Initialize algorithm lists.
+                            ArrayList<ValidateableInterface> nonDiscreteAlgs =
+                                    new ArrayList<>(20);
+                            ArrayList<ValidateableInterface> discreteAlgs =
+                                    new ArrayList<>(20);
+
+                            for (int cIndex = 0; cIndex <
+                                    classifierNames.size(); cIndex++) {
+                                // Place the algorithm in the appropriate list.
+                                String cName = classifierNames.get(cIndex);
+                                ValidateableInterface cInstance;
+                                if (algorithmParametrizationMap.containsKey(
+                                        cName)) {
+                                    cInstance = getClassifierForName(cName,
+                                            cIndex, numCategories, cmet, k,
+                                            algorithmParametrizationMap.get(
+                                            cName));
+                                } else {
+                                    cInstance = getClassifierForName(cName,
+                                            cIndex, numCategories, cmet, k,
+                                            null);
+                                }
+                                if (cInstance instanceof DiscreteClassifier) {
+                                    isDiscreteAlgorithm[cIndex] = true;
+                                }
+                                if (isDiscreteAlgorithm[cIndex]) {
+                                    discreteAlgs.add(cInstance);
+                                } else {
+                                    nonDiscreteAlgs.add(cInstance);
+                                }
+                            }
+                            discreteArray =
+                                    new ValidateableInterface[
+                                            discreteAlgs.size()];
+                            if (discreteArray.length > 0) {
+                                discre
