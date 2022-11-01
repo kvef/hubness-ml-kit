@@ -689,4 +689,67 @@ public class BatchClassifierTester {
                                     if (trainTestIndexes == null ||
                                             trainTestIndexes[datasetIndex] ==
                                             null) {
-                                        discreteCV.setAll
+                                        discreteCV.setAllFolds(dsFolds);
+                                    } else {
+                                        discreteCV.setTrainTestIndexes(
+                                                trainTestIndexes[datasetIndex]);
+                                    }
+                                    discreteCV.setExternalContext(
+                                            contextObjects);
+                                }
+                                nonDiscreteCV =
+                                        new MultiCrossValidation(
+                                                numTimes,
+                                                numFolds,
+                                                numCategories,
+                                                currDSet,
+                                                currDSet.data,
+                                                nonDiscreteArray, distMat);
+                                if (trainTestIndexes == null ||
+                                            trainTestIndexes[datasetIndex] ==
+                                            null) {
+                                    nonDiscreteCV.setAllFolds(dsFolds);
+                                } else {
+                                    nonDiscreteCV.setTrainTestIndexes(
+                                            trainTestIndexes[datasetIndex]);
+                                }
+                                nonDiscreteCV.setExternalContext(
+                                        contextObjects);
+                            } else {
+                                if (discreteExists) {
+                                    discreteCV =
+                                            new MultiCrossValidation(
+                                                    numTimes,
+                                                    numFolds,
+                                                    numCategories,
+                                                    currDiscDSet,
+                                                    currDiscDSet.data,
+                                                    discreteArray);
+                                    if (trainTestIndexes == null ||
+                                            trainTestIndexes[datasetIndex] ==
+                                            null) {
+                                        discreteCV.setAllFolds(dsFolds);
+                                    } else {
+                                        discreteCV.setTrainTestIndexes(
+                                                trainTestIndexes[datasetIndex]);
+                                    }
+                                }
+                                nonDiscreteCV =
+                                        new MultiCrossValidation(
+                                                numTimes,
+                                                numFolds,
+                                                numCategories,
+                                                currDSet,
+                                                currDSet.data,
+                                                nonDiscreteArray);
+                                if (trainTestIndexes == null ||
+                                            trainTestIndexes[datasetIndex] ==
+                                            null) {
+                                    nonDiscreteCV.setAllFolds(dsFolds);
+                                } else {
+                                    nonDiscreteCV.setTrainTestIndexes(
+                                            trainTestIndexes[datasetIndex]);
+                                }
+                            }
+                            // First handle the discretized case.
+                            if (d
