@@ -752,4 +752,61 @@ public class BatchClassifierTester {
                                 }
                             }
                             // First handle the discretized case.
-                            if (d
+                            if (discreteExists && discreteCV != null) {
+                                discreteCV.validateOnSeparateLabelArray(
+                                        originalLabels);
+                                discreteCV.useMultipleCommonThreads(
+                                        numCommonThreads);
+                            }
+                            nonDiscreteCV.validateOnSeparateLabelArray(
+                                    originalLabels);
+                            nonDiscreteCV.useMultipleCommonThreads(
+                                        numCommonThreads);
+                            if (approximateKNNs) {
+                                // In case of approximate kNN set calculations.
+                                if (discreteExists && discreteCV != null) {
+                                    discreteCV.setApproximateKNNParams(
+                                            approximateKNNs, alphaAppKNNs);
+                                }
+                                nonDiscreteCV.setApproximateKNNParams(
+                                        approximateKNNs, alphaAppKNNs);
+                            }
+                            // Performance estimators.
+                            ClassificationEstimator[] avgDiscrete = null;
+                            ClassificationEstimator[][] allDiscreteEstimates =
+                                    null;
+                            if (discreteExists && discreteCV != null) {
+                                // Initialize the cross-validation object.
+                                avgDiscrete = null;
+                                allDiscreteEstimates = null;
+                                if (discreteArray.length > 0) {
+                                    discreteCV.setKValue(k);
+                                    discreteCV.setCombinedMetric(cmet);
+                                    discreteCV.setProtoHubnessMode(
+                                            protoHubnessMode);
+                                    if (selector != null) {
+                                        discreteCV.setDataReducer(
+                                                selector, selectorRate);
+                                    }
+                                    // Perform the tests.
+                                    discreteCV.performAllTests();
+                                    System.out.println();
+                                    if (foldsDir != null) {
+                                        File foldsFile = new File(foldsDir,
+                                                dsFile.getName().substring(0,
+                                                dsFile.getName().lastIndexOf(
+                                                ".")) + "_cv_" + numTimes +
+                                                "_" + numFolds + ".json");
+                                        dsFolds = discreteCV.getAllFolds();
+                                        // We over-write in any case, as the
+                                        // folds might have been loaded
+                                        // externally via OpenML and we might
+                                        // like to save them for future off-line
+                                        // testing.
+                                        System.out.println("Saving the folds "
+                                                + "to:" + foldsFile.getPath());
+                                        CVFoldsIO.saveAllFolds(dsFolds,
+                                                numTimes, numFolds, foldsFile);
+                                    }
+                                    avgDiscrete =
+                               
