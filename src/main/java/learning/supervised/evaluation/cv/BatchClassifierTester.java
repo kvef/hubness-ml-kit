@@ -630,4 +630,63 @@ public class BatchClassifierTester {
                                                         ((SparseCombinedMetric)
                                                         cmet).getSparseMetric().
                                                         getClass().getName() +
-                            
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                        }
+                                    }
+                                }
+                                File dMatFile = null;
+                                Class cmetClass = originalDSet.getClass();
+                                if (dMatPath != null && noise == 0) {
+                                    dMatFile = new File(distancesDir,
+                                            dsFile.getName().substring(0,
+                                            dsFile.getName().lastIndexOf(".")) +
+                                            File.separator + dMatPath);
+                                    cmetClass = Class.forName(dMatFile.
+                                            getParentFile().getName());
+                                }
+                                if (contextObjects == null) {
+                                    contextObjects =
+                                            new ExternalExperimentalContext();
+                                }
+                                if (distMat == null) {
+                                    if (dMatFile == null || !dMatFile.exists()
+                                            || !(cmetClass.isInstance(
+                                            cmet.getFloatMetric()))) {
+                                        System.out.print(
+                                                "Calculating distances-");
+                                        distMat = currDSet.
+                                                calculateDistMatrixMultThr(
+                                                cmet, 8);
+                                        System.out.println(
+                                                "-distance calculated.");
+                                        if (dMatFile != null) {
+                                            DistanceMatrixIO.printDMatToFile(
+                                                    distMat, dMatFile);
+                                        }
+                                    } else {
+                                        System.out.print("Loading distances-");
+                                        distMat =
+                                                DistanceMatrixIO.
+                                                loadDMatFromFile(dMatFile);
+                                        System.out.println(
+                                                "-distance loaded from file: " +
+                                                dMatFile.getPath());
+                                    }
+                                }
+                                contextObjects.setDistances(distMat);
+                                if (discreteExists) {
+                                    discreteCV =
+                                            new MultiCrossValidation(
+                                                    numTimes,
+                                                    numFolds,
+                                                    numCategories,
+                                                    currDiscDSet,
+                                                    currDiscDSet.data,
+                                                    discreteArray,
+                                                    distMat);
+                                    if (trainTestIndexes == null ||
+                                            trainTestIndexes[datasetIndex] ==
+                                            null) {
+                                        discreteCV.setAll
