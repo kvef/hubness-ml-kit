@@ -516,4 +516,64 @@ public class BatchClassifierTester {
                                     new ValidateableInterface[
                                             discreteAlgs.size()];
                             if (discreteArray.length > 0) {
-                                discre
+                                discreteArray = discreteAlgs.toArray(
+                                        discreteArray);
+                            }
+                            nonDiscreteArray =
+                                    new ValidateableInterface[
+                                            nonDiscreteAlgs.size()];
+                            if (nonDiscreteArray.length > 0) {
+                                nonDiscreteArray = nonDiscreteAlgs.toArray(
+                                        nonDiscreteArray);
+                            }
+                            // Check for distance matrix users.
+                            for (int cIndex = 0; cIndex < discreteArray.length;
+                                    cIndex++) {
+                                if (discreteArray[cIndex] instanceof
+                                        DistMatrixUserInterface) {
+                                    distUserPresentDisc = true;
+                                    break;
+                                }
+                            }
+                            for (int cIndex = 0; cIndex <
+                                    nonDiscreteArray.length; cIndex++) {
+                                if (nonDiscreteArray[cIndex] instanceof
+                                        DistMatrixUserInterface) {
+                                    distUserPresentNonDisc = true;
+                                    break;
+                                }
+                                if (nonDiscreteArray[cIndex] instanceof
+                                        NeighborPointsQueryUserInterface ||
+                                        nonDiscreteArray[cIndex] instanceof
+                                        NSFUserInterface ) {
+                                    kNNUserPresent = true;
+                                    break;
+                                }
+                            }
+                            MultiCrossValidation discreteCV = null;
+                            MultiCrossValidation nonDiscreteCV;
+                            if (distUserPresentDisc || distUserPresentNonDisc ||
+                                    kNNUserPresent) {
+                                // Load or calculate the distance matrix.
+                                String dMatPath = null;
+                                // Calculate the appropriate distance matrix
+                                // path.
+                                if (distancesDir != null) {
+                                    if (!(cmet instanceof SparseCombinedMetric)) {
+                                        String metricDir =
+                                                cmet.getFloatMetric() != null ?
+                                                cmet.getFloatMetric().
+                                                getClass().getName() :
+                                                cmet.getIntegerMetric().
+                                                getClass().getName();
+                                        switch (normType) {
+                                            case NONE:
+                                                dMatPath = "NO" + File.separator
+                                                        + metricDir +
+                                                        File.separator +
+                                                        "dMat.txt";
+                                                break;
+                                            case NORM_01:
+                                                dMatPath = "NORM01" +
+                                                        File.separator +
+                               
