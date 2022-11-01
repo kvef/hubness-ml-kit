@@ -340,4 +340,62 @@ public class BatchClassifierTester {
                         }
                         if (multiLabelMode && labelCol != null) {
                             // If in the multi-label mode, assign the
-                            // appropriate labels to
+                            // appropriate labels to the data points.
+                            for (int dInd = 0; dInd < currDSet.size(); dInd++) {
+                                currDSet.data.get(dInd).setCategory(
+                                        labelCol.getInstance(
+                                        dInd).iAttr[lIndex]);
+                            }
+                            numCategories = currDSet.countCategories();
+                            originalLabels = currDSet.obtainLabelArray();
+                        }
+                        if (ml > 0) {
+                            // First check if any mislabeling instance weights
+                            // were provided, that make certain mislabelings
+                            // more probable than others.
+                            String weightsPath = null;
+                            if (mlWeightsDir != null) {
+                                if (!(cmet instanceof SparseCombinedMetric)) {
+                                    String metricDir = cmet.getFloatMetric()
+                                            != null ?
+                                            cmet.getFloatMetric().getClass().
+                                            getName() : cmet.getIntegerMetric().
+                                            getClass().getName();
+                                    switch (normType) {
+                                        case NONE:
+                                            weightsPath = "NO" + File.separator
+                                                    + metricDir + File.separator
+                                                    + "ml_weights.txt";
+                                            break;
+                                        case NORM_01:
+                                            weightsPath = "NORM01" +
+                                                    File.separator + metricDir +
+                                                    File.separator +
+                                                    "ml_weights.txt";
+                                            break;
+                                        case STANDARDIZE:
+                                            weightsPath = "STANDARDIZED" +
+                                                    File.separator + metricDir +
+                                                    File.separator +
+                                                    "ml_weights.txt";
+                                            break;
+                                        case TFIDF:
+                                            weightsPath = "TFIDF" +
+                                                    File.separator + metricDir +
+                                                    File.separator +
+                                                    "ml_weights.txt";
+                                            break;
+                                    }
+                                } else {
+                                    switch (normType) {
+                                        case NONE:
+                                            weightsPath = "NO" + File.separator
+                                                    + ((SparseCombinedMetric)
+                                                    cmet).getSparseMetric().
+                                                    getClass().getName() +
+                                                    File.separator +
+                                                    "ml_weights.txt";
+                                            break;
+                                        case NORM_01:
+                                            weightsPath = "NORM01" +
+                                                    File.sep
