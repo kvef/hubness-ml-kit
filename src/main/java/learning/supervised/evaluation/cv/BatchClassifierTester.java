@@ -398,4 +398,63 @@ public class BatchClassifierTester {
                                             break;
                                         case NORM_01:
                                             weightsPath = "NORM01" +
-                                                    File.sep
+                                                    File.separator +
+                                                    ((SparseCombinedMetric)
+                                                    cmet).getSparseMetric().
+                                                    getClass().getName() +
+                                                    File.separator +
+                                                    "ml_weights.txt";
+                                            break;
+                                        case STANDARDIZE:
+                                            weightsPath = "STANDARDIZED" +
+                                                    File.separator +
+                                                    ((SparseCombinedMetric)
+                                                    cmet).getSparseMetric().
+                                                    getClass().getName() +
+                                                    File.separator +
+                                                    "ml_weights.txt";
+                                            break;
+                                        case TFIDF:
+                                            weightsPath = "TFIDF" +
+                                                    File.separator +
+                                                    ((SparseCombinedMetric)
+                                                    cmet).getSparseMetric().
+                                                    getClass().getName() +
+                                                    File.separator +
+                                                    "ml_weights.txt";
+                                            break;
+                                    }
+                                }
+                                File inWeightFile = new File(mlWeightsDir,
+                                        weightsPath);
+                                 try (BufferedReader br = new BufferedReader(
+                                         new InputStreamReader(
+                                         new FileInputStream(inWeightFile)));) {
+                                     String[] weightStrs = br.readLine().split(
+                                             " ");
+                                     float[] mlWeights = new float[
+                                             weightStrs.length];
+                                     for (int i = 0; i < weightStrs.length;
+                                             i++) {
+                                         mlWeights[i] = Float.parseFloat(
+                                                 weightStrs[i]);
+                                     }
+                                     currDSet.induceWeightProportionalMislabeling(
+                                             ml, numCategories, mlWeights);
+                                 }
+                            } else {
+                                // Induce the specified mislabeling rate.
+                                currDSet.induceMislabeling(ml, numCategories);
+                            }
+                        }
+                        if (noise > 0) {
+                            // Induce Gaussian featue noise.
+                            currDSet.addGaussianNoiseToNormalizedCollection(
+                                    noise, 0.1f);
+                        }
+                        if (discreteExists) {
+                            // Make a discretized version of the original data.
+                            currDiscDSet = new DiscretizedDataSet(currDSet);
+                            EntropyMDLDiscretizer discretizer =
+                                    new EntropyMDLDiscretizer(
+                                    currDSet, currDiscD
