@@ -809,4 +809,62 @@ public class BatchClassifierTester {
                                                 numTimes, numFolds, foldsFile);
                                     }
                                     avgDiscrete =
-                               
+                                            discreteCV.getAverageResults();
+                                    allDiscreteEstimates =
+                                            discreteCV.getEstimators();
+                                }
+                            }
+                            // Now the continuous case.
+                            ClassificationEstimator[] avgNonDiscrete = null;
+                            ClassificationEstimator[][] allNonDiscreteEstimates
+                                    = null;
+                            if (nonDiscreteArray.length > 0) {
+                                // Initialize the cross-validation object.
+                                nonDiscreteCV.setKValue(k);
+                                nonDiscreteCV.setCombinedMetric(cmet);
+                                nonDiscreteCV.setProtoHubnessMode(
+                                        protoHubnessMode);
+                                if (selector != null) {
+                                    nonDiscreteCV.setDataReducer(
+                                            selector, selectorRate);
+                                }
+                                if (secondaryDistanceType !=
+                                        SecondaryDistance.NONE) {
+                                    nonDiscreteCV.useSecondaryDistances(
+                                            secondaryDistanceType,
+                                            secondaryDistanceK);
+                                }
+                                // Perform the tests.
+                                nonDiscreteCV.performAllTests();
+                                System.out.print("tEstTraining: " + (long) (
+                                        nonDiscreteCV.execTimeAllOneRun));
+                                System.out.println();
+                                if (foldsDir != null) {
+                                    File foldsFile = new File(foldsDir,
+                                            dsFile.getName().substring(0,
+                                            dsFile.getName().lastIndexOf(".")) +
+                                            "_cv_" + numTimes + "_" + numFolds +
+                                            ".json");
+                                    dsFolds = nonDiscreteCV.getAllFolds();
+                                    // We over-write in any case, as the folds
+                                    // might have been loaded externally via
+                                    // OpenML and we might like to save them
+                                    // for future off-line testing.
+                                    System.out.println("Saving the folds "
+                                                + "to:" + foldsFile.getPath());
+                                    CVFoldsIO.saveAllFolds(dsFolds, numTimes,
+                                            numFolds, foldsFile);
+                                }
+                                avgNonDiscrete =
+                                        nonDiscreteCV.getAverageResults();
+                                allNonDiscreteEstimates =
+                                        nonDiscreteCV.getEstimators();
+                            }
+                            int discreteCounter = -1;
+                            int nonDiscreteCounter = -1;
+                            float[][][][] allFuzzyPredictionsNonDisc = null;
+                            if (nonDiscreteCV != null) {
+                                allFuzzyPredictionsNonDisc =
+                                    nonDiscreteCV.getAllFuzzyLabelAssignments();
+                                if (dataIndexToOpenMLCounterMap.containsKey(
+              
