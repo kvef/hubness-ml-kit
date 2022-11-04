@@ -867,4 +867,55 @@ public class BatchClassifierTester {
                                 allFuzzyPredictionsNonDisc =
                                     nonDiscreteCV.getAllFuzzyLabelAssignments();
                                 if (dataIndexToOpenMLCounterMap.containsKey(
-              
+                                        datasetIndex)) {
+                                    for (int algIndex = 0; algIndex < 
+                                            nonDiscreteArray.length; algIndex++) {
+                                        ClassificationResultHandler handler =
+                                                new ClassificationResultHandler
+                                                (openmlConnector.getConnector(),
+                                                hubMinerSourceDir, currDSet,
+                                                classNames[datasetIndex]);
+                                        handler.uploadClassificationResults(
+                                                openmlConnector.getTaskForTaskID(
+                                                    openMLTaskIDList.get(
+                                                    dataIndexToOpenMLCounterMap.get(
+                                                    datasetIndex))),
+                                                    nonDiscreteArray[algIndex],
+                                                algIndex,
+                                                ClassifierParametrization.
+                                                    getClassifierParameterStringValues(
+                                                    nonDiscreteArray[algIndex]),
+                                                numTimes,
+                                                numFolds,
+                                                trainTestIndexes[datasetIndex],
+                                                allFuzzyPredictionsNonDisc);
+                                    }
+                                }
+                            }
+                            float[][][][] allFuzzyPredictionsDisc = null;
+                            if (discreteCV != null) {
+                                allFuzzyPredictionsDisc =
+                                    discreteCV.getAllFuzzyLabelAssignments();
+                                if (dataIndexToOpenMLCounterMap.containsKey(
+                                        datasetIndex)) {
+                                    for (int algIndex = 0; algIndex < 
+                                            discreteArray.length; algIndex++) {
+                                        ClassificationResultHandler handler =
+                                                new ClassificationResultHandler
+                                                (openmlConnector.getConnector(),
+                                                hubMinerSourceDir, currDSet,
+                                                classNames[datasetIndex]);
+                                        handler.uploadClassificationResults(
+                                                openmlConnector.getTaskForTaskID(
+                                                    openMLTaskIDList.get(
+                                                    dataIndexToOpenMLCounterMap.get(
+                                                    datasetIndex))),
+                                                    discreteArray[algIndex],
+                                                algIndex,
+                                                ClassifierParametrization.
+                                                    getClassifierParameterStringValues(
+                                                    discreteArray[algIndex]),
+                                                numTimes,
+                                                numFolds,
+                                                trainTestIndexes[datasetIndex],
+                                                allFuzzy
