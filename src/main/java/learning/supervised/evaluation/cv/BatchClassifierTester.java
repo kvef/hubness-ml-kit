@@ -1121,4 +1121,90 @@ public class BatchClassifierTester {
                 IllegalAccessException ex) {
             Logger.getLogger(
                     BatchClassifierTester.class.getName()).log(
-          
+                    Level.SEVERE, null, ex);
+        }
+        System.out.println();
+        isDiscreteAlgorithm[index] = classAlg instanceof DiscreteClassifier;
+        return classAlg;
+    }
+    
+    /**
+     * This method loads the configuration from the configuration object.
+     * 
+     * @param conf BatchClassifierConfig that is the configuration object.
+     */
+    public void loadFromConfigurationObject(BatchClassifierConfig conf) {
+        if (conf == null) {
+            return;
+        }
+        secondaryDistanceType = conf.secondaryDistanceType;
+        secondaryDistanceK = conf.secondaryDistanceK;
+        normType = conf.normType;
+        numTimes = conf.numTimes;
+        numFolds = conf.numFolds;
+        kMin = conf.kMin;
+        kMax = conf.kMax;
+        kStep = conf.kStep;
+        noiseMin = conf.noiseMin;
+        noiseMax = conf.noiseMax;
+        noiseStep = conf.noiseStep;
+        mlMin = conf.mlMin;
+        mlMax = conf.mlMax;
+        mlStep = conf.mlStep;
+        inDir = conf.inDir;
+        outDir = conf.outDir;
+        summaryDir = conf.summaryDir;
+        inLabelFile = conf.inLabelFile;
+        distancesDir = conf.distancesDir;
+        mlWeightsDir = conf.mlWeightsDir;
+        foldsDir = conf.foldsDir;
+        classifierNames = conf.classifierNames;
+        dsPaths = conf.dsPaths;
+        dsMetric = conf.dsMetric;
+        allDataSetFolds = conf.allDataSetFolds;
+        multiLabelMode = conf.multiLabelMode;
+        numDifferentLabelings = conf.numDifferentLabelings;
+        lsep = conf.lsep;
+        alphaAppKNNs = conf.alphaAppKNNs;
+        approximateKNNs = conf.approximateKNNs;
+        selector = conf.selector;
+        selectorRate = conf.selectorRate;
+        protoHubnessMode = conf.protoHubnessMode;
+        numCommonThreads = conf.numCommonThreads;
+        openmlConnector = conf.getOpenMLConnector();
+        trainTestIndexes = conf.trainTestIndexes;
+        hubMinerSourceDir = conf.hubMinerSourceDir;
+        algorithmParametrizationMap = conf.algorithmParametrizationMap;
+        openMLTaskIDList = conf.openMLTaskIDList;
+        dataIndexToOpenMLCounterMap = conf.dataIndexToOpenMLCounterMap;
+        classNames = conf.classNames;
+    }
+
+    /**
+     * This method loads the experimental configuration from the configuration
+     * file.
+     * @throws Exception 
+     */
+    public void loadParameters() throws Exception {
+        BatchClassifierConfig config = new BatchClassifierConfig();
+        config.loadParameters(inConfigFile);
+        loadFromConfigurationObject(config);
+    }
+
+    /**
+     * The main method that runs the entire experiment.
+     * @param args Command line arguments - a single parameter that is the
+     * path of the experimental configuration file.
+     * @throws Exception 
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            System.out.println("1 parameter - file with test configuration");
+            return;
+        }
+        File inConfigFile = new File(args[0]);
+        BatchClassifierTester tester = new BatchClassifierTester(inConfigFile);
+        tester.loadParameters();
+        tester.runAllTests();
+    }
+}
