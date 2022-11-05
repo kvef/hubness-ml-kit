@@ -1033,4 +1033,92 @@ public class BatchClassifierTester {
                                 String jsonAssignmentsString = gson.toJson(
                                         averageFuzzyPredictions[cIndex],
                                         float[][].class);
-                                File outF
+                                File outFuzzyLabelAssignmentsFile = new File(
+                                        outAlgDir,
+                                        "avgProbClassAssignments.json");
+                                FileUtil.createFile(
+                                        outFuzzyLabelAssignmentsFile);
+                                try (PrintWriter pw = new PrintWriter(
+                                        new FileWriter(
+                                        outFuzzyLabelAssignmentsFile))) {
+                                    pw.write(jsonAssignmentsString);
+                                } catch (Exception e) {
+                                    throw e;
+                                }   
+                            }
+                        }
+                    }
+                }
+                distMat = null;
+                contextObjects = null;
+            }
+            datasetIndex++;
+            System.gc();
+        }
+        if (summaryDir != null) {
+            BatchStatSummarizer summarizer =
+                    new BatchStatSummarizer(outDir, summaryDir, numTimes,
+                    numFolds);
+            summarizer.summarize();
+        }
+    }
+
+    /**
+     * This method checks if an algorithm name corresponds to a discrete
+     * algorithm.
+     * @param algName String that is the algorithm name.
+     * @return True if it is a discrete classifier, false otherwise.
+     */
+    public boolean isDiscrete(String algName) {
+        ClassifierFactory cfact = new ClassifierFactory();
+        return cfact.getClassifierForName(algName, 2,
+                CombinedMetric.EUCLIDEAN, 5) instanceof DiscreteClassifier;
+    }
+
+    
+    /**
+     * This method sets the appropriate instance selection method for the
+     * specified name.
+     * @param name String that is the name of the instance selector to use.
+     */
+    public void setInstanceSelector(String name) {
+        selector = ReducersFactory.getReducerForName(name);
+        System.out.println("instance selector set to:" + name);
+    }
+
+    /**
+     * This method instantiates an algorithm instance for the specified name
+     * with the provided parameters.
+     * 
+     * @param algName String that is the algorithm name.
+     * @param index Integer that is the internal algorithm index.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer representing the neighborhood size.
+     * @param algorithmParametrization HashMap<String, Object> representing the
+     * parameter values to set to the algorithm.
+     * @return 
+     */
+    private ValidateableInterface getClassifierForName(String algName,
+            int index, int numClasses, CombinedMetric cmet, int k,
+            HashMap<String, Object> algorithmParametrization) {
+        System.out.print("testing " + algName);
+        ClassifierFactory cfact = new ClassifierFactory();
+        ValidateableInterface classAlg = cfact.getClassifierForName(algName,
+                numClasses, cmet, k);
+        try {
+            ClassifierParametrization.setParameterValuesToClassifier(classAlg,
+                    algorithmParametrization);
+            if (algorithmParametrization != null) {
+                Set<String> paramNames = algorithmParametrization.keySet();
+                System.out.print(" with ");
+                for (String paramName: paramNames) {
+                    System.out.print(paramName + "=" +
+                            algorithmParametrization.get(paramName) + " ");
+                }
+            }
+        } catch (NoSuchFieldException | IllegalArgumentException |
+                IllegalAccessException ex) {
+            Logger.getLogger(
+                    BatchClassifierTester.class.getName()).log(
+          
