@@ -119,4 +119,76 @@ public class ROCGenerator {
             Arrays.sort(trainingIndexes);
             for (int i = 0; i < trainingIndexes.length - 1; i++) {
                 trainingData.addDataInstance(dset.getInstance(
-                        trainingIn
+                        trainingIndexes[i]));
+                trainingDataDisc.data.add(discDset.data.get(
+                        trainingIndexes[i]));
+                for (int j = trainingIndexes[i]; j < trainingIndexes[i + 1];
+                        j++) {
+                    testData.addDataInstance(dset.getInstance(j));
+                    testDataDisc.data.add(discDset.data.get(j));
+                }
+            }
+            trainingData.addDataInstance(
+                    dset.getInstance(trainingIndexes[
+                    trainingIndexes.length - 1]));
+            trainingDataDisc.data.add(
+                    discDset.data.get(trainingIndexes[
+                    trainingIndexes.length - 1]));
+        } while (trainingData.countCategories() != dset.countCategories() ||
+                testData.countCategories() != dset.countCategories());
+        ArrayList<ValidateableInterface> classifierList = new ArrayList<>(10);
+        // Load the classifiers.
+        ClassifierFactory cFactory = new ClassifierFactory();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(inClassifierFile)))) {
+            // All the classifier names should be in one line, comma separated.
+            String line = br.readLine();
+            String[] lineItems = line.split(",");
+            for (String item : lineItems) {
+                String classifierName = item.trim();
+                classifierList.add(cFactory.getClassifierForName(
+                        classifierName, numCategories, cmet, k));
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        // Calculate the distance matrix and the k-nearest neighbor sets.
+        float[][] dMat = trainingData.calculateDistMatrixMultThr(cmet, 8);
+        NeighborSetFinder nsf = new NeighborSetFinder(trainingData, dMat, cmet);
+        nsf.calculateNeighborSetsMultiThr(k, 8);
+        int[] testLabels = testData.obtainLabelArray();
+        int numClassifiers = classifierList.size();
+        // Initialize the ROC array.
+        ROCObject[][] classifierROCs =
+                new ROCObject[numClassifiers][numCategories];
+        for (int learnerIndex = 0; learnerIndex < classifierList.size();
+                learnerIndex++) {
+            // Classifier initialization.
+            ValidateableInterface classifier = classifierList.get(learnerIndex);
+            if (classifier instanceof Classifier) {
+                classifier.setData(trainingData.data, trainingData);
+            }
+            if (classifier instanceof DiscreteClassifier) {
+                ((DiscreteClassifier) classifier).setData(trainingDataDisc.data,
+                        trainingDataDisc);
+            }
+            if (classifier instanceof DistMatrixUserInterface) {
+                ((DistMatrixUserInterface) classifier).setDistMatrix(dMat);
+            }
+            if (classifier instanceof NSFUserInterface) {
+                ((NSFUserInterface) classifier).setNSF(nsf);
+            }
+            // Train the model.
+            classifier.train();
+            float[][] assignmentProbs = null;
+            // Classify the test data.
+            if (classifier instanceof Classifier) {
+                assignmentProbs = ((Classifier) classifier).
+                        classifyProbabilistically(testData.data);
+            }
+            if (classifier instanceof DiscreteClassifier) {
+                assignmentProbs = ((DiscreteClassifier) classifier).
+                        classifyProbabilistically(testDataDisc.data);
+            }
+            for (int cIndex = 0; cIndex < numCategories; cIndex++) {
+                // For each classif
