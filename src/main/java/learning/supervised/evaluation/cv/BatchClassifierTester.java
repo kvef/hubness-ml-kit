@@ -976,4 +976,61 @@ public class BatchClassifierTester {
                                             discreteCounter], new File(
                                             outAlgDir, "avg.txt"));
                                     for (int j = 0; j < allDiscreteEstimates[
-                       
+                                            discreteCounter].length; j++) {
+                                        allDiscreteEstimates[
+                                                discreteCounter][j].
+                                                printEstimatorToFile(
+                                                new File(new File(
+                                                outAlgDir, "all"), "run" + j +
+                                                ".txt"));
+                                    }
+                                } else {
+                                    nonDiscreteCounter++;
+                                    for (int i = 0; i < currDSet.size(); i++) {
+                                        for (int c = 0; c < numCategories;
+                                                c++) {
+                                            for (int rep = 0; rep < numTimes;
+                                                    rep++) {
+                                                averageFuzzyPredictions[cIndex][
+                                                        i][c] +=
+                                                        allFuzzyPredictionsNonDisc[
+                                                        nonDiscreteCounter][
+                                                        rep][i][c];
+                                            }
+                                        }
+                                    }
+                                    for (int i = 0; i < currDSet.size(); i++) {
+                                        for (int c = 0; c < numCategories;
+                                                c++) {
+                                            averageFuzzyPredictions[cIndex][i][
+                                                    c] /= numTimes;
+                                        }
+                                    }
+                                    avgNonDiscrete[nonDiscreteCounter].
+                                            printEstimatorToFile(
+                                            new File(outAlgDir, "avg.txt"));
+                                    ClassificationEstimator.
+                                            printMainPointsOfEstimatorsToFile(
+                                            allNonDiscreteEstimates[
+                                            nonDiscreteCounter], new File(
+                                            outAlgDir, "allSummed.txt"));
+                                    ClassificationEstimator.
+                                            appendMainPointsStDevsToFile(
+                                            allNonDiscreteEstimates[
+                                            nonDiscreteCounter], new File(
+                                            outAlgDir, "avg.txt"));
+                                    for (int j = 0; j < allNonDiscreteEstimates[
+                                            nonDiscreteCounter].length; j++) {
+                                        allNonDiscreteEstimates[
+                                                nonDiscreteCounter][j].
+                                                printEstimatorToFile(new File(
+                                                new File(outAlgDir, "all"),
+                                                "run" + j + ".txt"));
+                                    }
+                                }
+                                // Persist all fuzzy classifications as json.
+                                Gson gson = new Gson();
+                                String jsonAssignmentsString = gson.toJson(
+                                        averageFuzzyPredictions[cIndex],
+                                        float[][].class);
+                                File outF
