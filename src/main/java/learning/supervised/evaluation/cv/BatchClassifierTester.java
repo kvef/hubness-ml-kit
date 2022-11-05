@@ -918,4 +918,62 @@ public class BatchClassifierTester {
                                                 numTimes,
                                                 numFolds,
                                                 trainTestIndexes[datasetIndex],
-                                                allFuzzy
+                                                allFuzzyPredictionsDisc);
+                                    }
+                                }
+                            }
+                            float[][][] averageFuzzyPredictions =
+                                    new float[classifierNames.size()][
+                                            currDSet.size()][numCategories];
+                            // Persist the average classifier performance
+                            // indicators.
+                            for (int cIndex = 0; cIndex <
+                                    classifierNames.size(); cIndex++) {
+                                File outAlgDir;
+                                if (secondaryDistanceType ==
+                                        SecondaryDistance.NONE) {
+                                    outAlgDir = new File(currOutDSDir,
+                                            classifierNames.get(cIndex));
+                                } else {
+                                    outAlgDir = new File(currOutDSDir,
+                                            classifierNames.get(cIndex) +
+                                            getSecondaryDistanceName(
+                                            secondaryDistanceType));
+                                }
+                                if (isDiscreteAlgorithm[cIndex]) {
+                                    discreteCounter++;
+                                    for (int i = 0; i < currDSet.size(); i++) {
+                                        for (int c = 0; c < numCategories;
+                                                c++) {
+                                            for (int rep = 0; rep < numTimes;
+                                                    rep++) {
+                                                averageFuzzyPredictions[cIndex][
+                                                        i][c] +=
+                                                        allFuzzyPredictionsDisc[
+                                                        discreteCounter][
+                                                        rep][i][c];
+                                            }
+                                        }
+                                    }
+                                    for (int i = 0; i < currDSet.size(); i++) {
+                                        for (int c = 0; c < numCategories;
+                                                c++) {
+                                            averageFuzzyPredictions[cIndex][i][
+                                                    c] /= numTimes;
+                                        }
+                                    }
+                                    avgDiscrete[discreteCounter].
+                                            printEstimatorToFile(new File(
+                                            outAlgDir, "avg.txt"));
+                                    ClassificationEstimator.
+                                            printMainPointsOfEstimatorsToFile(
+                                            allDiscreteEstimates[
+                                            discreteCounter], new File(
+                                            outAlgDir, "allSummed.txt"));
+                                    ClassificationEstimator.
+                                            appendMainPointsStDevsToFile(
+                                            allDiscreteEstimates[
+                                            discreteCounter], new File(
+                                            outAlgDir, "avg.txt"));
+                                    for (int j = 0; j < allDiscreteEstimates[
+                       
