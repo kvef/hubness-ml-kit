@@ -191,4 +191,37 @@ public class ROCGenerator {
                         classifyProbabilistically(testDataDisc.data);
             }
             for (int cIndex = 0; cIndex < numCategories; cIndex++) {
-                // For each classif
+                // For each classifier and each class, we calculate the ROC and
+                // AUC.
+                try {
+                    classifierROCs[learnerIndex][cIndex] =
+                            new ROCObject(cIndex, testLabels,
+                            assignmentProbs, true);
+                } catch (Exception e) {
+                    System.err.println("Classifier " + classifier.getName()
+                            + " ROC calculation error.");
+                    throw e;
+                }
+            }
+        }
+        FileUtil.createFile(outFile);
+
+        // Print out the results.
+        float[] classPriors = trainingData.getClassPriors();
+        try (PrintWriter pw = new PrintWriter(new FileWriter(outFile));) {
+            pw.println("Priors training");
+            SOPLUtil.printArrayToStream(classPriors, pw);
+            for (int learnerIndex = 0; learnerIndex < classifierList.size();
+                    learnerIndex++) {
+                pw.println(classifierList.get(learnerIndex).getName());
+                for (int cIndex = 0; cIndex < numCategories; cIndex++) {
+                    pw.println("NegClass: " + cIndex);
+                    classifierROCs[learnerIndex][cIndex].printToStream(pw);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            throw e;
+        }
+    }
+}
