@@ -18,4 +18,35 @@ package learning.supervised.interfaces;
 
 /**
  * This interface declares the getters and setters for the upper triangular
- * float distance matrix. It can be used by class
+ * float distance matrix. It can be used by classifiers and clusterers to
+ * request a distance matrix from the evaluation environment, which calculates
+ * it once for all the algorithms, if distance matrix users are present.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public interface DistMatrixUserInterface {
+
+    /**
+     * Distance matrix setter.
+     *
+     * @param distMatrix float[][] representing the upper triangular distance
+     * matrix. Each row i contains only entries for j > i, due to distances
+     * being symmetric. For compression, the zeroed lower triangular entries are
+     * not stored, so each row i contains (size - i - 1) elements. The entry in
+     * distMatrix[i][j] corresponds to the distance between data points i and i
+     * + j + 1.
+     */
+    public void setDistMatrix(float[][] distMatrix);
+
+    /**
+     * Distance matrix getter.
+     *
+     * @return float[][] representing the upper triangular distance matrix. Each
+     * row i contains only entries for j > i, due to distances being symmetric.
+     * For compression, the zeroed lower triangular entries are not stored, so
+     * each row i contains (size - i - 1) elements. The entry in
+     * distMatrix[i][j] corresponds to the distance between data points i and i
+     * + j + 1.
+     */
+    public float[][] getDistMatrix();
+}
