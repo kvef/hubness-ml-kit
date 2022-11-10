@@ -55,4 +55,13 @@ public interface NeighborPointsQueryUserInterface {
      *
      * @param instance DataInstance object that is to be classified.
      * @param distToTraining float[] representing distances to all training
-     * poi
+     * points.
+     * @param neighborsAmongTraining int[] representing the indexes of the
+     * k-nearest neighbors among the training data.
+     * @return Integer that is the classification outcome, the prediction of the
+     * class label.
+     * @throws Exception
+     */
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] neighborsAmongTraining) throws Exception;
+}
