@@ -178,4 +178,77 @@ public class AdaBoostM2 extends Classifier implements
         classPriors = trainingData.getClassPriors();
         // Because of the interfaces it pays off to duplicate the matrix in a
         // different format.
-    
+        float[][] distToTrain = new float[numInstances][numInstances];
+        if (dMat != null) {
+            for (int i = 0; i < numInstances; i++) {
+                for (int j = i + 1; j < numInstances; j++) {
+                    distToTrain[i][j] = dMat[i][j - i - 1];
+                    distToTrain[j][i] = dMat[i][j - i - 1];
+                }
+            }
+        }
+        numClasses = trainingData.countCategories();
+        distributions = new ArrayList<>(numIterationsTrain);
+        weightsPerLabel = new ArrayList<>(numIterationsTrain);
+        labelWeightingFunction = new ArrayList<>(numIterationsTrain);
+        totalWeights = new ArrayList<>(numIterationsTrain);
+        pseudoLoss = new ArrayList<>(numIterationsTrain);
+        lossRatios = new ArrayList<>(numIterationsTrain);
+        // Initialize the distribution.
+        double[] distribution = new double[numInstances];
+        Arrays.fill(distribution, 1f / numInstances);
+        double[][] weightsPerLabelArray = new double[numInstances][numClasses];
+        for (int i = 0; i < numInstances; i++) {
+            int label = trainingData.getLabelOf(i);
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                if (cIndex != label) {
+                    weightsPerLabelArray[i][cIndex] = distribution[i]
+                            / (numClasses - 1);
+                }
+            }
+        }
+        weightsPerLabel.add(weightsPerLabelArray);
+        trainedModels = new ArrayList<>(numIterationsTrain);
+        predictions = new ArrayList<>(numIterationsTrain);
+        for (int iterationIndex = 0; iterationIndex < numIterationsTrain;
+                iterationIndex++) {
+            double iterationPseudoLoss = 0;
+            double[] totalWeightsArray = new double[numInstances];
+            double[][] labelWeightingFunctionArray =
+                    new double[numInstances][numClasses];
+            double[][] predictionArray = new double[numInstances][];
+            double totalWeightSum = 0;
+            distribution = new double[numInstances];
+            for (int i = 0; i < numInstances; i++) {
+                int label = trainingData.getLabelOf(i);
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    if (cIndex != label) {
+                        totalWeightsArray[i] +=
+                                weightsPerLabelArray[i][cIndex];
+                    }
+                }
+                totalWeightSum += totalWeightsArray[i];
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    if (cIndex != label) {
+                        if (totalWeightsArray[i] == 0) {
+                            break;
+                        }
+                        labelWeightingFunctionArray[i][cIndex] =
+                                weightsPerLabelArray[i][cIndex]
+                                / totalWeightsArray[i];
+                    }
+                }
+            }
+            for (int i = 0; i < numInstances; i++) {
+                if (totalWeightSum > 0) {
+                    distribution[i] = totalWeightsArray[i] / totalWeightSum;
+                }
+            }
+            distributions.add(distribution);
+            weightsPerLabel.add(weightsPerLabelArray);
+            labelWeightingFunction.add(labelWeightingFunctionArray);
+            totalWeights.add(totalWeightsArray);
+            // Here we update the model by adding another weak learner.
+            BoostableClassifier iterationLearner =
+                    (BoostableClassifier) (weakLearner.copyConfiguration());
+            iterationLearner.setClasse
