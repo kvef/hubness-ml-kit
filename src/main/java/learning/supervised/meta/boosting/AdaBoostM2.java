@@ -251,4 +251,74 @@ public class AdaBoostM2 extends Classifier implements
             // Here we update the model by adding another weak learner.
             BoostableClassifier iterationLearner =
                     (BoostableClassifier) (weakLearner.copyConfiguration());
-            iterationLearner.setClasse
+            iterationLearner.setClasses(categories);
+            // Assign the required objects.
+            if (weakLearner instanceof DistMatrixUserInterface) {
+                ((DistMatrixUserInterface) iterationLearner).
+                        setDistMatrix(dMat);
+            }
+            if (weakLearner instanceof NSFUserInterface) {
+                ((NSFUserInterface) iterationLearner).
+                        setNSF(nsf);
+            }
+            iterationLearner.setTotalInstanceWeights(totalWeightsArray);
+            iterationLearner.setMisclassificationCostDistribution(
+                    labelWeightingFunctionArray);
+            // Train the learner.
+            iterationLearner.train();
+            trainedModels.add(iterationLearner);
+            for (int i = 0; i < numInstances; i++) {
+                int label = trainingData.getLabelOf(i);
+                float[] classProbs;
+                if (weakLearner instanceof DistToPointsQueryUserInterface
+                        && weakLearner instanceof
+                        NeighborPointsQueryUserInterface && nsf != null) {
+                    classProbs = ((NeighborPointsQueryUserInterface)
+                            iterationLearner).classifyProbabilistically(
+                            trainingData.getInstance(i),
+                            distToTrain[i], nsf.getKNeighbors()[i]);
+                } else if (weakLearner instanceof
+                        DistToPointsQueryUserInterface) {
+                    classProbs = ((DistToPointsQueryUserInterface)
+                            iterationLearner).classifyProbabilistically(
+                            trainingData.getInstance(i),
+                            distToTrain[i]);
+                } else {
+                    classProbs = iterationLearner.classifyProbabilistically(
+                            trainingData.getInstance(i));
+                }
+                predictionArray[i] = new double[numClasses];
+                double correctProb = classProbs[label];
+                double penaltySum = 0;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    predictionArray[i][cIndex] = classProbs[cIndex];
+                    if (cIndex != label) {
+                        penaltySum += classProbs[cIndex]
+                                * labelWeightingFunctionArray[i][cIndex];
+                    }
+                }
+                if (!DataMineConstants.isAcceptableDouble(penaltySum)
+                        || !DataMineConstants.isAcceptableDouble(
+                        distribution[i])
+                        || !DataMineConstants.isAcceptableDouble(correctProb)) {
+                    continue;
+                }
+                iterationPseudoLoss += (distribution[i] / 2) * (1 - correctProb
+                        + penaltySum);
+            }
+            predictions.add(predictionArray);
+            pseudoLoss.add(iterationPseudoLoss);
+            double lossRatio = iterationPseudoLoss
+                    / (1 - iterationPseudoLoss);
+            // In case of long iterations, the weights can become very small,
+            // so here we add some correction logic.
+            double maxWeight = 0;
+            for (int i = 0; i < numInstances; i++) {
+                maxWeight = Math.max(maxWeight, ArrayUtil.max(
+                        weightsPerLabelArray[i]));
+            }
+            if (maxWeight < Double.MIN_VALUE * SAFE_FACTOR) {
+                for (int i = 0; i < numInstances; i++) {
+                    int label = trainingData.getLabelOf(i);
+                    for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                        if (cIndex != label
