@@ -394,4 +394,84 @@ public class AdaBoostM2 extends Classifier implements
                     }
                 }
                 if (maxClassIndex == instance.getCategory()) {
-        
+                    totalAccuracyCount[iterIndex]++;
+                }
+            }
+            if (totalAccuracyCount[iterIndex] > bestAccuracyCount) {
+                bestAccuracyCount = totalAccuracyCount[iterIndex];
+                numIterationsTest = iterIndex + 1;
+            }
+        }
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining, int[] trNeighbors) throws Exception {
+        float[] classProbEstimates = new float[numClasses];
+        for (int iterationIndex = 0; iterationIndex < numIterationsTest;
+                iterationIndex++) {
+            BoostableClassifier iterationLearner = trainedModels.get(
+                    iterationIndex);
+            double lossRatio = lossRatios.get(iterationIndex);
+            float[] classProbsIteration;
+            if (weakLearner instanceof DistToPointsQueryUserInterface
+                    && weakLearner instanceof
+                    NeighborPointsQueryUserInterface) {
+                classProbsIteration = ((NeighborPointsQueryUserInterface)
+                        iterationLearner).classifyProbabilistically(
+                        instance, distToTraining, trNeighbors);
+            } else if (weakLearner instanceof DistToPointsQueryUserInterface) {
+                classProbsIteration = ((DistToPointsQueryUserInterface)
+                        iterationLearner).classifyProbabilistically(
+                        instance, distToTraining);
+            } else {
+                classProbsIteration =
+                        iterationLearner.classifyProbabilistically(instance);
+            }
+            float factor = (float) BasicMathUtil.log2(1. / lossRatio);
+            if (!DataMineConstants.isAcceptableFloat(factor)) {
+                continue;
+            }
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                if (DataMineConstants.isAcceptableFloat(
+                        classProbsIteration[cIndex])) {
+                    classProbEstimates[cIndex] += factor
+                            * classProbsIteration[cIndex];
+                }
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining) throws Exception {
+        float[] classProbEstimates = new float[numClasses];
+        for (int iterationIndex = 0; iterationIndex < numIterationsTest;
+                iterationIndex++) {
+            BoostableClassifier iterationLearner = trainedModels.get(
+                    iterationIndex);
+            double lossRatio = lossRatios.get(iterationIndex);
+            float[] classProbsIteration;
+            if (weakLearner instanceof DistToPointsQueryUserInterface) {
+                classProbsIteration = ((DistToPointsQueryUserInterface)
+                        iterationLearner).classifyProbabilistically(
+                        instance, distToTraining);
+            } else {
+                classProbsIteration =
+                        iterationLearner.classifyProbabilistically(instance);
+            }
+            float factor = (float) BasicMathUtil.log2(1. / lossRatio);
+            if (!DataMineConstants.isAcceptableFloat(factor)) {
+                continue;
