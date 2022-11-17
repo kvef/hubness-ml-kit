@@ -475,3 +475,103 @@ public class AdaBoostM2 extends Classifier implements
             float factor = (float) BasicMathUtil.log2(1. / lossRatio);
             if (!DataMineConstants.isAcceptableFloat(factor)) {
                 continue;
+            }
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                if (DataMineConstants.isAcceptableFloat(
+                        classProbsIteration[cIndex])) {
+                    classProbEstimates[cIndex] += factor
+                            * classProbsIteration[cIndex];
+                }
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        float[] classProbEstimates = new float[numClasses];
+        for (int iterationIndex = 0; iterationIndex < numIterationsTest;
+                iterationIndex++) {
+            BoostableClassifier iterationLearner = trainedModels.get(
+                    iterationIndex);
+            double lossRatio = lossRatios.get(iterationIndex);
+            float[] classProbsIteration =
+                    iterationLearner.classifyProbabilistically(instance);
+            float factor = (float) BasicMathUtil.log2(1. / lossRatio);
+            if (!DataMineConstants.isAcceptableFloat(factor)) {
+                continue;
+            }
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                if (DataMineConstants.isAcceptableFloat(
+                        classProbsIteration[cIndex])) {
+                    classProbEstimates[cIndex] += factor
+                            * classProbsIteration[cIndex];
+                }
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    @Override
+    public int classify(DataInstance instance) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance);
+        float maxProb = 0;
+        int result = 0;
+        for (int i = 0; i < numClasses; i++) {
+            if (classProbs[i] > maxProb) {
+                maxProb = classProbs[i];
+                result = i;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining)
+            throws Exception {
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining);
+        float maxProb = 0;
+        int result = 0;
+        for (int i = 0; i < numClasses; i++) {
+            if (classProbs[i] > maxProb) {
+                maxProb = classProbs[i];
+                result = i;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] trNeighbors) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining, trNeighbors);
+        float maxProb = 0;
+        int result = 0;
+        for (int i = 0; i < numClasses; i++) {
+            if (classProbs[i] > maxProb) {
+                max
