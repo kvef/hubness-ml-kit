@@ -321,4 +321,77 @@ public class AdaBoostM2 extends Classifier implements
                 for (int i = 0; i < numInstances; i++) {
                     int label = trainingData.getLabelOf(i);
                     for (int cIndex = 0; cIndex < numClasses; cIndex++) {
-                        if (cIndex != label
+                        if (cIndex != label) {
+                            weightsPerLabelArray[i][cIndex] *= SAFE_FACTOR;
+                        }
+                    }
+                }
+            }
+            weightsPerLabelArray = new double[numInstances][numClasses];
+            // Now update the weights based on the pseudo-loss.
+            lossRatios.add(lossRatio);
+            for (int i = 0; i < numInstances; i++) {
+                int label = trainingData.getLabelOf(i);
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    double updateExponent = 0.5 * (1
+                            + predictionArray[i][label]
+                            - predictionArray[i][cIndex]);
+                    double updateFactor = Math.pow(lossRatio,
+                            updateExponent);
+                    if (cIndex != label) {
+                        if (DataMineConstants.isAcceptableDouble(
+                                updateFactor)) {
+                            weightsPerLabelArray[i][cIndex] =
+                                    weightsPerLabel.get(iterationIndex)[i][
+                                    cIndex] * updateFactor;
+                        } else {
+                            // If something went wrong, keep the previous
+                            // weight.
+                            weightsPerLabelArray[i][cIndex] =
+                                    weightsPerLabel.get(iterationIndex)[i][
+                                    cIndex];
+                        }
+                    }
+                }
+            }
+        }
+        numIterationsTest = numIterationsTrain;
+        float[] totalAccuracyCount = new float[numIterationsTrain];
+        float[][] currPrediction = new float[numInstances][numClasses];
+        float bestAccuracyCount = 0;
+        for (int iterIndex = 0; iterIndex < numIterationsTrain; iterIndex++) {
+            BoostableClassifier iterationLearner = trainedModels.get(
+                    iterIndex);
+            double lossRatio = lossRatios.get(iterIndex);
+            float factor = (float) BasicMathUtil.log2(1. / lossRatio);
+            for (int i = 0; i < numInstances; i++) {
+                DataInstance instance = trainingData.getInstance(i);
+                float[] classProbsIteration;
+                if (weakLearner instanceof DistToPointsQueryUserInterface
+                        && weakLearner instanceof
+                        NeighborPointsQueryUserInterface && nsf != null) {
+                    classProbsIteration = ((NeighborPointsQueryUserInterface)
+                            iterationLearner).classifyProbabilistically(
+                            instance, distToTrain[i], nsf.getKNeighbors()[i]);
+                } else if (weakLearner instanceof
+                        DistToPointsQueryUserInterface) {
+                    classProbsIteration = ((DistToPointsQueryUserInterface)
+                            iterationLearner).classifyProbabilistically(
+                            instance, distToTrain[i]);
+                } else {
+                    classProbsIteration =
+                            iterationLearner.
+                            classifyProbabilistically(instance);
+                }
+                float maxClassIndex = 0;
+                float maxClassVote = -Float.MAX_VALUE;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    currPrediction[i][cIndex] += factor
+                            * classProbsIteration[cIndex];
+                    if (currPrediction[i][cIndex] > maxClassVote) {
+                        maxClassVote = currPrediction[i][cIndex];
+                        maxClassIndex = cIndex;
+                    }
+                }
+                if (maxClassIndex == instance.getCategory()) {
+        
