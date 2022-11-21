@@ -574,4 +574,96 @@ public class AdaBoostM2 extends Classifier implements
         int result = 0;
         for (int i = 0; i < numClasses; i++) {
             if (classProbs[i] > maxProb) {
-                max
+                maxProb = classProbs[i];
+                result = i;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void setClasses(Category[] categories) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int i = 0; i < categories.length; i++) {
+            totalSize += categories[i].size();
+            if (indexFirstNonEmptyClass == -1 && categories[i].size() > 0) {
+                indexFirstNonEmptyClass = i;
+            }
+        }
+        // An internal training data representation.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[
+                indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames =
+                categories[indexFirstNonEmptyClass]
+                .getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames =
+                categories[indexFirstNonEmptyClass].getInstance(0).
+                getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int j = 0; j < categories[cIndex].size(); j++) {
+                categories[cIndex].getInstance(j).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(j));
+            }
+        }
+        this.categories = categories;
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        AdaBoostM2 classifierCopy = new AdaBoostM2(weakLearner,
+                numIterationsTrain);
+        return classifierCopy;
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        if (weakLearner != null && weakLearner instanceof NSFUserInterface) {
+            ((NSFUserInterface) weakLearner).setNSF(nsf);
+        }
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        if (weakLearner != null && weakLearner instanceof NSFUserInterface) {
+            NeighborSetFinder nsf = ((NSFUserInterface) weakLearner).getNSF();
+            return nsf;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void setDistMatrix(float[][] distMatrix) {
+        if (weakLearner != null && weakLearner instanceof
+                DistMatrixUserInterface) {
+            ((DistMatrixUserInterface) weakLearner).setDistMatrix(distMatrix);
+        }
+    }
+
+    @Override
+    public float[][] getDistMatrix() {
+        if (weakLearner != null && weakLearner instanceof
+                DistMatrixUserInterface) {
+            return ((DistMatrixUserInterface) weakLearner).getDistMatrix();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void noRecalcs() {
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        if (weakLearner != null && weakLearner instanceof NSFUserInterface) {
+            return ((NSFUserInterface)weakLearner).getNeighborhoodSize();
+        } else {
+            return 0;
+        }
+    }
+}
