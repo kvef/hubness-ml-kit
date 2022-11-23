@@ -94,4 +94,143 @@ public class HIKNNBoostable extends BoostableClassifier implements
     
     @Override
     public Publication getPublicationInfo() {
-        ConferencePublication pub = new Confe
+        ConferencePublication pub = new ConferencePublication();
+        pub.setTitle("Boosting for Vote Learning in High-Dimensional k-Nearest "
+                + "Neighbor Classification");
+        pub.addAuthor(Author.NENAD_TOMASEV);
+        pub.setConferenceName("Workshop on High-Dimensional Data Mining at the "
+                + "International Conference on Data Mining");
+        pub.setYear(2014);
+        pub.setPublisher(Publisher.IEEE);
+        return pub;
+    }
+    
+    @Override
+    public long getVersion() {
+        return serialVersionUID;
+    }
+
+    /**
+     * @param boostingMode Integer that is the current boosting mode: B1 or B2.
+     */
+    public void setBoostingMode(int boostingMode) {
+        this.boostingMode = boostingMode;
+    }
+
+    @Override
+    public void setTotalInstanceWeights(double[] instanceWeights) {
+        this.instanceWeights = instanceWeights;
+    }
+
+    @Override
+    public void setMisclassificationCostDistribution(
+            double[][] instanceLabelWeights) {
+        this.instanceLabelWeights = instanceLabelWeights;
+    }
+
+    @Override
+    public String getName() {
+        return "HIKNN";
+    }
+
+    @Override
+    public void setDistMatrix(float[][] distMatrix) {
+        this.distMat = distMatrix;
+    }
+
+    @Override
+    public float[][] getDistMatrix() {
+        return distMat;
+    }
+
+    @Override
+    public void noRecalcs() {
+        noRecalc = true;
+    }
+
+    /**
+     * The default constructor.
+     */
+    public HIKNNBoostable() {
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     */
+    public HIKNNBoostable(int k) {
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public HIKNNBoostable(int k, CombinedMetric cmet) {
+        this.k = k;
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClasses Integer that is the number of classes.
+     */
+    public HIKNNBoostable(int k, CombinedMetric cmet, int numClasses) {
+        this.k = k;
+        setCombinedMetric(cmet);
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClasses Integer that is the number of classes.
+     * @param boostingMode Integer that is the current boosting mode.
+     */
+    public HIKNNBoostable(int k, CombinedMetric cmet, int numClasses,
+            int boostingMode) {
+        this.k = k;
+        setCombinedMetric(cmet);
+        this.numClasses = numClasses;
+        this.boostingMode = boostingMode;
+
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param laplaceEstimator Float that is the Laplace estimator for smoothing
+     * the probability distributions.
+     */
+    public HIKNNBoostable(int k, float laplaceEstimator) {
+        this.k = k;
+        this.laplaceEstimator = laplaceEstimator;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param laplaceEstimator Float that is the Laplace estimator for smoothing
+     * the probability distributions.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public HIKNNBoostable(int k, float laplaceEstimator, CombinedMetric cmet) {
+        this.k = k;
+        this.laplaceEstimator = laplaceEstimator;
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the
