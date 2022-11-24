@@ -330,4 +330,118 @@ public class HIKNNBoostable extends BoostableClassifier implements
         int totalSize = 0;
         int indexFirstNonEmptyClass = -1;
         for (int i = 0; i < categories.length; i++) {
-         
+            totalSize += categories[i].size();
+            if (indexFirstNonEmptyClass == -1 && categories[i].size() > 0) {
+                indexFirstNonEmptyClass = i;
+            }
+        }
+        // An internal training data representation.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[
+                indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames =
+                categories[indexFirstNonEmptyClass]
+                .getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames =
+                categories[indexFirstNonEmptyClass].getInstance(0).
+                getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int j = 0; j < categories[cIndex].size(); j++) {
+                categories[cIndex].getInstance(j).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(j));
+            }
+        }
+    }
+
+    /**
+     * @param trainingData DataSet object to train the model on.
+     */
+    public void setTrainingSet(DataSet trainingData) {
+        this.trainingData = trainingData;
+    }
+
+    /**
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public void setNumClasses(int numClasses) {
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * @return Integer that is the number of classes in the data.
+     */
+    public int getNumClasses() {
+        return numClasses;
+    }
+
+    /**
+     * @return Integer that is the neighborhood size used in calculations.
+     */
+    public int getK() {
+        return k;
+    }
+
+    /**
+     * @param k Integer that is the neighborhood size used in calculations.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    /**
+     * Calculate the neighbor sets, if not already calculated.
+     *
+     * @throws Exception
+     */
+    public void calculateNeighborSets() throws Exception {
+        if (distMat == null) {
+            nsf = new NeighborSetFinder(trainingData, getCombinedMetric());
+            nsf.calculateDistances();
+        } else {
+            nsf = new NeighborSetFinder(trainingData, distMat,
+                    getCombinedMetric());
+        }
+        nsf.calculateNeighborSets(k);
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        HIKNNBoostable classifierCopy = new HIKNNBoostable(k, laplaceEstimator,
+                getCombinedMetric(), numClasses);
+        classifierCopy.noRecalc = noRecalc;
+        classifierCopy.boostingMode = boostingMode;
+        return classifierCopy;
+    }
+
+    @Override
+    public void train() throws Exception {
+        if (nsf == null) {
+            // If the kNN sets have not been provided, calculate them.
+            calculateNeighborSets();
+        }
+        // Find the class priors.
+        classPriors = trainingData.getClassPriors();
+        if (!noRecalc) {
+            nsf.recalculateStatsForSmallerK(k);
+        }
+        // Set default values for instance weights if none have been provided.
+        if (instanceWeights == null) {
+            instanceWeights = new double[trainingData.size()];
+            Arrays.fill(instanceWeights, 1d);
+        }
+        if (instanceLabelWeights == null) {
+            instanceLabelWeights = new double[trainingData.size()][numClasses];
+        }
+        // Get the neighbor occurrence frequenc
