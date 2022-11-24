@@ -233,4 +233,101 @@ public class HIKNNBoostable extends BoostableClassifier implements
     /**
      * Initialization.
      *
-     * @param k Integer that is the
+     * @param k Integer that is the neighborhood size.
+     * @param laplaceEstimator Float that is the Laplace estimator for smoothing
+     * the probability distributions.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClasses Integer that is the number of classes.
+     */
+    public HIKNNBoostable(int k, float laplaceEstimator, CombinedMetric cmet,
+            int numClasses) {
+        this.k = k;
+        this.laplaceEstimator = laplaceEstimator;
+        setCombinedMetric(cmet);
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object that is the training data.
+     * @param numClasses Integer that is the number of classes.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public HIKNNBoostable(DataSet dset, int numClasses, CombinedMetric cmet,
+            int k) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object that is the training data.
+     * @param numClasses Integer that is the number of classes.
+     * @param nsf NeighborSetFinder object for kNN calculations.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public HIKNNBoostable(DataSet dset, int numClasses, NeighborSetFinder nsf,
+            CombinedMetric cmet, int k) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        this.nsf = nsf;
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param categories Category[] of classes to train on.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public HIKNNBoostable(Category[] categories, CombinedMetric cmet, int k) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int i = 0; i < categories.length; i++) {
+            totalSize += categories[i].size();
+            if (indexFirstNonEmptyClass == -1 && categories[i].size() > 0) {
+                indexFirstNonEmptyClass = i;
+            }
+        }
+        // As this is an internal DataSet object, data instances will not have
+        // it set as their data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int i = 0; i < categories.length; i++) {
+            for (int j = 0; j < categories[i].size(); j++) {
+                categories[i].getInstance(j).setCategory(i);
+                trainingData.addDataInstance(categories[i].getInstance(j));
+            }
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * @param laplaceEstimator Float that is the Laplace estimator for smoothing
+     * the probability distributions.
+     */
+    public void setLaplaceEstimator(float laplaceEstimator) {
+        this.laplaceEstimator = laplaceEstimator;
+    }
+
+    @Override
+    public void setClasses(Category[] categories) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int i = 0; i < categories.length; i++) {
+         
