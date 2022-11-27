@@ -444,4 +444,81 @@ public class HIKNNBoostable extends BoostableClassifier implements
         if (instanceLabelWeights == null) {
             instanceLabelWeights = new double[trainingData.size()][numClasses];
         }
-        // Get the neighbor occurrence frequenc
+        // Get the neighbor occurrence frequencies. Despite the instance
+        // weights, non-weighted total frequencies are used for information
+        // content estimation of different occurrences.
+        neighborOccurrenceFreqs = nsf.getNeighborFrequencies();
+        // Weighted occurrences are used for vote normalization.
+        neighborOccurrenceFreqsWeighted = new double[trainingData.size()];
+        // Find the class-conditional neighbor occurrence frequencies.
+        int[][] kneighbors = nsf.getKNeighbors();
+        classDataKNeighborRelation =
+                new double[numClasses][trainingData.size()];
+        labelInformationFactor = new float[trainingData.size()];
+        int currClass;
+        float maxHubness = 0;
+        float minHubness = Float.MAX_VALUE;
+        for (int i = 0; i < trainingData.size(); i++) {
+            if (neighborOccurrenceFreqs[i] > maxHubness) {
+                maxHubness = neighborOccurrenceFreqs[i];
+            }
+            if (neighborOccurrenceFreqs[i] < minHubness) {
+                minHubness = neighborOccurrenceFreqs[i];
+            }
+        }
+        // Calculate the neighbor occurrence informativeness and the
+        // class-conditional neighbor occurrence frequencies.
+        float eventInfo;
+        float minEventInfo;
+        float maxEventInfo;
+        minEventInfo = (float) BasicMathUtil.log2(
+                ((float) trainingData.size()) / (maxHubness + 1f));
+        maxEventInfo = (float) BasicMathUtil.log2(
+                ((float) trainingData.size()) / (0 + 1f));
+        for (int i = 0; i < trainingData.size(); i++) {
+            eventInfo = (float) BasicMathUtil.log2(
+                    ((float) trainingData.size())
+                    / ((float) neighborOccurrenceFreqs[i] + 1f));
+            labelInformationFactor[i] = (eventInfo - minEventInfo)
+                    / (maxEventInfo - minEventInfo + 0.0001f);
+            currClass = trainingData.data.get(i).getCategory();
+            if (boostingMode == B1) {
+                neighborOccurrenceFreqsWeighted[i] += instanceWeights[i];
+                classDataKNeighborRelation[currClass][i] += instanceWeights[i];
+                for (int kIndex = 0; kIndex < k; kIndex++) {
+                    neighborOccurrenceFreqsWeighted[kneighbors[i][kIndex]] +=
+                            instanceWeights[i];
+                    classDataKNeighborRelation[
+                            currClass][kneighbors[i][kIndex]] +=
+                            instanceWeights[i];
+                }
+            } else {
+                // B2 boosting.
+                classDataKNeighborRelation[currClass][i] += instanceWeights[i];
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    if (cIndex != currClass) {
+                        classDataKNeighborRelation[cIndex][i] -=
+                                instanceLabelWeights[i][cIndex]
+                                * instanceWeights[i];
+                    }
+                }
+                for (int kIndex = 0; kIndex < k; kIndex++) {
+                    classDataKNeighborRelation[
+                            currClass][kneighbors[i][kIndex]] +=
+                            instanceWeights[i];
+                    for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                        if (cIndex != currClass) {
+                            classDataKNeighborRelation[cIndex][
+                                    kneighbors[i][kIndex]] -=
+                                    instanceLabelWeights[i][cIndex]
+                                    * instanceWeights[i];
+                        }
+                    }
+                }
+            }
+        }
+        // Normalization.
+        if (boostingMode == B1) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                for (int j = 0; j < trainingData.size(); j++) {
+      
