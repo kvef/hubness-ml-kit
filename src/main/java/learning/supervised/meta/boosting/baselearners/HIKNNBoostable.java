@@ -521,4 +521,96 @@ public class HIKNNBoostable extends BoostableClassifier implements
         if (boostingMode == B1) {
             for (int cIndex = 0; cIndex < numClasses; cIndex++) {
                 for (int j = 0; j < trainingData.size(); j++) {
-      
+                    if (neighborOccurrenceFreqsWeighted[j] > 0) {
+                        double backupValue =
+                                classDataKNeighborRelation[cIndex][j];
+                        classDataKNeighborRelation[cIndex][j] /=
+                                (neighborOccurrenceFreqsWeighted[j]);
+                        if (!DataMineConstants.isAcceptableDouble(
+                                classDataKNeighborRelation[cIndex][j])) {
+                            classDataKNeighborRelation[cIndex][j] = backupValue;
+                        }
+                    }
+                }
+            }
+        } else {
+            for (int j = 0; j < trainingData.size(); j++) {
+                double minValue = Double.MAX_VALUE;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    minValue = Math.min(minValue,
+                            classDataKNeighborRelation[cIndex][j]);
+                }
+                double denominator = 0;
+                if (minValue < 0) {
+                    for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                        classDataKNeighborRelation[cIndex][j] +=
+                                Math.abs(minValue);
+                        denominator += classDataKNeighborRelation[cIndex][j];
+                    }
+                }
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    classDataKNeighborRelation[cIndex][j] /= denominator;
+                }
+            }
+        }
+    }
+
+    @Override
+    public int classify(DataInstance instance) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance);
+        float maxProb = 0;
+        int result = 0;
+        for (int i = 0; i < numClasses; i++) {
+            if (classProbs[i] > maxProb) {
+                maxProb = classProbs[i];
+                result = i;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        // Find the k-nearest neighbors.
+        float[] kDistances = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistances[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDistance = cmet.dist(trainingData.data.get(i), instance);
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        // Calculate the distance weights.
+        float[] distance_weights = new float[k];
+        float dwSum = 0;
+        for (int i = 0; i < k; i++) {
+            if (kDistances[i] != 0) {
+                distance_weights[i] = 1f / ((float) Math.pow(kDistances[i],
+                        (2f / (mValue - 1f))));
+            } else {
+                distance_weights[i] = 10000f;
+            }
+            dwSum += distance_weights[i];
+        }
+        float[] classProbEstimates = new float[numClasses];
+        // Perform the voting.
+        for (int i = 0; i < k; i++) {
+            for (int j = 0; j < numClasses; j++) {
+                if (trainingData.data.get(kNeighbors[i]).getCategory() == j) {
+                    classProbEstimates[j] +=
+              
