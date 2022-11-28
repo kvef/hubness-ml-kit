@@ -613,4 +613,90 @@ public class HIKNNBoostable extends BoostableClassifier implements
             for (int j = 0; j < numClasses; j++) {
                 if (trainingData.data.get(kNeighbors[i]).getCategory() == j) {
                     classProbEstimates[j] +=
-              
+                            ((labelInformationFactor[kNeighbors[i]]
+                            + ((1 - labelInformationFactor[kNeighbors[i]])
+                            * classDataKNeighborRelation[j][kNeighbors[i]]))
+                            * (float) BasicMathUtil.log2(
+                            ((float) trainingData.size())
+                            / (1f + neighborOccurrenceFreqs[kNeighbors[i]])))
+                            * distance_weights[i] / dwSum;
+                } else {
+                    classProbEstimates[j] +=
+                            ((((1 - labelInformationFactor[kNeighbors[i]]))
+                            * classDataKNeighborRelation[j][kNeighbors[i]])
+                            * (float) BasicMathUtil.log2(
+                            ((float) trainingData.size())
+                            / (1f + neighborOccurrenceFreqs[kNeighbors[i]])))
+                            * distance_weights[i] / dwSum;
+                }
+            }
+        }
+        // Normalize.
+        float minVal = ArrayUtil.min(classProbEstimates);
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (minVal < 0) {
+                classProbEstimates[cIndex] -= minVal;
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining) throws Exception {
+        // Find the k-nearest neighbors.
+        float[] kDistances = new float[k];
+        for (int i = 0; i < k; i++) {
+            kDistances[i] = Float.MAX_VALUE;
+        }
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDistance = distToTraining[i];
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        // Calculate the distance weights.
+        float[] distance_weights = new float[k];
+        float dwSum = 0;
+        for (int i = 0; i < k; i++) {
+            if (kDistances[i] != 0) {
+                distance_weights[i] = 1f / ((float) Math.pow(kDistances[i],
+                        (2f / (mValue - 1f))));
+            } else {
+                distance_weights[i] = 10000f;
+            }
+            dwSum += distance_weights[i];
+        }
+        float[] classProbEstimates = new float[numClasses];
+        // Perform the voting.
+        for (int i = 0; i < k; i++) {
+            for (int j = 0; j < numClasses; j++) {
+                if (trainingData.data.get(kNeighbors[i]).getCategory() == j) {
+                    classProbEstimates[j] +=
+                            ((labelInformationFactor[kNeighbors[i]]
+                            + ((1 - labelInformationFactor[kNeighbors[i]])
+                            * classDataKNeighborRelation[j][kNeighbors[i]]))
+                            * (float) BasicMathUtil.log2(
+                            ((float) trainingData
