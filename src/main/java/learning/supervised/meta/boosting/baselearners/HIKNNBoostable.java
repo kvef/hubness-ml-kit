@@ -793,4 +793,87 @@ public class HIKNNBoostable extends BoostableClassifier implements
                     classProbEstimates[j] +=
                             ((labelInformationFactor[trNeighbors[i]]
                             + ((1 - labelInformationFactor[trNeighbors[i]])
-                            * classDataKNeighborRelation[j][trNeigh
+                            * classDataKNeighborRelation[j][trNeighbors[i]]))
+                            * (float) BasicMathUtil.log2(
+                            ((float) trainingData.size())
+                            / (1f + neighborOccurrenceFreqs[trNeighbors[i]])))
+                            * distance_weights[i] / dwSum;
+                } else {
+                    classProbEstimates[j] +=
+                            ((((1 - labelInformationFactor[trNeighbors[i]]))
+                            * classDataKNeighborRelation[j][trNeighbors[i]])
+                            * (float) BasicMathUtil.log2(
+                            ((float) trainingData.size())
+                            / (1f + neighborOccurrenceFreqs[trNeighbors[i]])))
+                            * distance_weights[i] / dwSum;
+                }
+            }
+        }
+        // Normalize.
+        float minVal = ArrayUtil.min(classProbEstimates);
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (minVal < 0) {
+                classProbEstimates[cIndex] -= minVal;
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    /**
+     * Classify a new instance.
+     *
+     * @param instance DataInstance object to classify.
+     * @param kDists float[] of distances to the k-nearest neighbors.
+     * @param trNeighbors int[] holding the indexes of the k-nearest neighbors.
+     * @return float[] of class affiliation probabilities.
+     * @throws Exception
+     */
+    public float[] classifyProbabilisticallyWithKDistAndNeighbors(
+            DataInstance instance, float[] kDists, int[] trNeighbors)
+            throws Exception {
+        // Calculate the distance weights.
+        float[] distance_weights = new float[k];
+        float dwSum = 0;
+        for (int i = 0; i < k; i++) {
+            if (kDists[i] != 0) {
+                distance_weights[i] = 1f
+                        / ((float) Math.pow(kDists[i], (2f / (mValue - 1f))));
+            } else {
+                distance_weights[i] = 10000f;
+            }
+            dwSum += distance_weights[i];
+        }
+        float[] classProbEstimates = new float[numClasses];
+        for (int i = 0; i < numClasses; i++) {
+            classProbEstimates[i] = 0;
+        }
+        // Perform the voting.
+        for (int i = 0; i < k; i++) {
+            for (int j = 0; j < numClasses; j++) {
+                if (trainingData.data.get(trNeighbors[i]).getCategory() == j) {
+                    classProbEstimates[j] +=
+                            ((labelInformationFactor[trNeighbors[i]]
+                            + ((1 - labelInformationFactor[trNeighbors[i]])
+                            * classDataKNeighborRelation[j][trNeighbors[i]]))
+                            * (float) BasicMathUtil.log2(
+                            ((float) trainingData.size())
+                            / (1f + neighborOccurrenceFreqs[trNeighbors[i]])))
+                            * distance_weights[i] / dwSum;
+                } else {
+                    classProbEstimates[j] +=
+                            ((((1 - labelInformationFactor[trNeighbors[i]]))
+                            * classDataKNeighborRelation[j][trNeighbors[i]])
+                            * (float) BasicMathUtil.log2(
+                            ((float) trainingData.size())
+      
