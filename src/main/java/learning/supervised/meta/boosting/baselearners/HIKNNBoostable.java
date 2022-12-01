@@ -876,4 +876,34 @@ public class HIKNNBoostable extends BoostableClassifier implements
                             * classDataKNeighborRelation[j][trNeighbors[i]])
                             * (float) BasicMathUtil.log2(
                             ((float) trainingData.size())
-      
+                            / (1f + neighborOccurrenceFreqs[trNeighbors[i]])))
+                            * distance_weights[i] / dwSum;
+                }
+            }
+        }
+        // Normalize the probabilities.
+        float minVal = ArrayUtil.min(classProbEstimates);
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (minVal < 0) {
+                classProbEstimates[cIndex] -= minVal;
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
+    }
+}
