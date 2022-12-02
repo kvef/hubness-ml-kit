@@ -51,4 +51,128 @@ public class RSLVQ extends Classifier implements Serializable {
     private float[][] protoDispersions;
     // Number of prototypes per class.
     private int numProtoPerClass = 5;
-    // The learning rate
+    // The learning rates.
+    float alphaProto = 0.5f;
+    float alphaVariance = 0.3f;
+    
+    @Override
+    public HashMap<String, String> getParameterNamesAndDescriptions() {
+        HashMap<String, String> paramMap = new HashMap<>();
+        paramMap.put("alphaProto", "Learning rate.");
+        paramMap.put("alphaVariance", "Learning rate.");
+        return paramMap;
+    }
+    
+    @Override
+    public Publication getPublicationInfo() {
+        JournalPublication pub = new JournalPublication();
+        pub.setTitle("Soft Learning Vector Quantization");
+        pub.addAuthor(new Author("Sambu", "Seo"));
+        pub.addAuthor(new Author("Klaus", "Obermayer"));
+        pub.setJournalName("Neural Computation");
+        pub.setYear(2003);
+        pub.setStartPage(1589);
+        pub.setEndPage(1604);
+        pub.setVolume(15);
+        pub.setIssue(7);
+        return pub;
+    }
+    
+    @Override
+    public long getVersion() {
+        return serialVersionUID;
+    }
+
+    @Override
+    public String getName() {
+        return "Robust Soft Learning Vector Quantization";
+    }
+    
+    /**
+     * Default constructor.
+     */
+    public RSLVQ() {
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dataClasses Category[] representing the training data.
+     */
+    public RSLVQ(Category[] dataClasses) {
+        setClasses(dataClasses);
+        numClasses = dataClasses.length;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object representing the training data.
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public RSLVQ(DataSet dset, int numClasses) {
+        this.trainingData = dset;
+        this.numClasses = numClasses;
+        setData(dset.data, dset);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dataClasses Category[] representing the training data.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public RSLVQ(Category[] dataClasses, CombinedMetric cmet) {
+        setClasses(dataClasses);
+        numClasses = dataClasses.length;
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object representing the training data.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public RSLVQ(DataSet dset, int numClasses, CombinedMetric cmet) {
+        this.trainingData = dset;
+        this.numClasses = numClasses;
+        setData(dset.data, dset);
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object representing the training data.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numProtoPerClass Integer that is the number of prototypes per
+     * class to use.
+     */
+    public RSLVQ(DataSet dset, int numClasses, CombinedMetric cmet,
+            int numProtoPerClass) {
+        this.trainingData = dset;
+        this.numClasses = numClasses;
+        setData(dset.data, dset);
+        setCombinedMetric(cmet);
+        this.numProtoPerClass = numProtoPerClass;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public RSLVQ(int numClasses, CombinedMetric cmet) {
+        this.numClasses = numClasses;
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cme
