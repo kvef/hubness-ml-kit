@@ -175,4 +175,89 @@ public class RSLVQ extends Classifier implements Serializable {
      * Initialization.
      *
      * @param numClasses Integer that is the number of classes in the data.
-     * @param cme
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numProtoPerClass Integer that is the number of prototypes per
+     * class to use.
+     */
+    public RSLVQ(int numClasses, CombinedMetric cmet, int numProtoPerClass) {
+        this.numClasses = numClasses;
+        setCombinedMetric(cmet);
+        this.numProtoPerClass = numProtoPerClass;
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        RSLVQ classifierCopy = new RSLVQ(numClasses, getCombinedMetric());
+        return classifierCopy;
+    }
+
+    @Override
+    public void train() throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        Category[] dataClasses = getClasses();
+        int dim = trainingData.getNumFloatAttr();
+        // Initialize the prototypes by random point selection.
+        numClasses = dataClasses.length;
+        numProtoPerClass = Math.min(50, Math.max(5,
+                (trainingData.size() / (numClasses * 15))));
+        classPrototypes = new DataInstance[numClasses][];
+        protoDispersions = new float[numClasses][];
+        // Distances to prototypes.
+        float[][] protoDists = new float[numClasses][];
+        // Exponential distances to prototypes.
+        float[][] protoDistExps = new float[numClasses][];
+        int tempInt;
+        for (int c = 0; c < numClasses; c++) {
+            // A class could in principle have fewer members than the desired
+            // number of prototypes, so we have to be careful.
+            int prLen = Math.max(numProtoPerClass, dataClasses[c].size());
+            classPrototypes[c] = new DataInstance[prLen];
+            protoDispersions[c] = new float[prLen];
+            protoDists[c] = new float[prLen];
+            protoDistExps[c] = new float[prLen];
+            int[] indexes = UniformSampler.getSample(
+                    dataClasses[c].size(), prLen);
+            int[] varianceSample = UniformSampler.getSample(
+                    dataClasses[c].size(), 20);
+            float[] varDists = new float[(varianceSample.length *
+                    (varianceSample.length - 1)) / 2];
+            tempInt = -1;
+            // Calculate the variance from the random sample.
+            for (int i = 0; i < varianceSample.length; i++) {
+                for (int j = i + 1; j < varianceSample.length; j++) {
+                    varDists[++tempInt] = cmet.dist(
+                            dataClasses[c].getInstance(varianceSample[i]),
+                            dataClasses[c].getInstance(varianceSample[j]));
+                }
+            }
+            float meanVal = HigherMoments.calculateArrayMean(varDists);
+            float stDev = HigherMoments.calculateArrayStDev(meanVal,
+                    varDists);
+            float varianceEstimate = stDev * stDev;
+            for (int i = 0; i < prLen; i++) {
+                classPrototypes[c][i] = dataClasses[c].getInstance(
+                        indexes[i]).copy();
+                protoDispersions[c][i] = varianceEstimate;
+            }
+        }
+        // Iterate through the data according to a random permutation.
+        int[] indexPermutation = Permutation.obtainRandomPermutation(
+                trainingData.size());
+        // Current class and current distance.
+        int currClass;
+        float currDist;
+        // Best selection parameters.
+        float minDist;
+        int minProtoIndex;
+        int minClassIndex;
+
+        float sumAll;
+        float[] classSums = new float[numClasses];
+
+        float choosingProbTotal;
+        float choosingProbInClass;
+
+        float deltaProtoFact;
+        float deltaVariance;
+
+        for (int i : indexPermutation) {
