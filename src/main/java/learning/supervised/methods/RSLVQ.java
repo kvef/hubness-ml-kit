@@ -261,3 +261,83 @@ public class RSLVQ extends Classifier implements Serializable {
         float deltaVariance;
 
         for (int i : indexPermutation) {
+            // Find the closest prototype.
+            currClass = trainingData.getLabelOf(i);
+            DataInstance instance = trainingData.getInstance(i);
+            minProtoIndex = 0;
+            minDist = Float.MAX_VALUE;
+            sumAll = 0;
+            minClassIndex = 0;
+            for (int c = 0; c < numClasses; c++) {
+                classSums[c] = 0;
+                for (int j = 0; j < classPrototypes[c].length; j++) {
+                    currDist = cmet.dist(instance, classPrototypes[c][j]);
+                    protoDists[c][j] = currDist;
+                    protoDistExps[c][j] = (float) Math.exp(-currDist * currDist
+                            / (2 * protoDispersions[c][j]));
+                    sumAll += protoDistExps[c][j];
+                    classSums[c] += protoDistExps[c][j];
+                    if (currDist < minDist) {
+                        minDist = currDist;
+                        minProtoIndex = j;
+                        minClassIndex = c;
+                    }
+                }
+            }
+            if (DataMineConstants.isZero(sumAll)) {
+                sumAll = DataMineConstants.EPSILON;
+            }
+            if (DataMineConstants.isZero(classSums[minClassIndex])) {
+                classSums[minClassIndex] = DataMineConstants.EPSILON;
+            }
+            choosingProbTotal = protoDistExps[minClassIndex][minProtoIndex]
+                    / sumAll;
+            choosingProbInClass = protoDistExps[minClassIndex][minProtoIndex]
+                    / classSums[minClassIndex];
+
+            if (minClassIndex == currClass) {
+                // Reward.
+                deltaProtoFact = (alphaProto / Math.max(
+                        protoDispersions[minClassIndex][minProtoIndex],
+                        DataMineConstants.EPSILON)) * (choosingProbInClass
+                        - choosingProbTotal);
+                deltaVariance = (alphaVariance / Math.max(
+                        protoDispersions[minClassIndex][minProtoIndex],
+                        DataMineConstants.EPSILON)) * (choosingProbInClass
+                        - choosingProbTotal) * (-dim + (minDist * minDist
+                        / Math.max(
+                        protoDispersions[minClassIndex][minProtoIndex],
+                        DataMineConstants.EPSILON)));
+            } else {
+                // Penalty.
+                deltaProtoFact = (alphaProto / Math.max(protoDispersions[
+                        minClassIndex][minProtoIndex],
+                        DataMineConstants.EPSILON)) * (-choosingProbTotal);
+                deltaVariance = (alphaVariance / Math.max(protoDispersions[
+                        minClassIndex][minProtoIndex],
+                        DataMineConstants.EPSILON)) * (-choosingProbTotal)
+                        * (-dim + (minDist * minDist /
+                        Math.max(protoDispersions[minClassIndex][minProtoIndex],
+                        DataMineConstants.EPSILON)));
+            }
+            protoDispersions[minClassIndex][minProtoIndex] += deltaVariance;
+            for (int d = 0; d < dim; d++) {
+                classPrototypes[minClassIndex][minProtoIndex].fAttr[d] +=
+                        deltaProtoFact * (instance.fAttr[d] - classPrototypes[
+                        minClassIndex][minProtoIndex].fAttr[d]);
+            }
+        }
+
+    }
+
+    @Override
+    public int classify(DataInstance instance) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int i = 0; i < numClasses; i++) {
+            if (classProbs[i] > maxProb) {
+                maxProb = classProbs[i];
+                maxClassIndex = i;
+            }
+       
