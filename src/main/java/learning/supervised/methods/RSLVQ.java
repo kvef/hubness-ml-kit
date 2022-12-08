@@ -340,4 +340,71 @@ public class RSLVQ extends Classifier implements Serializable {
                 maxProb = classProbs[i];
                 maxClassIndex = i;
             }
-       
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        float[] classProbs = new float[numClasses];
+        float classTotal = 0;
+        float[] classMinDists = new float[numClasses];
+        CombinedMetric cmet = getCombinedMetric();
+        float dist;
+        float maxDist = 0;
+        for (int c = 0; c < numClasses; c++) {
+            classMinDists[c] = Float.MAX_VALUE;
+            for (int i = 0; i < classPrototypes[c].length; i++) {
+                dist = cmet.dist(classPrototypes[c][i], instance);
+                if (dist < classMinDists[c]) {
+                    classMinDists[c] = dist;
+                }
+                if (dist > maxDist) {
+                    maxDist = dist;
+                }
+            }
+        }
+        maxDist = Math.max(maxDist, 1);
+        for (int c = 0; c < numClasses; c++) {
+            classProbs[c] = maxDist - classMinDists[c];
+            classTotal += classProbs[c];
+        }
+        if (classTotal != 0) {
+            for (int c = 0; c < numClasses; c++) {
+                classProbs[c] /= classTotal;
+            }
+        }
+        return classProbs;
+    }
+
+    @Override
+    public void setClasses(Category[] categories) {
+        super.setClasses(categories);
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1
+                    && categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+            }
+        }
+        // Data instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size(); i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(i));
+            }
+        }
+        numClasses = trainingData.countCategories();
+    }
+}
