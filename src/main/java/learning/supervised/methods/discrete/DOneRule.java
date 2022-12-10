@@ -214,4 +214,10 @@ public class DOneRule extends DiscreteClassifier implements Serializable {
         } else {
             targetValue = instance.nominalIndexes[index];
         }
-        if (valueCDistMap.containsKe
+        if (valueCDistMap.containsKey(targetValue)) {
+            return valueCDistMap.get(targetValue);
+        } else {
+            return classPriors;
+        }
+    }
+}
