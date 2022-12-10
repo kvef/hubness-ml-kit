@@ -96,4 +96,26 @@ public class DZeroRule extends DiscreteClassifier implements Serializable {
     public void train() throws Exception {
         DiscreteCategory[] dataClasses = getClasses();
         DiscretizedDataSet discDSet = getDataType();
-        int maxClassSi
+        int maxClassSize = 0;
+        classDistributions = new float[dataClasses.length];
+        for (int cIndex = 0; cIndex < dataClasses.length; cIndex++) {
+            classDistributions[cIndex] = dataClasses[cIndex].indexes.size()
+                    / (float) discDSet.data.size();
+            if (dataClasses[cIndex].indexes.size() > maxClassSize) {
+                maxClassSize = dataClasses[cIndex].indexes.size();
+                majorityClassIndex = cIndex;
+            }
+        }
+    }
+
+    @Override
+    public int classify(DiscretizedDataInstance instance) throws Exception {
+        return majorityClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DiscretizedDataInstance instance)
+            throws Exception {
+        return classDistributions;
+    }
+}
