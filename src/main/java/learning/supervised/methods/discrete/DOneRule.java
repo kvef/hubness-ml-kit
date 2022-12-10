@@ -130,4 +130,88 @@ public class DOneRule extends DiscreteClassifier implements Serializable {
         }
         // Find the best attribute to split on.
         Info infoCalculator = new Info(
-                n
+                new DiscreteAttributeValueSplitter(discDSet),
+                dataClasses.length);
+        // Lowest information value corresponds to the highest information gain.
+        int[] typeAndIndex = infoCalculator.
+                getTypeAndIndexOfLowestEvaluatedFeature();
+        attType = typeAndIndex[0];
+        index = typeAndIndex[1];
+        // Generate a split on the attribute.
+        DiscreteAttributeValueSplitter davs =
+                new DiscreteAttributeValueSplitter(discDSet);
+        ArrayList<Integer>[] split = davs.generateIndexedSplitOnAttribute(
+                typeAndIndex[0], typeAndIndex[1]);
+        // Initialize the maps.
+        valueCDistMap = new HashMap<>(1000);
+        valueClassMap = new HashMap<>(1000);
+        // Obtain the split values.
+        splitValues = new int[split.length];
+        //fill in the values for following checks for classification
+        for (int i = 0; i < split.length; i++) {
+            if (attType == DataMineConstants.FLOAT) {
+                splitValues[i] = discDSet.data.get(split[i].get(0)).
+                        floatIndexes[index];
+            } else if (attType == DataMineConstants.INTEGER) {
+                splitValues[i] = discDSet.data.get(split[i].get(0)).
+                        integerIndexes[index];
+            } else {
+                splitValues[i] = discDSet.data.get(split[i].get(0)).
+                        nominalIndexes[index];
+            }
+        }
+        // Calculate the class distribution for each value.
+        classDistributionsForValues = new float[split.length][
+                dataClasses.length];
+        majorityClassesForSplits = new int[split.length];
+        float maxClassVal;
+        for (int i = 0; i < split.length; i++) {
+            for (int j = 0; j < split[i].size(); j++) {
+                classDistributionsForValues[i][
+                        discDSet.data.get(j).getCategory()]++;
+            }
+            maxClassVal = 0;
+            for (int cIndex = 0; cIndex < dataClasses.length; cIndex++) {
+                if (classDistributionsForValues[i][cIndex] > maxClassVal) {
+                    maxClassVal = classDistributionsForValues[i][cIndex];
+                    majorityClassesForSplits[i] = cIndex;
+                }
+                classDistributionsForValues[i][cIndex] /=
+                        (float) split[i].size();
+            }
+            valueCDistMap.put(splitValues[i], classDistributionsForValues[i]);
+            valueClassMap.put(splitValues[i], majorityClassesForSplits[i]);
+        }
+    }
+
+    
+    @Override
+    public int classify(DiscretizedDataInstance instance) throws Exception {
+        int targetValue;
+        if (attType == DataMineConstants.FLOAT) {
+            targetValue = instance.floatIndexes[index];
+        } else if (attType == DataMineConstants.INTEGER) {
+            targetValue = instance.integerIndexes[index];
+        } else {
+            targetValue = instance.nominalIndexes[index];;
+        }
+        if (valueClassMap.containsKey(targetValue)) {
+            return valueClassMap.get(targetValue);
+        } else {
+            return majorityClassIndex;
+        }
+    }
+
+    
+    @Override
+    public float[] classifyProbabilistically(DiscretizedDataInstance instance)
+            throws Exception {
+        int targetValue;
+        if (attType == DataMineConstants.FLOAT) {
+            targetValue = instance.floatIndexes[index];
+        } else if (attType == DataMineConstants.INTEGER) {
+            targetValue = instance.integerIndexes[index];
+        } else {
+            targetValue = instance.nominalIndexes[index];
+        }
+        if (valueCDistMap.containsKe
