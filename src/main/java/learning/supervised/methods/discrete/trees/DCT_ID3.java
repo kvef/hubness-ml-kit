@@ -60,4 +60,117 @@ public class DCT_ID3 extends DiscreteClassifier implements Serializable {
     private int currDepth = 0;
     
     @Override
-    public HashMap<String, String> getParameterNamesAndDescr
+    public HashMap<String, String> getParameterNamesAndDescriptions() {
+        HashMap<String, String> paramMap = new HashMap<>();
+        return paramMap;
+    }
+    
+    @Override
+    public Publication getPublicationInfo() {
+        JournalPublication pub = new JournalPublication();
+        pub.setTitle("Induction of Decision Trees");
+        pub.addAuthor(new Author("J. R.", "Quinlan"));
+        pub.setPublisher(Publisher.MCGRAW_HILL);
+        pub.setJournalName("Machine Learning");
+        pub.setYear(1986);
+        pub.setStartPage(81);
+        pub.setEndPage(106);
+        pub.setVolume(1);
+        pub.setIssue(1);
+        return pub;
+    }
+
+    @Override
+    public String getName() {
+        return "ID3";
+    }
+
+    
+    /**
+     * The default constructor.
+     */
+    public DCT_ID3() {
+    }
+
+    
+    /**
+     * Initialization.
+     *
+     * @param discDSet DiscretizedDataSet that is the training data.
+     */
+    public DCT_ID3(DiscretizedDataSet discDSet) {
+        setDataType(discDSet);
+        generateClassesFromDataType();
+    }
+
+    
+    /**
+     * Initialization.
+     *
+     * @param discDSet DiscretizedDataSet that is the training data context.
+     * @param dataClasses DiscreteCategory[] that is the training data.
+     */
+    public DCT_ID3(DiscretizedDataSet discDSet, DiscreteCategory[] dataClasses) {
+        setClasses(dataClasses);
+        setDataType(discDSet);
+    }
+    
+    
+    @Override
+    public long getVersion() {
+        return serialVersionUID;
+    }
+
+    
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        return new DCT_ID3();
+    }
+
+    
+    /**
+     * This method makes a subtree below the current node.
+     *
+     * @param node DecisionTreeNode to expand.
+     */
+    public void makeTree(DecisionTreeNode node) {
+        currDepth++;
+        node.depth = currDepth;
+        node.currInfoValue = 0;
+        if (node.indexes != null && node.indexes.size() >= 1) {
+            // Calculate the class distribution within the node.
+            node.classPriorsLocal = new float[numClasses];
+            for (int i = 0; i < node.indexes.size(); i++) {
+                node.classPriorsLocal[(node.discDSet.data.get(
+                        node.indexes.get(i))).getCategory()]++;
+            }
+            float localLargestFreq = 0;
+            int numNonZeroClasses = 0;
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                if (node.classPriorsLocal[cIndex] > 0) {
+                    numNonZeroClasses++;
+                    // Normalize the prior.
+                    node.classPriorsLocal[cIndex] /=
+                            (float) node.indexes.size();
+                    // Keep track of the locally largest frequency.
+                    if (node.classPriorsLocal[cIndex] > localLargestFreq) {
+                        node.majorityClass = cIndex;
+                        localLargestFreq = node.classPriorsLocal[cIndex];
+                    }
+                    node.currInfoValue -= node.classPriorsLocal[cIndex] *
+                            BasicMathUtil.log2(node.classPriorsLocal[cIndex]);
+                }
+            }
+            if (numNonZeroClasses == 1) {
+                // All instances in the node belong to the same class, so there
+                // is no need to expand further. The work is done here.
+                currDepth--;
+                return;
+            }
+            if (currDepth <= totalNumAtt) {
+                // There are more attributes to try.
+                Info infoCalculator = new Info(
+                        new DiscreteAttributeValueSplitter(node.discDSet),
+                        numClasses);
+                int[] typeAndIndex = infoCalculator.
+                        getTypeAndIndexOfLowestEvaluatedFeature
