@@ -250,4 +250,46 @@ public class DCT_ID3 extends DiscreteClassifier implements Serializable {
         acceptableFloat = new boolean[floatSize];
         acceptableInt = new boolean[intSize];
         acceptableNominal = new boolean[nominalSize];
-        totalNumAtt = floatSize + i
+        totalNumAtt = floatSize + intSize + nominalSize;
+        Arrays.fill(acceptableFloat, true);
+        Arrays.fill(acceptableInt, true);
+        Arrays.fill(acceptableNominal, true);
+        DiscreteCategory[] classes = getClasses();
+        float globalLargestFrequency = 0;
+        classPriors = new float[classes.length];
+        for (int cIndex = 0; cIndex < classes.length; cIndex++) {
+            if (classes[cIndex] != null && classes[cIndex].indexes.size() > 0) {
+                classPriors[cIndex] = classes[cIndex].indexes.size() /
+                        (float) discDSet.size();
+                if (classPriors[cIndex] > globalLargestFrequency) {
+                    globalLargestFrequency = classPriors[cIndex];
+                    generalMajorityClass = cIndex;
+                }
+            }
+        }
+        numClasses = classes.length;
+        // Initialize the root node.
+        root = new DecisionTreeNode();
+        root.discDSet = discDSet;
+        root.indexes = new ArrayList(discDSet.size());
+        for (int i = 0; i < discDSet.size(); i++) {
+            root.indexes.add(i);
+        }
+        root.branchValue = -1;
+        root.currInfoValue = Float.MAX_VALUE;
+        makeTree(root);
+    }
+
+    
+    @Override
+    public int classify(DiscretizedDataInstance instance) throws Exception {
+        return root.classify(instance);
+    }
+
+    
+    @Override
+    public float[] classifyProbabilistically(DiscretizedDataInstance instance)
+            throws Exception {
+        return root.classifyProbabilistically(instance);
+    }
+}
