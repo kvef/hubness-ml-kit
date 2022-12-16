@@ -173,4 +173,81 @@ public class DCT_ID3 extends DiscreteClassifier implements Serializable {
                         new DiscreteAttributeValueSplitter(node.discDSet),
                         numClasses);
                 int[] typeAndIndex = infoCalculator.
-                        getTypeAndIndexOfLowestEvaluatedFeature
+                        getTypeAndIndexOfLowestEvaluatedFeatureOnSubset(
+                        node.indexes, acceptableFloat, acceptableInt,
+                        acceptableNominal);
+                DiscreteAttributeValueSplitter davs =
+                        new DiscreteAttributeValueSplitter(node.discDSet);
+                // There might be nodes with no instances, but this way there
+                // will be a bijective correspondence between the children
+                // indexes and split values, which makes cross-referencing
+                // easier.
+                davs.setEmptyToleration(true);
+                // Generate the split.
+                ArrayList<Integer>[] split = davs.
+                        generateIndexedSplitFromGivenDiscretization(
+                        node.indexes, typeAndIndex[0], typeAndIndex[1]);
+                node.attType = typeAndIndex[0];
+                node.attIndex = typeAndIndex[1];
+                // Calculate the information value of the split to see if there
+                // is any improvement.
+                infoCalculator = new Info(new DiscreteAttributeValueSplitter(
+                        node.discDSet), numClasses);
+                float splitInfo = infoCalculator.evaluateSplitOnSubset(
+                        node.indexes, split);
+                if (splitInfo < node.currInfoValue) {
+                    // The attribute is flagged as in use.
+                    if (node.attType == DataMineConstants.FLOAT) {
+                        acceptableFloat[node.attIndex] = false;
+                    } else if (node.attType == DataMineConstants.INTEGER) {
+                        acceptableInt[node.attIndex] = false;
+                    } else {
+                        acceptableNominal[node.attIndex] = false;
+                    }
+                    // Since there is improvement, split on the attribute.
+                    node.children = new ArrayList<>(split.length);
+                    DecisionTreeNode childNode;
+                    for (int sIndex = 0; sIndex < split.length; sIndex++) {
+                        childNode = new DecisionTreeNode();
+                        childNode.discDSet = node.discDSet;
+                        childNode.indexes = split[sIndex];
+                        childNode.branchValue = sIndex;
+                        node.children.add(childNode);
+                        makeTree(childNode);
+                    }
+                    // Since we are leaving this branch, flag the attribute as
+                    // available once again.
+                    if (node.attType == DataMineConstants.FLOAT) {
+                        acceptableFloat[node.attIndex] = true;
+                    } else if (node.attType == DataMineConstants.INTEGER) {
+                        acceptableInt[node.attIndex] = true;
+                    } else {
+                        acceptableNominal[node.attIndex] = true;
+                    }
+                } else {
+                    // No improvement, so we stop.
+                    currDepth--;
+                    return;
+                }
+            }
+        } else {
+            node.majorityClass = generalMajorityClass;
+            node.classPriorsLocal = classPriors;
+        }
+        currDepth--;
+    }
+
+    
+    @Override
+    public void train() throws Exception {
+        // Fetch the data.
+        DiscretizedDataSet discDSet = getDataType();
+        // Count the attributes.
+        int floatSize = discDSet.getNumFloatAttr();
+        int intSize = discDSet.getNumIntAttr();
+        int nominalSize = discDSet.getNumNominalAttr();
+        // Initialize the availability arrays.
+        acceptableFloat = new boolean[floatSize];
+        acceptableInt = new boolean[intSize];
+        acceptableNominal = new boolean[nominalSize];
+        totalNumAtt = floatSize + i
