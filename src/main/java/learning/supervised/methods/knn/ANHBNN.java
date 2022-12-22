@@ -336,4 +336,112 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
     }
 
     /**
-     * @param trainingData
+     * @param trainingData DataSet object to train the model on.
+     */
+    public void setTrainingSet(DataSet trainingData) {
+        this.trainingData = trainingData;
+    }
+
+    /**
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public void setNumClasses(int numClasses) {
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * @return Integer that is the number of classes in the data.
+     */
+    public int getNumClasses() {
+        return numClasses;
+    }
+
+    /**
+     * @return Integer that is the neighborhood size used in calculations.
+     */
+    public int getK() {
+        return k;
+    }
+
+    /**
+     * @param k Integer that is the neighborhood size used in calculations.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    /**
+     * Calculate the neighbor sets, if not already calculated.
+     *
+     * @throws Exception
+     */
+    public void calculateNeighborSets() throws Exception {
+        if (distMat == null) {
+            nsf = new NeighborSetFinder(trainingData, getCombinedMetric());
+            nsf.calculateDistances();
+        } else {
+            nsf = new NeighborSetFinder(trainingData, distMat,
+                    getCombinedMetric());
+        }
+        nsf.calculateNeighborSets(k);
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        ANHBNN classifierCopy = new ANHBNN(k, laplaceEstimatorSmall,
+                getCombinedMetric(), numClasses);
+        classifierCopy.noRecalc = noRecalc;
+        classifierCopy.thetaValue = thetaValue;
+        return classifierCopy;
+    }
+
+    /**
+     * Calculates the mutual information between two neighbors according to
+     * their occurrences and co-occurrences.
+     *
+     * @param min
+     * @param max
+     * @return
+     */
+    private double calculateMutualInformation(int lowerIndex, long upperIndex) {
+        // Transform to the encoding used in the hash maps.
+        long concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+        int size = trainingData.size();
+        if (mutualInformationMap.containsKey(concat)) {
+            // If it has already been queried and calculated before, just load
+            // the existing result.
+            return mutualInformationMap.get(concat);
+        } else {
+            // Calculate the mutual information from mutual and individual
+            // occurrence counts.
+            double bothOccurFactor = 0;
+            double firstOccursFactor = 0;
+            double secondOccursFactor = 0;
+            double noneOccursFactor = 0;
+            int cooccFreq;
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                if (coDependencyMaps[cIndex].containsKey(concat)) {
+                    cooccFreq = coDependencyMaps[cIndex].get(concat);
+                } else {
+                    cooccFreq = 0;
+                }
+                // The formulas are a bit complicated. For more detail, look up
+                // the original paper, as it is freely available online.
+                bothOccurFactor += ((double) (cooccFreq) / (double) size)
+                        * BasicMathUtil.log2(((double) (cooccFreq
+                        + laplaceEstimatorSmall) / (double) classFreqs[cIndex]
+                        + laplaceEstimatorSmall) / (((classDataKNeighborRelation[
+                        cIndex][lowerIndex] + laplaceEstimatorSmall)
+                        / ((double) classFreqs[cIndex] + laplaceEstimatorSmall))
+                        * ((classDataKNeighborRelation[cIndex][(int) upperIndex]
+                        + laplaceEstimatorSmall)
