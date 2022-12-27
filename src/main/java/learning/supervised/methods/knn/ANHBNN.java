@@ -444,4 +444,67 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                         cIndex][lowerIndex] + laplaceEstimatorSmall)
                         / ((double) classFreqs[cIndex] + laplaceEstimatorSmall))
                         * ((classDataKNeighborRelation[cIndex][(int) upperIndex]
-                        + laplaceEstimatorSmall)
+                        + laplaceEstimatorSmall) / ((double) classFreqs[cIndex]
+                        + laplaceEstimatorSmall))));
+                firstOccursFactor += ((double) (classDataKNeighborRelation[
+                        cIndex][lowerIndex] - cooccFreq) / (double) size)
+                        * BasicMathUtil.log2(((double) (
+                        classDataKNeighborRelation[cIndex][lowerIndex]
+                        - cooccFreq + laplaceEstimatorSmall) /
+                        ((double) classFreqs[cIndex] + laplaceEstimatorSmall))
+                        / (((classDataKNeighborRelation[cIndex][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[cIndex]
+                        + laplaceEstimatorSmall)) * (1
+                        - ((classDataKNeighborRelation[cIndex][(int) upperIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[cIndex]
+                        + laplaceEstimatorSmall)))));
+                secondOccursFactor += ((double) (classDataKNeighborRelation[
+                        cIndex][(int) upperIndex] - cooccFreq) / (double) size)
+                        * BasicMathUtil.log2(((double) (
+                        classDataKNeighborRelation[cIndex][(int) upperIndex]
+                        - cooccFreq + laplaceEstimatorSmall) /
+                        ((double) classFreqs[cIndex] + laplaceEstimatorSmall)) /
+                        (((classDataKNeighborRelation[cIndex][(int) upperIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[cIndex]
+                        + laplaceEstimatorSmall)) * (1 -
+                        ((classDataKNeighborRelation[cIndex][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[cIndex]
+                        + laplaceEstimatorSmall)))));
+                noneOccursFactor += ((double) (classFreqs[cIndex]
+                        - classDataKNeighborRelation[cIndex][lowerIndex]
+                        - classDataKNeighborRelation[cIndex][(int) upperIndex]
+                        + cooccFreq) / (double) size) * BasicMathUtil.log2(
+                        ((double) (classFreqs[cIndex]
+                        - classDataKNeighborRelation[cIndex][lowerIndex]
+                        - classDataKNeighborRelation[cIndex][(int) upperIndex]
+                        + cooccFreq + laplaceEstimatorSmall)
+                        / ((double) classFreqs[cIndex] + laplaceEstimatorSmall))
+                        / ((1 - ((classDataKNeighborRelation[cIndex][
+                        (int) upperIndex] + laplaceEstimatorSmall)
+                        / ((double) classFreqs[cIndex] +
+                        laplaceEstimatorSmall)))
+                        * (1 - ((classDataKNeighborRelation[cIndex][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[cIndex]
+                        + laplaceEstimatorSmall)))));
+            }
+            double mutualInformation = bothOccurFactor + firstOccursFactor
+                    + secondOccursFactor + noneOccursFactor;
+            mutualInformationMap.put(concat, mutualInformation);
+            return mutualInformation;
+        }
+    }
+
+    /**
+     * Calculates the entropies of the reverse neighbor sets.
+     *
+     * @param kneighbors int[][] of k-nearest neighbors for all training
+     * instances.
+     * @return float[] of reverse neighbor set entropies for all training
+     * instances.
+     */
+    private float[] calculateReverseNeighborEntropies(int[][] kneighbors) {
+        // Category frequencies in the reverse neighbor set of a particular
+        // point.
+        float[] categoryFrequencies = new float[numClasses];
+        float[] reverseNeighborEntropies = new float[trainingData.size()];
+    
