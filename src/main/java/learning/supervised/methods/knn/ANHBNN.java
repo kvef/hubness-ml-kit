@@ -595,4 +595,68 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
         for (int i = 0; i < neighbOccFreqs.length; i++) {
             // Get the class context of the query.
             queryClass = trainingData.getLabelOf(i);
-            // Each point is considered
+            // Each point is considered as its own 0th nearest neighbor, which
+            // avoids many zero-division issues.
+            classDataKNeighborRelation[queryClass][i]++;
+            classToClassPriors[queryClass][queryClass]++;
+            for (int kIndFirst = 0; kIndFirst < k; kIndFirst++) {
+                classDataKNeighborRelation[queryClass][kneighbors[i][
+                        kIndFirst]]++;
+                classToClassPriors[trainingData.getLabelOf(
+                        kneighbors[i][kIndFirst])][queryClass]++;
+                // Encode the pair. Here each neighbor co-occurs with the query
+                // point, as the point is considered to be its own neighbor.
+                lowerIndex = Math.min(kneighbors[i][kIndFirst], i);
+                upperIndex = Math.max(kneighbors[i][kIndFirst], i);
+                concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+                // Insert or increment the co-occurrence count.
+                if (!coDependencyMaps[queryClass].containsKey(concat)) {
+                    coDependencyMaps[queryClass].put(concat, 1);
+                    coOccurringPairs.add(new Point(lowerIndex,
+                            (int) upperIndex));
+                } else {
+                    currFreq = coDependencyMaps[queryClass].get(concat);
+                    coDependencyMaps[queryClass].remove(concat);
+                    coDependencyMaps[queryClass].put(concat, currFreq + 1);
+                }
+                // Iterate through the remaining neighbors.
+                for (int kIndSecond = kIndFirst + 1; kIndSecond < k;
+                        kIndSecond++) {
+                    classCoOccurrencesInNeighborhoodsOfClasses[queryClass][
+                            trainingData.getLabelOf(kneighbors[i][kIndFirst])][
+                            trainingData.getLabelOf(
+                            kneighbors[i][kIndSecond])]++;
+                    if (trainingData.getLabelOf(kneighbors[i][kIndFirst])
+                            != trainingData.getLabelOf(
+                            kneighbors[i][kIndSecond])) {
+                        classCoOccurrencesInNeighborhoodsOfClasses[queryClass][
+                                trainingData.getLabelOf(kneighbors[i][
+                                kIndSecond])][trainingData.getLabelOf(
+                                kneighbors[i][kIndFirst])]++;
+                    }
+                    // Encode the pair.
+                    lowerIndex = Math.min(kneighbors[i][kIndFirst],
+                            kneighbors[i][kIndSecond]);
+                    upperIndex = Math.max(kneighbors[i][kIndFirst],
+                            kneighbors[i][kIndSecond]);
+                    concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+                    // Insert or increment the co-occurrence count.
+                    if (!coDependencyMaps[queryClass].containsKey(concat)) {
+                        coDependencyMaps[queryClass].put(concat, 1);
+                        coOccurringPairs.add(new Point(lowerIndex,
+                                (int) upperIndex));
+                    } else {
+                        currFreq = coDependencyMaps[queryClass].get(concat);
+                        coDependencyMaps[queryClass].remove(concat);
+                        coDependencyMaps[queryClass].put(concat, currFreq + 1);
+                    }
+                }
+            }
+        }
+        // Calculate the class-conditional self-information.
+        for (int i = 0; i < neighbOccFreqs.length; i++) {
+            for (int c = 0; c < numClasses; c++) {
+                if (classDataKNeighborRelation[c][i] > 0) {
+                    classConditionalSelfInformation[i][c] =
+                            BasicMathUtil.log2(classFreqs[c]
+                   
