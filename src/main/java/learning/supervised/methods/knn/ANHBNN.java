@@ -507,4 +507,92 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
         // point.
         float[] categoryFrequencies = new float[numClasses];
         float[] reverseNeighborEntropies = new float[trainingData.size()];
-    
+        ArrayList<Integer>[] reverseNeighbors =
+                new ArrayList[trainingData.size()];
+        for (int i = 0; i < trainingData.size(); i++) {
+            reverseNeighbors[i] = new ArrayList<>(10 * k);
+        }
+        for (int i = 0; i < trainingData.size(); i++) {
+            for (int kIndex = 0; kIndex < k; kIndex++) {
+                reverseNeighbors[kneighbors[i][kIndex]].add(i);
+            }
+        }
+        float ratio;
+        for (int i = 0; i < reverseNeighborEntropies.length; i++) {
+            if (reverseNeighbors[i].size() <= 1) {
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    categoryFrequencies[cIndex] = 0;
+                }
+                reverseNeighborEntropies[i] = 0;
+                continue;
+            }
+            for (int j = 0; j < reverseNeighbors[i].size(); j++) {
+                int currClass = trainingData.getInstance(
+                        reverseNeighbors[i].get(j)).getCategory();
+                if (currClass >= 0) {
+                    categoryFrequencies[currClass]++;
+                }
+            }
+            // Calculate the entropy.
+            for (int j = 0; j < categoryFrequencies.length; j++) {
+                if (categoryFrequencies[j] > 0) {
+                    ratio = categoryFrequencies[j]
+                            / (float) reverseNeighbors[i].size();
+                    reverseNeighborEntropies[i] -=
+                            ratio * BasicMathUtil.log2(ratio);
+                }
+            }
+            // Nullify the category frequencies array for next use.
+            for (int j = 0; j < numClasses; j++) {
+                categoryFrequencies[j] = 0;
+            }
+        }
+        return reverseNeighborEntropies;
+    }
+
+    @Override
+    public void train() throws Exception {
+        if (k <= 0) {
+            // If the neighborhood size was not specified, use the default
+            // value. TODO: implement automatic parameter selection.
+            k = 10;
+        }
+        if (nsf == null) {
+            calculateNeighborSets();
+        }
+        dataSize = trainingData.size();
+        // Calculate class priors.
+        classPriors = trainingData.getClassPriors();
+        classFreqs = trainingData.getClassFrequenciesAsFloatArray();
+        classToClassPriors = new float[numClasses][numClasses];
+        // Get the neighbor occurrence frequencies.
+        neighbOccFreqs = nsf.getNeighborFrequencies();
+        // Calculate the entropies of the reverse neighbor sets.
+        nsf.calculateReverseNeighborEntropies(numClasses);
+        rnnImpurity = nsf.getReverseNeighborEntropies();
+        // The list of co-occurring pairs of points.
+        coOccurringPairs = new ArrayList<>(dataSize);
+        // The kNN sets.
+        int[][] kneighbors = nsf.getKNeighbors();
+        // The map for storing the co-occurrence counts. 
+        coDependencyMaps = new HashMap[numClasses];
+        mutualInformationMap = new HashMap<>(dataSize);
+        classConditionalSelfInformation = new double[dataSize][numClasses];
+        classCoOccurrencesInNeighborhoodsOfClasses =
+                new float[numClasses][numClasses][numClasses];
+        // Initialize the maps.
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            coDependencyMaps[cIndex] = new HashMap<>(dataSize);
+
+        }
+        long concat; // Used to encode neighbor pairs to a single hashable
+        // value.
+        int lowerIndex;
+        long upperIndex;
+        int queryClass;
+        int currFreq;
+        classDataKNeighborRelation = new float[numClasses][trainingData.size()];
+        for (int i = 0; i < neighbOccFreqs.length; i++) {
+            // Get the class context of the query.
+            queryClass = trainingData.getLabelOf(i);
+            // Each point is considered
