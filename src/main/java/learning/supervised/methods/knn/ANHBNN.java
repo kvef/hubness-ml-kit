@@ -798,4 +798,73 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
         classToClassPriors = new float[numClasses][numClasses];
         // Initialize the list of co-occuring neighbor pairs.
         coOccurringPairs = new ArrayList<>(trainingData.size());
-        // Get the prototype kN
+        // Get the prototype kNN sets.
+        int[][] kneighbors = reducer.getProtoNeighborSets();
+        // Calculate the reverse neighbor entropies.
+        rnnImpurity = this.calculateReverseNeighborEntropies(kneighbors);
+        // Initialize the hash maps.
+        coDependencyMaps = new HashMap[numClasses];
+        mutualInformationMap = new HashMap<>(trainingData.size());
+        classConditionalSelfInformation = new double[trainingData.size()][
+                numClasses];
+        classCoOccurrencesInNeighborhoodsOfClasses =
+                new float[numClasses][numClasses][numClasses];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            coDependencyMaps[cIndex] = new HashMap<>(trainingData.size());
+        }
+        float[][] classDataKNeighborRelationTemp = reducer.
+                getClassDataNeighborRelationNonNormalized(
+                kReducer, numClasses, true);
+        classDataKNeighborRelation = new float[numClasses][
+                neighbOccFreqs.length];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            for (int i = 0; i < neighbOccFreqs.length; i++) {
+                classDataKNeighborRelation[cIndex][i] =
+                        classDataKNeighborRelationTemp[cIndex][
+                        indexPermutation.get(i)];
+            }
+        }
+        // Encoding for the neighbor pairs.
+        long concat;
+        int lowerIndex;
+        long upperIndex;
+        int queryClass;
+        int currFreq;
+        int actualIndex;
+        for (int i = 0; i < neighbOccFreqs.length; i++) {
+            actualIndex = indexPermutation.get(i);
+            queryClass = trainingData.getLabelOf(i);
+            classToClassPriors[queryClass][queryClass]++;
+            for (int kIndFirst = 0; kIndFirst < kReducer; kIndFirst++) {
+                // Get the encoding for co-occurrences of the query point that
+                // is considered to be its own zeroeth neighbor and the
+                // prototype.
+                lowerIndex = Math.min(kneighbors[actualIndex][kIndFirst], i);
+                upperIndex = Math.max(kneighbors[actualIndex][kIndFirst], i);
+                concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+                if (!coDependencyMaps[queryClass].containsKey(concat)) {
+                    coDependencyMaps[queryClass].put(concat, 1);
+                    coOccurringPairs.add(new Point(lowerIndex,
+                            (int) upperIndex));
+                } else {
+                    currFreq = coDependencyMaps[queryClass].get(concat);
+                    coDependencyMaps[queryClass].remove(concat);
+                    coDependencyMaps[queryClass].put(concat, currFreq + 1);
+                }
+                classToClassPriors[trainingData.getLabelOf(
+                        kneighbors[actualIndex][kIndFirst])][queryClass]++;
+                // Consider neighbor co-occurrences.
+                for (int kIndSecond = kIndFirst + 1; kIndSecond < kReducer;
+                        kIndSecond++) {
+                    // Increment the class-to-class co-occurrence counts in
+                    // neighborhoods of the current query class.
+                    classCoOccurrencesInNeighborhoodsOfClasses[queryClass][
+                            trainingData.getLabelOf(kneighbors[i][kIndFirst])][
+                            trainingData.getLabelOf(
+                            kneighbors[i][kIndSecond])]++;
+                    if (trainingData.getLabelOf(kneighbors[i][kIndFirst])
+                            != trainingData.getLabelOf(
+                            kneighbors[i][kIndSecond])) {
+                        classCoOccurrencesInNeighborhoodsOfClasses[queryClass][
+                                trainingData.getLabelOf(kneighbors[i][
+ 
