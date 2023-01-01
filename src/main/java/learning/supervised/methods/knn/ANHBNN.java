@@ -725,4 +725,77 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                         - classDataKNeighborRelation[c][lowerIndex]
                         - classDataKNeighborRelation[c][(int) upperIndex]
                         + cooccFreq) / (double) dataSize) * BasicMathUtil.log2(
- 
+                        ((double) (classFreqs[c] - classDataKNeighborRelation[
+                        c][lowerIndex] - classDataKNeighborRelation[c][
+                        (int) upperIndex] + cooccFreq + laplaceEstimatorSmall)
+                        / ((double) classFreqs[c] + laplaceEstimatorSmall))
+                        / ((1 - ((classDataKNeighborRelation[c][
+                        (int) upperIndex] + laplaceEstimatorSmall) /
+                        ((double) classFreqs[c] + laplaceEstimatorSmall))) * (1
+                        - ((classDataKNeighborRelation[c][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)))));
+            }
+            mutualInformationMap.put(concat, bothOccurFactor
+                    + firstOccursFactor + secondOccursFactor +
+                    noneOccursFactor);
+        }
+        // Normalize class-to-class priors.
+        laplaceEstimatorSmall = 0.00001f;
+        double laplaceTotal = numClasses * laplaceEstimatorSmall;
+        for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+            for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                classToClassPriors[cFirst][cSecond] += laplaceEstimatorSmall;
+                classToClassPriors[cFirst][cSecond] /= ((k + 1)
+                        * classFreqs[cSecond] * classFreqs[cFirst]
+                        + laplaceTotal);
+            }
+        }
+        // Now we calculate how often classes co-occur in neighborhoods of each
+        // particular class.
+        float occSum;
+        for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+            for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                occSum = 0;
+                for (int cThird = 0; cThird < numClasses; cThird++) {
+                    occSum += classCoOccurrencesInNeighborhoodsOfClasses[
+                            cFirst][cSecond][cThird];
+                }
+                if (occSum > 0) {
+                    for (int cThird = 0; cThird < numClasses; cThird++) {
+                        classCoOccurrencesInNeighborhoodsOfClasses[
+                                cFirst][cSecond][cThird] /= occSum;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void trainOnReducedData(InstanceSelector reducer) throws Exception {
+        ArrayList<Integer> indexPermutation = MultiCrossValidation.
+                getIndexPermutation(reducer.getPrototypeIndexes(),
+                reducer.getOriginalDataSet());
+        int kReducer = reducer.getNeighborhoodSize();
+        if (kReducer <= 0) {
+            kReducer = 10;
+        }
+        if (nsf == null) {
+            calculateNeighborSets();
+        }
+        dataSize = reducer.getOriginalDataSize();
+        // First find the class priors.
+        classPriors = trainingData.getClassPriors();
+        classFreqs = trainingData.getClassFrequenciesAsFloatArray();
+        classToClassPriors = new float[numClasses][numClasses];
+        // Get the neighbor occurrence frequencies.
+        int[] protoOccFreqs = reducer.getPrototypeHubness();
+        neighbOccFreqs = new int[protoOccFreqs.length];
+        for (int i = 0; i < neighbOccFreqs.length; i++) {
+            neighbOccFreqs[i] = protoOccFreqs[indexPermutation.get(i)];
+        }
+        // Initialize class-to-class priors.
+        classToClassPriors = new float[numClasses][numClasses];
+        // Initialize the list of co-occuring neighbor pairs.
+        coOccurringPairs = new ArrayList<>(trainingData.size());
+        // Get the prototype kN
