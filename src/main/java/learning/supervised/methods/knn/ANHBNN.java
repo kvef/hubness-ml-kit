@@ -867,4 +867,72 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                             kneighbors[i][kIndSecond])) {
                         classCoOccurrencesInNeighborhoodsOfClasses[queryClass][
                                 trainingData.getLabelOf(kneighbors[i][
- 
+                                kIndSecond])][trainingData.getLabelOf(
+                                kneighbors[i][kIndFirst])]++;
+                    }
+                    // Encode the pair from their indexes.
+                    lowerIndex = Math.min(kneighbors[actualIndex][kIndFirst],
+                            kneighbors[actualIndex][kIndSecond]);
+                    upperIndex = Math.max(kneighbors[actualIndex][kIndFirst],
+                            kneighbors[actualIndex][kIndSecond]);
+                    concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+                    // Insert or increment the co-occurrence count for the
+                    // neighbor pair.
+                    if (!coDependencyMaps[queryClass].containsKey(concat)) {
+                        coDependencyMaps[queryClass].put(concat, 1);
+                        coOccurringPairs.add(new Point(lowerIndex,
+                                (int) upperIndex));
+                    } else {
+                        currFreq = coDependencyMaps[queryClass].get(concat);
+                        coDependencyMaps[queryClass].remove(concat);
+                        coDependencyMaps[queryClass].put(concat, currFreq + 1);
+                    }
+                }
+            }
+        }
+        // Calculate the class-conditional occurrence self-information.
+        for (int i = 0; i < neighbOccFreqs.length; i++) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                if (classDataKNeighborRelation[cIndex][i] > 0) {
+                    classConditionalSelfInformation[i][cIndex] =
+                            BasicMathUtil.log2(classFreqs[cIndex]
+                            / classDataKNeighborRelation[cIndex][i]);
+                } else {
+                    classConditionalSelfInformation[i][cIndex] = 0;
+                }
+            }
+        }
+        double bothOccurFactor;
+        double firstOccursFactor;
+        double secondOccursFactor;
+        double noneOccursFactor;
+        int cooccFreq;
+        // Mutual information calculations.
+        for (int i = 0; i < coOccurringPairs.size(); i++) {
+            bothOccurFactor = 0;
+            firstOccursFactor = 0;
+            secondOccursFactor = 0;
+            noneOccursFactor = 0;
+            // Encode the pair.
+            lowerIndex = (int) (coOccurringPairs.get(i).getX());
+            upperIndex = (int) (coOccurringPairs.get(i).getY());
+            concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+            for (int c = 0; c < numClasses; c++) {
+                if (coDependencyMaps[c].containsKey(concat)) {
+                    cooccFreq = coDependencyMaps[c].get(concat);
+                } else {
+                    cooccFreq = 0;
+                }
+                bothOccurFactor += ((double) (cooccFreq) / (double) dataSize)
+                        * BasicMathUtil.log2(((double) (cooccFreq
+                        + laplaceEstimatorSmall) / (double) classFreqs[c]
+                        + laplaceEstimatorSmall) /
+                        (((classDataKNeighborRelation[c][lowerIndex] +
+                        laplaceEstimatorSmall) / ((double) classFreqs[c] +
+                        laplaceEstimatorSmall)) * ((classDataKNeighborRelation[
+                        c][(int) upperIndex] + laplaceEstimatorSmall) /
+                        ((double) classFreqs[c] + laplaceEstimatorSmall))));
+                firstOccursFactor += ((double) (classDataKNeighborRelation[c][
+                        lowerIndex] - cooccFreq) / (double) dataSize)
+                        * BasicMathUtil.log2(((double)
+                        (classDataKNeighborRelation[c][lowerIndex] -
