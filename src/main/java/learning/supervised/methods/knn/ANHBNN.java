@@ -659,4 +659,70 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                 if (classDataKNeighborRelation[c][i] > 0) {
                     classConditionalSelfInformation[i][c] =
                             BasicMathUtil.log2(classFreqs[c]
-                   
+                            / classDataKNeighborRelation[c][i]);
+                } else {
+                    classConditionalSelfInformation[i][c] =
+                            BasicMathUtil.log2(classFreqs[c]);
+                }
+            }
+        }
+        double bothOccurFactor;
+        double firstOccursFactor;
+        double secondOccursFactor;
+        double noneOccursFactor;
+        int cooccFreq;
+        // Mutual information calculations.
+        for (int i = 0; i < coOccurringPairs.size(); i++) {
+            bothOccurFactor = 0;
+            firstOccursFactor = 0;
+            secondOccursFactor = 0;
+            noneOccursFactor = 0;
+            lowerIndex = (int) (coOccurringPairs.get(i).getX());
+            upperIndex = (int) (coOccurringPairs.get(i).getY());
+            // Encode the pair.
+            concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+            for (int c = 0; c < numClasses; c++) {
+                if (coDependencyMaps[c].containsKey(concat)) {
+                    cooccFreq = coDependencyMaps[c].get(concat);
+                } else {
+                    cooccFreq = 0;
+                }
+                bothOccurFactor += ((double) (cooccFreq) / (double) dataSize)
+                        * BasicMathUtil.log2(((double) (cooccFreq
+                        + laplaceEstimatorSmall) / (double) classFreqs[c]
+                        + laplaceEstimatorSmall)
+                        / (((classDataKNeighborRelation[c][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall))
+                        * ((classDataKNeighborRelation[c][(int) upperIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall))));
+                firstOccursFactor += ((double) (
+                        classDataKNeighborRelation[c][lowerIndex] - cooccFreq)
+                        / (double) dataSize) * BasicMathUtil.log2(((double) (
+                        classDataKNeighborRelation[c][lowerIndex] - cooccFreq
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall))
+                        / (((classDataKNeighborRelation[c][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)) * (1
+                        - ((classDataKNeighborRelation[c][(int) upperIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)))));
+                secondOccursFactor += ((double) (classDataKNeighborRelation[c][
+                        (int) upperIndex] - cooccFreq) / (double) dataSize)
+                        * BasicMathUtil.log2(((double) (
+                        classDataKNeighborRelation[c][(int) upperIndex]
+                        - cooccFreq + laplaceEstimatorSmall) / (
+                        (double) classFreqs[c] + laplaceEstimatorSmall)) /
+                        (((classDataKNeighborRelation[c][(int) upperIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)) * (1 - ((
+                        classDataKNeighborRelation[c][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)))));
+                noneOccursFactor += ((double) (classFreqs[c]
+                        - classDataKNeighborRelation[c][lowerIndex]
+                        - classDataKNeighborRelation[c][(int) upperIndex]
+                        + cooccFreq) / (double) dataSize) * BasicMathUtil.log2(
+ 
