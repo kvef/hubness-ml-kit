@@ -935,4 +935,67 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                 firstOccursFactor += ((double) (classDataKNeighborRelation[c][
                         lowerIndex] - cooccFreq) / (double) dataSize)
                         * BasicMathUtil.log2(((double)
-                        (classDataKNeighborRelation[c][lowerIndex] -
+                        (classDataKNeighborRelation[c][lowerIndex] - cooccFreq
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)) / (((classDataKNeighborRelation[
+                        c][lowerIndex] + laplaceEstimatorSmall) /
+                        ((double) classFreqs[c] + laplaceEstimatorSmall)) * (1
+                        - ((classDataKNeighborRelation[c][(int) upperIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)))));
+                secondOccursFactor += ((double) (classDataKNeighborRelation[c][
+                        (int) upperIndex] - cooccFreq) / (double) dataSize)
+                        * BasicMathUtil.log2(((double) (
+                        classDataKNeighborRelation[c][(int) upperIndex]
+                        - cooccFreq + laplaceEstimatorSmall) / (
+                        (double) classFreqs[c] + laplaceEstimatorSmall)) /
+                        (((classDataKNeighborRelation[c][(int) upperIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)) * (1 - (
+                        (classDataKNeighborRelation[c][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)))));
+                noneOccursFactor += ((double) (classFreqs[c]
+                        - classDataKNeighborRelation[c][lowerIndex]
+                        - classDataKNeighborRelation[c][(int) upperIndex]
+                        + cooccFreq) / (double) dataSize) * BasicMathUtil.log2(
+                        ((double) (classFreqs[c] - classDataKNeighborRelation[
+                        c][lowerIndex] - classDataKNeighborRelation[c][
+                        (int) upperIndex] + cooccFreq + laplaceEstimatorSmall)
+                        / ((double) classFreqs[c] + laplaceEstimatorSmall))
+                        / ((1 - ((classDataKNeighborRelation[c][
+                        (int) upperIndex] + laplaceEstimatorSmall) / (
+                        (double) classFreqs[c] + laplaceEstimatorSmall))) * (1
+                        - ((classDataKNeighborRelation[c][lowerIndex]
+                        + laplaceEstimatorSmall) / ((double) classFreqs[c]
+                        + laplaceEstimatorSmall)))));
+            }
+            mutualInformationMap.put(concat, bothOccurFactor
+                    + firstOccursFactor + secondOccursFactor +
+                    noneOccursFactor);
+        }
+        // Normalize class-to-class priors.
+        double laplaceTotal;
+        laplaceEstimatorSmall = 0.00001f;
+        laplaceTotal = numClasses * laplaceEstimatorSmall;
+        for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+            for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                classToClassPriors[cFirst][cSecond] += laplaceEstimatorSmall;
+                classToClassPriors[cFirst][cSecond] /= ((k + 1)
+                        * classFreqs[cSecond] * classFreqs[cFirst]
+                        + laplaceTotal);
+            }
+        }
+        // Now we calculate how often classes co-occur in neighborhoods of each
+        // particular class.
+        float occSum;
+        for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+            for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                occSum = 0;
+                for (int cThird = 0; cThird < numClasses; cThird++) {
+                    occSum += classCoOccurrencesInNeighborhoodsOfClasses[
+                            cFirst][cSecond][cThird];
+                }
+                if (occSum > 0) {
+                    for (int cThird = 0; cThird < numClasses; cThird++) {
+                        classCoOccurrencesInNeighborhoodsO
