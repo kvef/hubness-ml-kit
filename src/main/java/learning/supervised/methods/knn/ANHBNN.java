@@ -1140,3 +1140,60 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                     }
                 } else {
                     // The special anti-hub handling case.
+                    for (int c = 0; c < numClasses; c++) {
+                        ODEs[c][kIndexSecond][kIndexFirst] = 0;
+                        weights[c][kIndexSecond][kIndexFirst] = 0;
+                    }
+                }
+                // Now for the second neighbor in comparison.
+                if (neighbOccFreqs[kNeighbors[kIndexSecond]] > thetaValue) {
+                    for (int c = 0; c < numClasses; c++) {
+                        if (coDependencyMaps[c].containsKey(concat)) {
+                            // These neighbors have co-occurred on the training
+                            // data in neighborhoods of class c.
+                            ODEs[c][kIndexFirst][kIndexSecond] = (
+                                    (double) coDependencyMaps[c].get(concat)
+                                    + laplaceEstimatorSmall) /
+                                    ((double) classDataKNeighborRelation[c][
+                                    kNeighbors[kIndexSecond]] +
+                                    laplaceEstimatorSmall);
+                            // Calculate the interaction strength.
+                            if (classConditionalSelfInformation[kIndexSecond][c]
+                                    != 0) {
+                                weights[c][kIndexFirst][kIndexSecond] =
+                                        mutualInformationMap.get(concat)
+                                        / classConditionalSelfInformation[
+                                        kIndexSecond][c];
+                                weights[c][kIndexSecond][kIndexFirst] /=
+                                        (rnnImpurity[kIndexSecond]
+                                        + laplaceEstimatorBig);
+                            } else {
+                                weights[c][kIndexFirst][kIndexSecond] =
+                                        mutualInformationMap.get(concat)
+                                        / BasicMathUtil.log2(dataSize);
+                            }
+                        } else {
+                            // These neighbors have not co-occurred before in
+                            // neighborhoods of class c.
+                            if (classDataKNeighborRelation[c][kNeighbors[
+                                    kIndexSecond]] > 0) {
+                                ODEs[c][kIndexFirst][kIndexSecond] =
+                                        (laplaceEstimatorSmall) /
+                                        ((double) classDataKNeighborRelation[c][
+                                        kNeighbors[kIndexSecond]]
+                                        + laplaceEstimatorSmall);
+                                if (classConditionalSelfInformation[
+                                        kIndexSecond][c] != 0) {
+                                    weights[c][kIndexFirst][kIndexSecond] =
+                                            (calculateMutualInformation(
+                                            lowerIndex, upperIndex)
+                                            + laplaceEstimatorSmall)
+                                            / classConditionalSelfInformation[
+                                            kIndexSecond][c];
+                                    weights[c][kIndexSecond][kIndexFirst] /=
+                                            (rnnImpurity[kIndexSecond]
+                                            + laplaceEstimatorBig);
+                                } else {
+                                    weights[c][kIndexFirst][kIndexSecond] =
+                                            (calculateMutualInformation(
+               
