@@ -1080,4 +1080,63 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                             if (classConditionalSelfInformation[kIndexFirst][c]
                                     != 0) {
                                 // Calculate the interaction strength.
-                                weigh
+                                weights[c][kIndexSecond][kIndexFirst] =
+                                        mutualInformationMap.get(concat)
+                                        / classConditionalSelfInformation[
+                                        kIndexFirst][c];
+                                weights[c][kIndexSecond][kIndexFirst] /=
+                                        (rnnImpurity[kIndexFirst]
+                                        + laplaceEstimatorBig);
+                            } else {
+                                weights[c][kIndexSecond][kIndexFirst] =
+                                        mutualInformationMap.get(concat)
+                                        / BasicMathUtil.log2(
+                                        dataSize);
+                            }
+                        } else {
+                            // These neighbors have not co-occurred before in
+                            // neighborhoods of the current class c.
+                            if (classDataKNeighborRelation[c][
+                                    kNeighbors[kIndexFirst]] > 0) {
+                                ODEs[c][kIndexSecond][kIndexFirst] =
+                                        (laplaceEstimatorSmall)
+                                        / ((double) classDataKNeighborRelation[
+                                        c][kNeighbors[kIndexFirst]]
+                                        + laplaceEstimatorSmall);
+                                if (classConditionalSelfInformation[
+                                        kIndexFirst][c] != 0) {
+                                    weights[c][kIndexSecond][kIndexFirst] =
+                                            (calculateMutualInformation(
+                                            lowerIndex, upperIndex)
+                                            + laplaceEstimatorSmall)
+                                            / classConditionalSelfInformation[
+                                            kIndexFirst][c];
+                                    weights[c][kIndexSecond][kIndexFirst] /=
+                                            (rnnImpurity[kIndexFirst]
+                                            + laplaceEstimatorBig);
+                                } else {
+                                    weights[c][kIndexSecond][kIndexFirst] =
+                                            (calculateMutualInformation(
+                                            lowerIndex, upperIndex)
+                                            + laplaceEstimatorSmall)
+                                            / BasicMathUtil.log2(
+                                            dataSize);
+                                }
+                            } else {
+                                ODEs[c][kIndexSecond][kIndexFirst] =
+                                        classCoOccurrencesInNeighborhoodsOfClasses[
+                                        c][trainingData.getLabelOf(
+                                        kNeighbors[kIndexFirst])][
+                                        trainingData.getLabelOf(
+                                        kNeighbors[kIndexSecond])];
+                                weights[c][kIndexSecond][kIndexFirst] =
+                                        (calculateMutualInformation(
+                                        lowerIndex, upperIndex)
+                                        + laplaceEstimatorSmall)
+                                        / BasicMathUtil.log2(dataSize
+                                        / k);
+                            }
+                        }
+                    }
+                } else {
+                    // The special anti-hub handling case.
