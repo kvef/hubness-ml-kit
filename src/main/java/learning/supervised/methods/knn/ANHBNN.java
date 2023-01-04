@@ -998,4 +998,86 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                 }
                 if (occSum > 0) {
                     for (int cThird = 0; cThird < numClasses; cThird++) {
-                        classCoOccurrencesInNeighborhoodsO
+                        classCoOccurrencesInNeighborhoodsOfClasses[cFirst][
+                                cSecond][cThird] /= occSum;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public int classify(DataInstance instance) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        // Find the k-nearest neighbors.
+        float[] kDistances = new float[k];
+        Arrays.fill(kDistances, Float.MAX_VALUE);
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDistance = cmet.dist(trainingData.data.get(i), instance);
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        double[] classProbEstimates = new double[numClasses];
+        for (int i = 0; i < numClasses; i++) {
+            classProbEstimates[i] = classPriors[i];
+        }
+        // ODE[i][j] quantifies how i is conditioned on j.
+        double[][][] ODEs = new double[numClasses][k][k];
+        // weights[i][j] quantifies the strength of how i is conditioned on j.
+        double[][][] weights = new double[numClasses][k][k];
+        int lowerIndex;
+        long upperIndex;
+        long concat;
+        for (int kIndexFirst = 0; kIndexFirst < k; kIndexFirst++) {
+            for (int kIndexSecond = kIndexFirst + 1; kIndexSecond < k;
+                    kIndexSecond++) {
+                // Encode the neighbor pair.
+                lowerIndex = Math.min(kNeighbors[kIndexFirst],
+                        kNeighbors[kIndexSecond]);
+                upperIndex = Math.max(kNeighbors[kIndexFirst],
+                        kNeighbors[kIndexSecond]);
+                concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+                if (neighbOccFreqs[kNeighbors[kIndexFirst]] > thetaValue) {
+                    // A regular point or a hub point, above the anti-hub
+                    // threshold.
+                    for (int c = 0; c < numClasses; c++) {
+                        if (coDependencyMaps[c].containsKey(concat)) {
+                            // These neighbors have co-occurred on the training
+                            // data in neighborhoods of class c.
+                            ODEs[c][kIndexSecond][kIndexFirst] =
+                                    ((double) coDependencyMaps[c].get(concat)
+                                    + laplaceEstimatorSmall)
+                                    / ((double) classDataKNeighborRelation[c][
+                                    kNeighbors[kIndexFirst]]
+                                    + laplaceEstimatorSmall);
+                            if (classConditionalSelfInformation[kIndexFirst][c]
+                                    != 0) {
+                                // Calculate the interaction strength.
+                                weigh
