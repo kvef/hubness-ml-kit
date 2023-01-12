@@ -1553,4 +1553,86 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
         } else {
             for (int cIndex = 0; cIndex < numClasses; cIndex++) {
                 classProbEstimates[cIndex] = classPriors[cIndex];
-                cProbEstimatesFloat[cIndex] = (float) classPro
+                cProbEstimatesFloat[cIndex] = (float) classProbEstimates[
+                        cIndex];
+            }
+        }
+        return cProbEstimatesFloat;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining)
+            throws Exception {
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] trNeighbors) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance, distToTraining,
+                trNeighbors);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining, int[] trNeighbors) throws Exception {
+        double[] classProbEstimates = new double[numClasses];
+        for (int i = 0; i < numClasses; i++) {
+            classProbEstimates[i] = classPriors[i];
+        }
+        // ODE[i][j] quantifies how i is conditioned on j.
+        double[][][] ODEs = new double[numClasses][k][k];
+        // weights[i][j] quantifies the strength of how i is conditioned on j.
+        double[][][] weights = new double[numClasses][k][k];
+        int lowerIndex;
+        long upperIndex;
+        long concat;
+        for (int kIndFirst = 0; kIndFirst < k; kIndFirst++) {
+            for (int kIndSecond = kIndFirst + 1; kIndSecond < k; kIndSecond++) {
+                // Encode the neighbor pair.
+                lowerIndex = Math.min(trNeighbors[kIndFirst],
+                        trNeighbors[kIndSecond]);
+                upperIndex = Math.max(trNeighbors[kIndFirst],
+                        trNeighbors[kIndSecond]);
+                concat = (upperIndex << 32) | (lowerIndex & 0XFFFFFFFFL);
+                if (neighbOccFreqs[trNeighbors[kIndFirst]] > thetaValue) {
+                    // A regular point or a hub point, above the anti-hub
+                    // threshold.
+                    for (int c = 0; c < numClasses; c++) {
+                        if (coDependencyMaps[c].containsKey(concat)) {
+                            // These neighbors have co-occurred on the training
+                            // data in neighborhoods of class c.
+                            ODEs[c][kIndSecond][kIndFirst] =
+                                    ((double) coDependencyMaps[c].get(concat)
+                                    + laplaceEstimatorSmall) /
+                                    ((double) classDataKNeighborRelation[c][
+                                    trNeighbors[kIndFirst]] +
+                                    laplaceEstimatorSmall);
+                            // Calculate the interaction strength.
+                            if (classConditionalSelfInformation[kIndFirst][c]
+                                    != 0) {
+                                weights[c][kIndSecond][kIndFirst] =
+                                        (mutualInformationMap.get(concat)
+                                        + laplaceEstimatorSmall)
+                                        / classConditionalSelfInformation[
+                                        kIndFirst][c];
+                                weights[c][k
