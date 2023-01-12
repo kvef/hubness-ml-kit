@@ -1635,4 +1635,65 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                                         + laplaceEstimatorSmall)
                                         / classConditionalSelfInformation[
                                         kIndFirst][c];
-                                weights[c][k
+                                weights[c][kIndSecond][kIndFirst] /=
+                                        (rnnImpurity[kIndFirst]
+                                        + laplaceEstimatorBig);
+                            } else {
+                                weights[c][kIndSecond][kIndFirst] =
+                                        (mutualInformationMap.get(concat)
+                                        + laplaceEstimatorSmall)
+                                        / BasicMathUtil.log2(dataSize);
+                            }
+                        } else {
+                            // These neighbors have not co-occurred before in
+                            // neighborhoods of the current class c.
+                            if (classDataKNeighborRelation[c][
+                                    trNeighbors[kIndFirst]] > 0) {
+                                ODEs[c][kIndSecond][kIndFirst] = (
+                                        laplaceEstimatorSmall) /
+                                        ((double) classDataKNeighborRelation[c][
+                                        trNeighbors[kIndFirst]]
+                                        + laplaceEstimatorSmall);
+                                if (classConditionalSelfInformation[kIndFirst][
+                                        c] != 0) {
+                                    weights[c][kIndSecond][kIndFirst] =
+                                            (calculateMutualInformation(
+                                            lowerIndex, upperIndex)
+                                            + laplaceEstimatorSmall)
+                                            / classConditionalSelfInformation[
+                                            kIndFirst][c];
+                                    weights[c][kIndSecond][kIndFirst] /=
+                                            (rnnImpurity[kIndFirst]
+                                            + laplaceEstimatorBig);
+                                } else {
+                                    weights[c][kIndSecond][kIndFirst] =
+                                            (calculateMutualInformation(
+                                            lowerIndex, upperIndex)
+                                            + laplaceEstimatorSmall)
+                                            / BasicMathUtil.log2(dataSize);
+                                }
+                            } else {
+                                ODEs[c][kIndSecond][kIndFirst] = 0;
+                                weights[c][kIndSecond][kIndFirst] = 0;
+                            }
+                        }
+                    }
+                } else {
+                    // The special anti-hub handling case.
+                    for (int c = 0; c < numClasses; c++) {
+                        ODEs[c][kIndSecond][kIndFirst] = 0;
+                        weights[c][kIndSecond][kIndFirst] = 0;
+                    }
+                }
+                // Now for the second neighbor in comparison.
+                if (neighbOccFreqs[trNeighbors[kIndSecond]] > thetaValue) {
+                    // A regular point or a hub point, above the anti-hub
+                    // threshold.
+                    for (int c = 0; c < numClasses; c++) {
+                        if (coDependencyMaps[c].containsKey(concat)) {
+                            // These neighbors have co-occurred on the training
+                            // data in neighborhoods of class c.
+                            ODEs[c][kIndFirst][kIndSecond] =
+                                    ((double) coDependencyMaps[c].get(concat)
+                                    + laplaceEstimatorSmall) /
+                                    ((double) classDataKNeighborRelation[c][
