@@ -125,4 +125,114 @@ public class CBWkNN extends Classifier implements DistMatrixUserInterface,
         return serialVersionUID;
     }
 
- 
+    @Override
+    public String getName() {
+        return "CBWKNN";
+    }
+
+    @Override
+    public void setDistMatrix(float[][] distMatrix) {
+        this.distMat = distMatrix;
+    }
+
+    @Override
+    public float[][] getDistMatrix() {
+        return distMat;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public CBWkNN(int numClasses, CombinedMetric cmet, int k) {
+        this.numClasses = numClasses;
+        if (trainingData != null) {
+            knnClassifications = new int[trainingData.size()];
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object that is the training data.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public CBWkNN(DataSet dset, int numClasses, CombinedMetric cmet, int k) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        if (trainingData != null) {
+            knnClassifications = new int[trainingData.size()];
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object that is the training data.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     * @param mValue Integer that is the number of neighbors to use for
+     * determining the weighting factor.
+     */
+    public CBWkNN(DataSet dset, int numClasses, CombinedMetric cmet, int k,
+            int mValue) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        if (trainingData != null) {
+            knnClassifications = new int[trainingData.size()];
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+        this.mValue = mValue;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param categories Category[] representing the training data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public CBWkNN(Category[] categories, CombinedMetric cmet, int k) {
+        setClasses(categories);
+        if (trainingData != null) {
+            knnClassifications = new int[trainingData.size()];
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        return new CBWkNN(trainingData, numClasses, getCombinedMetric(), k,
+                mValue);
+    }
+
+    @Override
+    public void setClasses(Category[] categories) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1 &&
+                    categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+                break;
+            }
+        }
+        // Instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEm
