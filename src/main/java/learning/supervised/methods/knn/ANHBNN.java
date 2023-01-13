@@ -1697,3 +1697,68 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
                                     ((double) coDependencyMaps[c].get(concat)
                                     + laplaceEstimatorSmall) /
                                     ((double) classDataKNeighborRelation[c][
+                                    trNeighbors[kIndSecond]] +
+                                    laplaceEstimatorSmall);
+                            // Calculate the interaction strength.
+                            if (classConditionalSelfInformation[kIndSecond][c]
+                                    != 0) {
+                                weights[c][kIndFirst][kIndSecond] =
+                                        (mutualInformationMap.get(concat)
+                                        + laplaceEstimatorSmall)
+                                        / classConditionalSelfInformation[
+                                        kIndSecond][c];
+                                weights[c][kIndSecond][kIndFirst] /=
+                                        (rnnImpurity[kIndSecond]
+                                        + laplaceEstimatorBig);
+                            } else {
+                                weights[c][kIndFirst][kIndSecond] =
+                                        (mutualInformationMap.get(concat)
+                                        + laplaceEstimatorSmall)
+                                        / BasicMathUtil.log2(dataSize);
+                            }
+                        } else {
+                            // These neighbors have not co-occurred before in
+                            // neighborhoods of class c.
+                            if (classDataKNeighborRelation[c][trNeighbors[
+                                    kIndSecond]] > 0) {
+                                ODEs[c][kIndFirst][kIndSecond] =
+                                        (laplaceEstimatorSmall) /
+                                        ((double) classDataKNeighborRelation[c][
+                                        trNeighbors[kIndSecond]]
+                                        + laplaceEstimatorSmall);
+                                if (classConditionalSelfInformation[kIndSecond][
+                                        c] != 0) {
+                                    weights[c][kIndFirst][kIndSecond] =
+                                            (calculateMutualInformation(
+                                            lowerIndex, upperIndex)
+                                            + laplaceEstimatorSmall)
+                                            / classConditionalSelfInformation[
+                                            kIndSecond][c];
+                                    weights[c][kIndSecond][kIndFirst] /=
+                                            (rnnImpurity[kIndSecond]
+                                            + laplaceEstimatorBig);
+                                } else {
+                                    weights[c][kIndFirst][kIndSecond] =
+                                            (calculateMutualInformation(
+                                            lowerIndex, upperIndex)
+                                            + laplaceEstimatorSmall)
+                                            / BasicMathUtil.log2(dataSize);
+                                }
+                            } else {
+                                ODEs[c][kIndFirst][kIndSecond] = 0;
+                                weights[c][kIndFirst][kIndSecond] = 0;
+                            }
+                        }
+                    }
+                } else {
+                    // The special anti-hub handling case.
+                    for (int c = 0; c < numClasses; c++) {
+                        ODEs[c][kIndFirst][kIndSecond] = 0;
+                        weights[c][kIndFirst][kIndSecond] = 0;
+                    }
+                }
+            }
+        }
+        // Normalize the weights for ODE combinations.
+        double weightSum;
+        f
