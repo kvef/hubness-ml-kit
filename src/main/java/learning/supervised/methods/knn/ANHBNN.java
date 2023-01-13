@@ -1761,4 +1761,75 @@ public class ANHBNN extends Classifier implements DistMatrixUserInterface,
         }
         // Normalize the weights for ODE combinations.
         double weightSum;
-        f
+        for (int c = 0; c < numClasses; c++) {
+            weightSum = 0;
+            for (int kIndFirst = 0; kIndFirst < k; kIndFirst++) {
+                for (int kIndSecond = 0; kIndSecond < k; kIndSecond++) {
+                    weightSum += weights[c][kIndFirst][kIndSecond];
+                }
+                if (weightSum > 0) {
+                    for (int kIndSecond = 0; kIndSecond < k; kIndSecond++) {
+                        weights[c][kIndFirst][kIndSecond] /= weightSum;
+                    }
+                }
+            }
+        }
+        // Combine all the interactions.
+        double multiplicativeFactor;
+        double maxProb = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            if (neighbOccFreqs[trNeighbors[kIndex]] > thetaValue) {
+                for (int c = 0; c < numClasses; c++) {
+                    multiplicativeFactor = 0;
+                    for (int j = 0; j < k; j++) {
+                        multiplicativeFactor += weights[c][kIndex][j]
+                                * ODEs[c][kIndex][j];
+                    }
+                    classProbEstimates[c] *= multiplicativeFactor;
+                    if (classProbEstimates[c] > maxProb) {
+                        maxProb = classProbEstimates[c];
+                    }
+                }
+            } else {
+                for (int c = 0; c < numClasses; c++) {
+                    multiplicativeFactor = (double) classToClassPriors[
+                            trainingData.getLabelOf(trNeighbors[kIndex])][c];
+                    classProbEstimates[c] *= multiplicativeFactor;
+                    if (classProbEstimates[c] > maxProb) {
+                        maxProb = classProbEstimates[c];
+                    }
+                }
+            }
+            if (maxProb > 0) {
+                for (int c = 0; c < numClasses; c++) {
+                    classProbEstimates[c] /= maxProb;
+                }
+            }
+        }
+        // Normalize the probabilities.
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        float[] cProbEstimatesFloat = new float[numClasses];
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+                cProbEstimatesFloat[cIndex] = (float) classProbEstimates[
+                        cIndex];
+            }
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] = classPriors[cIndex];
+                cProbEstimatesFloat[cIndex] = (float) classProbEstimates[
+                        cIndex];
+            }
+        }
+        return cProbEstimatesFloat;
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
+    }
+}
