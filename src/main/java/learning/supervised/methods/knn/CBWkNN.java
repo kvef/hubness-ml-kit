@@ -352,4 +352,94 @@ public class CBWkNN extends Classifier implements DistMatrixUserInterface,
                 for (int kIndex = 0; kIndex < k; kIndex++) {
                     kNeighbors[i][kIndex] = kNeighborsLarger[i][kIndex];
                     kDistances[i][kIndex] = kDistancesLarger[i][kIndex];
-            
+                }
+            }
+        }
+        float[] localClassCounts;
+        for (int i = 0; i < trainingData.size(); i++) {
+            localClassCounts = new float[numClasses];
+            labelPrediction = classifier.classifyWithKDistAndNeighbors(
+                    trainingData.getInstance(i), kDistances[i], kNeighbors[i]);
+            knnClassifications[i] = labelPrediction;
+            for (int kInd = 0; kInd < k; kInd++) {
+                localClassCounts[trainingData.getLabelOf(
+                        kNeighbors[i][kInd])]++;
+            }
+            neighborCoefficient[i] = localClassCounts[labelPrediction]
+                    / (Math.max(1, localClassCounts[
+                    trainingData.getLabelOf(i)]));
+        }
+    }
+
+    /**
+     * Calculates the class weights for the voting.
+     *
+     * @param neighbors int[] of neighbor indexes.
+     * @return float[] of class weights based on the query neighbors.
+     */
+    private float[] getClassWeightsForNeighbors(int[] neighbors) {
+        float[] alphas = new float[numClasses];
+        float[] weights = new float[numClasses];
+        int kSmall = Math.max(1, (int) ((float) k / (float) mValue));
+        for (int kInd = 0; kInd < kSmall; kInd++) {
+            alphas[trainingData.getLabelOf(neighbors[kInd])] +=
+                    (neighborCoefficient[neighbors[kInd]] * mValue) / k;
+        }
+        for (int c = 0; c < numClasses; c++) {
+            weights[c] = alphas[c] / (1 + alphas[c]);
+        }
+        return weights;
+    }
+
+    @Override
+    public int classify(DataInstance instance) throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        if (instance == null) {
+            return -1;
+        }
+        // Calculate the kNN sets.
+        int[] nearestInstances = new int[k];
+        float[] nearestDistances = new float[k];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            nearestDistances[kIndex] = Float.MAX_VALUE;
+            nearestInstances[kIndex] = -1;
+        }
+        float currDist;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDist = cmet.dist(instance, trainingData.data.get(i));
+            index = k - 1;
+            while (index >= 0 && nearestDistances[index] > currDist) {
+                index--;
+            }
+            if (index < k - 1) {
+                for (int j = k - 1; j > index + 1; j--) {
+                    nearestDistances[j] = nearestDistances[j - 1];
+                    nearestInstances[j] = nearestInstances[j - 1];
+                }
+                nearestInstances[index + 1] = i;
+                nearestDistances[index + 1] = currDist;
+            }
+        }
+        // Make the weighted vote.
+        float[] classProbabilities = new float[numClasses];
+        float probTotal = 0;
+        float[] classWeights = this.getClassWeightsForNeighbors(
+                nearestInstances);
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(
+                    nearestInstances[kIndex]).getCategory()] += classWeights[
+                    trainingData.getLabelOf(nearestInstances[kIndex])];
+            probTotal += classWeights[trainingData.getLabelOf(
+                    nearestInstances[kIndex])];
+        }
+        // Normalize.
+        int maxClassIndex = -1;
+        float maxProb = 0;
+        if (probTotal == 0) {
+            return 0;
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+                if (classProbabilities[cIndex] >= maxProb) {
+                    maxClassIndex = cInde
