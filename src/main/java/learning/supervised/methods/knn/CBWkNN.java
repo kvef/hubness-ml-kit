@@ -235,4 +235,121 @@ public class CBWkNN extends Classifier implements DistMatrixUserInterface,
         trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
                 getInstance(0).getEmbeddingDataset().fAttrNames;
         trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
-                getInstance(0).getEm
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size();
+                    i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(
+                        categories[cIndex].getInstance(i));
+            }
+        }
+        if (trainingData != null) {
+            knnClassifications = new int[trainingData.size()];
+        }
+        numClasses = trainingData.countCategories();
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    /**
+     * @return DataSet object that is the training data.
+     */
+    public DataSet getTrainingSet() {
+        return trainingData;
+    }
+
+    /**
+     * @param trainingData DataSet object that is the training data.
+     */
+    public void setTrainingSet(DataSet trainingData) {
+        this.trainingData = trainingData;
+    }
+
+    /**
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public void setNumClasses(int numClasses) {
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * @return Integer that is the number of classes in the data.
+     */
+    public int getNumClasses() {
+        return numClasses;
+    }
+
+    /**
+     * @return Integer that is the neighborhood size.
+     */
+    public int getK() {
+        return k;
+    }
+
+    /**
+     * @param k Integer that is the neighborhood size.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    /**
+     * Calculate the kNN sets.
+     *
+     * @throws Exception
+     */
+    public void calculateNeighborSets() throws Exception {
+        if (distMat == null) {
+            nsf = new NeighborSetFinder(trainingData, getCombinedMetric());
+            nsf.calculateDistances();
+        } else {
+            nsf = new NeighborSetFinder(trainingData, distMat,
+                    getCombinedMetric());
+        }
+        nsf.calculateNeighborSets(k);
+    }
+
+    @Override
+    public void train() throws Exception {
+        // If the kNN sets have not been provided, calculate them.
+        if (nsf == null) {
+            calculateNeighborSets();
+        }
+        if (k <= 0) {
+            k = nsf.getCurrK();
+        }
+        // Initialize the kNN classifier for leave-one-out prediction on the
+        // training data.
+        KNN classifier = new KNN(k, this.getCombinedMetric());
+        classifier.setData(trainingData.data, trainingData);
+        classifier.train();
+        int labelPrediction;
+        int[][] kNeighbors = null;
+        float[][] kDistances = null;
+        // Initialize the neighbor coefficients.
+        neighborCoefficient = new float[trainingData.size()];
+        if (nsf.getKNeighbors()[0].length == k) {
+            kNeighbors = nsf.getKNeighbors();
+            kDistances = nsf.getKDistances();
+        } else if (nsf.getKNeighbors()[0].length > k) {
+            kNeighbors = new int[trainingData.size()][k];
+            kDistances = new float[trainingData.size()][k];
+            int[][] kNeighborsLarger = nsf.getKNeighbors();
+            float[][] kDistancesLarger = nsf.getKDistances();
+            for (int i = 0; i < trainingData.size(); i++) {
+                for (int kIndex = 0; kIndex < k; kIndex++) {
+                    kNeighbors[i][kIndex] = kNeighborsLarger[i][kIndex];
+                    kDistances[i][kIndex] = kDistancesLarger[i][kIndex];
+            
