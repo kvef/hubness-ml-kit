@@ -540,4 +540,104 @@ public class CBWkNN extends Classifier implements DistMatrixUserInterface,
         float[] classWeights = this.getClassWeightsForNeighbors(
                 nearestInstances);
         float probTotal = 0;
-        for (int kIndex = 0; kIndex < k; kI
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(
+                    nearestInstances[kIndex]).getCategory()] +=
+                    classWeights[trainingData.getLabelOf(
+                    nearestInstances[kIndex])];
+            probTotal += classWeights[trainingData.getLabelOf(
+                    nearestInstances[kIndex])];
+        }
+        // Normalize.
+        if (probTotal == 0) {
+            return new float[numClasses];
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+            }
+        }
+        return classProbabilities;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining)
+            throws Exception {
+        if (instance == null) {
+            return -1;
+        }
+        // Find the kNN sets.
+        int[] nearestInstances = new int[k];
+        float[] nearestDistances = new float[k];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            nearestDistances[kIndex] = Float.MAX_VALUE;
+            nearestInstances[kIndex] = -1;
+        }
+        float currDist;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDist = distToTraining[i];
+            index = k - 1;
+            while (index >= 0 && nearestDistances[index] > currDist) {
+                index--;
+            }
+            if (index < k - 1) {
+                for (int j = k - 1; j > index + 1; j--) {
+                    nearestDistances[j] = nearestDistances[j - 1];
+                    nearestInstances[j] = nearestInstances[j - 1];
+                }
+                nearestInstances[index + 1] = i;
+                nearestDistances[index + 1] = currDist;
+            }
+        }
+        // Perform the weighted vote.
+        float[] classProbabilities = new float[numClasses];
+        float[] classWeights = this.getClassWeightsForNeighbors(
+                nearestInstances);
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(nearestInstances[kIndex]).
+                    getCategory()] += classWeights[trainingData.getLabelOf(
+                    nearestInstances[kIndex])];
+            probTotal += classWeights[trainingData.getLabelOf(
+                    nearestInstances[kIndex])];
+        }
+        // Normalize.
+        int maxClassIndex = -1;
+        float maxProb = 0;
+        if (probTotal == 0) {
+            return 0;
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+                if (classProbabilities[cIndex] >= maxProb) {
+                    maxClassIndex = cIndex;
+                    maxProb = classProbabilities[cIndex];
+                }
+            }
+        }
+        if (maxClassIndex < 0) {
+            maxClassIndex = 0;
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] trNeighbors) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance, distToTraining,
+                trNeighbors);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining, int[] trNeighbors) throws Exception {
+   
