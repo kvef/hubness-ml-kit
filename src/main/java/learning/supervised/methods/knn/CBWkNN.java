@@ -640,4 +640,32 @@ public class CBWkNN extends Classifier implements DistMatrixUserInterface,
     @Override
     public float[] classifyProbabilistically(DataInstance instance,
             float[] distToTraining, int[] trNeighbors) throws Exception {
-   
+        if (instance == null) {
+            return null;
+        }
+        float[] classProbabilities = new float[numClasses];
+        float[] classWeights = this.getClassWeightsForNeighbors(trNeighbors);
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(trNeighbors[kIndex]).
+                    getCategory()] += classWeights[trainingData.getLabelOf(
+                    trNeighbors[kIndex])];
+            probTotal += classWeights[trainingData.getLabelOf(
+                    trNeighbors[kIndex])];
+        }
+        // Normalize.
+        if (probTotal == 0) {
+            return new float[numClasses];
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+            }
+        }
+        return classProbabilities;
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
+    }
+}
