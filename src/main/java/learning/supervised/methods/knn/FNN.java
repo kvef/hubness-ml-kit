@@ -709,3 +709,5 @@ public class FNN extends Classifier implements AutomaticKFinderInterface,
     @Override
     public int getNeighborhoodSize() {
         return k;
+    }
+}
