@@ -405,3 +405,263 @@ public class HwKNN extends Classifier implements AutomaticKFinderInterface,
         }
         float currDist;
         int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDist = cmet.dist(instance, trainingData.data.get(i));
+            index = k - 1;
+            while (index >= 0 && nearestDistances[index] > currDist) {
+                index--;
+            }
+            if (index < k - 1) {
+                for (int j = k - 1; j > index + 1; j--) {
+                    nearestDistances[j] = nearestDistances[j - 1];
+                    nearestInstances[j] = nearestInstances[j - 1];
+                }
+                nearestInstances[index + 1] = i;
+                nearestDistances[index + 1] = currDist;
+            }
+        }
+        // Perform the weighted vote.
+        float[] classProbabilities = new float[numClasses];
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(nearestInstances[kIndex]).
+                    getCategory()] += instanceWeights[nearestInstances[kIndex]];
+            probTotal += instanceWeights[nearestInstances[kIndex]];
+        }
+        // Normalize.
+        int maxClassIndex = -1;
+        float maxProb = 0;
+        if (probTotal == 0) {
+            return 0;
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+                if (classProbabilities[cIndex] >= maxProb) {
+                    maxClassIndex = cIndex;
+                    maxProb = classProbabilities[cIndex];
+                }
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        if (trainingData == null || instanceWeights == null
+                || trainingData.size() != instanceWeights.length) {
+            throw new Exception("Bad classifier initialization");
+        }
+        if (instance == null) {
+            return null;
+        }
+        // Find the kNN set.
+        int[] nearestInstances = new int[k];
+        float[] nearestDistances = new float[k];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            nearestDistances[kIndex] = Float.MAX_VALUE;
+            nearestInstances[kIndex] = -1;
+        }
+        float currDist;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDist = cmet.dist(instance, trainingData.data.get(i));
+            index = k - 1;
+            while (index >= 0 && nearestDistances[index] > currDist) {
+                index--;
+            }
+            if (index < k - 1) {
+                for (int j = k - 1; j > index + 1; j--) {
+                    nearestDistances[j] = nearestDistances[j - 1];
+                    nearestInstances[j] = nearestInstances[j - 1];
+                }
+                nearestInstances[index + 1] = i;
+                nearestDistances[index + 1] = currDist;
+            }
+        }
+        // Perform the weighted voting.
+        float[] classProbabilities = new float[numClasses];
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(
+                    nearestInstances[kIndex]).getCategory()] +=
+                    instanceWeights[nearestInstances[kIndex]];
+            probTotal += instanceWeights[nearestInstances[kIndex]];
+        }
+        // Normalize.
+        if (probTotal == 0) {
+            return new float[numClasses];
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+            }
+        }
+        return classProbabilities;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining) throws Exception {
+        if (trainingData == null || instanceWeights == null
+                || trainingData.size() != instanceWeights.length) {
+            throw new Exception("Bad classifier initialization");
+        }
+        if (instance == null) {
+            return null;
+        }
+        // Find the kNN set.
+        int[] nearestInstances = new int[k];
+        float[] nearestDistances = new float[k];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            nearestDistances[kIndex] = Float.MAX_VALUE;
+            nearestInstances[kIndex] = -1;
+        }
+        float currDist;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDist = distToTraining[i];
+            index = k - 1;
+            while (index >= 0 && nearestDistances[index] > currDist) {
+                index--;
+            }
+            if (index < k - 1) {
+                for (int j = k - 1; j > index + 1; j--) {
+                    nearestDistances[j] = nearestDistances[j - 1];
+                    nearestInstances[j] = nearestInstances[j - 1];
+                }
+                nearestInstances[index + 1] = i;
+                nearestDistances[index + 1] = currDist;
+            }
+        }
+        // Perform the weighted vote.
+        float[] classProbabilities = new float[numClasses];
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(nearestInstances[kIndex]).
+                    getCategory()] += instanceWeights[nearestInstances[kIndex]];
+            probTotal += instanceWeights[nearestInstances[kIndex]];
+        }
+        // Normalize.
+        if (probTotal == 0) {
+            return new float[numClasses];
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+            }
+        }
+        return classProbabilities;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining)
+            throws Exception {
+        if (trainingData == null || instanceWeights == null
+                || trainingData.size() != instanceWeights.length) {
+            throw new Exception("Bad classifier initialization");
+        }
+        if (instance == null) {
+            return -1;
+        }
+        // Find the kNN set.
+        int[] nearestInstances = new int[k];
+        float[] nearestDistances = new float[k];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            nearestDistances[kIndex] = Float.MAX_VALUE;
+            nearestInstances[kIndex] = -1;
+        }
+        float currDist;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDist = distToTraining[i];
+            index = k - 1;
+            while (index >= 0 && nearestDistances[index] > currDist) {
+                index--;
+            }
+            if (index < k - 1) {
+                for (int j = k - 1; j > index + 1; j--) {
+                    nearestDistances[j] = nearestDistances[j - 1];
+                    nearestInstances[j] = nearestInstances[j - 1];
+                }
+                nearestInstances[index + 1] = i;
+                nearestDistances[index + 1] = currDist;
+            }
+        }
+        // Perform the weighted vote.
+        float[] classProbabilities = new float[numClasses];
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(nearestInstances[kIndex]).
+                    getCategory()] += instanceWeights[nearestInstances[kIndex]];
+            probTotal += instanceWeights[nearestInstances[kIndex]];
+        }
+        // Normalize.
+        int maxClassIndex = -1;
+        float maxProb = 0;
+        if (probTotal == 0) {
+            return 0;
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+                if (classProbabilities[cIndex] >= maxProb) {
+                    maxClassIndex = cIndex;
+                    maxProb = classProbabilities[cIndex];
+                }
+            }
+        }
+        if (maxClassIndex < 0) {
+            maxClassIndex = 0;
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] trNeighbors) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining, trNeighbors);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining, int[] trNeighbors) throws Exception {
+        if (trainingData == null || instanceWeights == null
+                || trainingData.size() != instanceWeights.length) {
+            throw new Exception("Bad classifier initialization");
+        }
+        if (instance == null) {
+            return null;
+        }
+        float[] classProbabilities = new float[numClasses];
+        float probTotal = 0;
+        // Perform the weighted vote.
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbabilities[trainingData.data.get(trNeighbors[kIndex]).
+                    getCategory()] += instanceWeights[trNeighbors[kIndex]];
+            probTotal += instanceWeights[trNeighbors[kIndex]];
+        }
+        // Normalize.
+        if (probTotal == 0) {
+            return new float[numClasses];
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbabilities[cIndex] /= probTotal;
+            }
+        }
+        return classProbabilities;
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
+    }
+}
