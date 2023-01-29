@@ -100,3 +100,105 @@ public class KNN extends Classifier implements AutomaticKFinderInterface,
      * @param k Integer that is the neighborhood size.
      * @param cmet CombinedMetric object for distance calculations.
      */
+    public KNN(int k, CombinedMetric cmet) {
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object used for model training.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public KNN(DataSet dset, int numClasses, CombinedMetric cmet, int k) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public void setNumClasses(int numClasses) {
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * @return Integer that is the number of classes in the data.
+     */
+    public int getNumClasses() {
+        return numClasses;
+    }
+
+    /**
+     * @return Integer that is the neighborhood size used in calculations.
+     */
+    public int getK() {
+        return k;
+    }
+
+    /**
+     * @param k Integer that is the neighborhood size used in calculations.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param categories Category[] representing the training data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public KNN(Category[] categories, CombinedMetric cmet, int k) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1
+                    && categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+            }
+        }
+        // Instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size(); i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(i));
+            }
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+        numClasses = trainingData.countCategories();
+    }
+
+    @Override
+    public void setClasses(Category[] categories) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1
+                    && categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+            }
+        }
+        // Instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+          
