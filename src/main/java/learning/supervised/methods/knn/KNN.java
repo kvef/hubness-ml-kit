@@ -201,4 +201,90 @@ public class KNN extends Classifier implements AutomaticKFinderInterface,
         trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
                 getInstance(0).getEmbeddingDataset().fAttrNames;
         trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
-          
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size(); i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(i));
+            }
+        }
+        numClasses = trainingData.countCategories();
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        return new KNN(trainingData, numClasses, getCombinedMetric(), k);
+    }
+
+    @Override
+    public void findK(int kMin, int kMax) throws Exception {
+        numClasses = trainingData.countCategories();
+        NeighborSetFinder nsf = new NeighborSetFinder(trainingData,
+                getCombinedMetric());
+        nsf.calculateDistances();
+        nsf.calculateNeighborSets(kMax);
+        // The array that holds the accuracy for the entire range of tested
+        // neighborhood sizes.
+        float[] accuracyArray = new float[kMax - kMin + 1];
+        // The current best achieved accuracy.
+        float currMaxAcc = -1f;
+        // The current optimal neighborhood size.
+        int currMaxK = 0;
+        int dataSize = trainingData.size();
+        // Votes and decisions are updated incrementally, which reduces the
+        // computational complexity.
+        float[][] currVoteClassCounts = new float[dataSize][numClasses];
+        int[] currPredictions = new int[dataSize];
+        // The label of the current vote.
+        int voteLabel;
+        // The k-nearest neighbor sets on the training data.
+        int[][] kneighbors = nsf.getKNeighbors();
+        // The current accuracy.
+        float currAccuracy;
+        for (int kInc = 0; kInc < accuracyArray.length; kInc++) {
+            currAccuracy = 0;
+            // Find the accuracy of the method on the training data for the
+            // given k value.
+            for (int catIndex = 0; catIndex < getClasses().length; catIndex++) {
+                for (int i = 0; i < dataSize; i++) {
+                    voteLabel = trainingData.getLabelOf(
+                            kneighbors[i][kMin + kInc - 1]);
+                    currVoteClassCounts[i][voteLabel]++;
+                    if (currPredictions[i] != voteLabel) {
+                        // Check if the decision needs to be updated.
+                        if (currVoteClassCounts[i][voteLabel]
+                                > currVoteClassCounts[i][currPredictions[i]]) {
+                            currPredictions[i] = voteLabel;
+                        }
+                    }
+                    if (currPredictions[i] == trainingData.getLabelOf(i)) {
+                        currAccuracy++;
+                    }
+                }
+            }
+            // Normalize the accuracy.
+            currAccuracy /= (float) dataSize;
+            accuracyArray[kInc] = currAccuracy;
+            // Update the best parameter values.
+            if (currMaxAcc < currAccuracy) {
+                currMaxAcc = currAccuracy;
+                currMaxK = kMin + kInc;
+            }
+        }
+        // Set the optimal neighborhood size as the actual one.
+        k = currMaxK;
+    }
+
+    @Override
+    public void train() throws Exception {
+        if (k <= 0) {
+            // If an invalid neighborhood size was provided, automatically
+            // search for the optimal one in the lower k-range.
+            findK(1, 20);
+        }
+        if (trainingData != null) {
+            numClasses = Math.max(numClasses, trainingData.countCategories());
+            classPriors = trainingData.getClassPr
