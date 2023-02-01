@@ -287,4 +287,106 @@ public class KNN extends Classifier implements AutomaticKFinderInterface,
         }
         if (trainingData != null) {
             numClasses = Math.max(numClasses, trainingData.countCategories());
-            classPriors = trainingData.getClassPr
+            classPriors = trainingData.getClassPriors();
+        }
+    }
+
+    @Override
+    public int classify(DataInstance instance) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance);
+        float maxProb = 0;
+        int maxClass = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClass = cIndex;
+            }
+        }
+        return maxClass;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        // Calculate the kNN set.
+        float[] kDistances = new float[k];
+        Arrays.fill(kDistances, Float.MAX_VALUE);
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDistance = cmet.dist(trainingData.data.get(i), instance);
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        // Perform the voting.
+        float[] classProbEstimates = new float[numClasses];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbEstimates[trainingData.getLabelOf(kNeighbors[kIndex])]++;
+        }
+        // Normalize.
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining)
+            throws Exception {
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining) throws Exception {
+        // Calculate the kNN set.
+        float[] kDistances = new float[k];
+        Arrays.fill(kDistances, Float.MAX_VALUE);
+        int[] kNeighbors = new int[k];
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            if (distToTraining[i] < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > distToTraining[i]) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = distToTraining[i];
+                kNeighbors[index] = i;
+            }
+        }
+        // Perform the voting.
+        float[] classProbEstimates = new float[numClasses];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+        
