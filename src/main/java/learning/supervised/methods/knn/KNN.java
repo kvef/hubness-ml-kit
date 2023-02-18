@@ -389,4 +389,101 @@ public class KNN extends Classifier implements AutomaticKFinderInterface,
         // Perform the voting.
         float[] classProbEstimates = new float[numClasses];
         for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbEstimates[trainingData.getLabelOf(kNeighbors[kIndex])]++;
+        }
+        // Normalize.
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    /**
+     * Classify the point of interest based on the kNN set and the distances to
+     * the neighbor points.
+     *
+     * @param instance DataInstance object that is to be classified.
+     * @param kDistances float[] representing the distances to the k-nearest
+     * neighbors.
+     * @param trNeighbors int[] representing the indexes of the kNN set.
+     * @return Integer that is the predicted class affiliation in the point of
+     * interest.
+     * @throws Exception
+     */
+    public int classifyWithKDistAndNeighbors(DataInstance instance,
+            float[] kDistances, int[] trNeighbors) throws Exception {
+        float[] classProbEstimates = new float[numClasses];
+        // Perform the voting.
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbEstimates[trainingData.getLabelOf(trNeighbors[kIndex])]++;
+        }
+        // Normalize.
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbEstimates[cIndex] > maxProb) {
+                maxProb = classProbEstimates[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    /**
+     * Classify the point of interest based on the kNN set and the distances to
+     * the neighbor points.
+     *
+     * @param instance DataInstance object that is to be classified.
+     * @param kDistances float[] representing the distances to the k-nearest
+     * neighbors.
+     * @param trNeighbors int[] representing the indexes of the kNN set.
+     * @return float[] that is the predicted class distribution in the point of
+     * interest.
+     * @throws Exception
+     */
+    public float[] classifyProbabilisticallyWithKDistAndNeighbors(
+            DataInstance instance, float[] kDistances, int[] trNeighbors)
+            throws Exception {
+        float[] classProbEstimates = new float[numClasses];
+        // Perform the voting.
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbEstimates[trainingData.getLabelOf(trNeighbors[kIndex])]++;
+        }
+        // Normalize.
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] trNeighbors) throws Exception {
         
