@@ -486,4 +486,37 @@ public class KNN extends Classifier implements AutomaticKFinderInterface,
     @Override
     public int classify(DataInstance instance, float[] distToTraining,
             int[] trNeighbors) throws Exception {
-        
+        float[] classProbs = classifyProbabilistically(instance, distToTraining,
+                trNeighbors);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining, int[] trNeighbors) throws Exception {
+        float[] classProbEstimates = new float[numClasses];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbEstimates[trainingData.getLabelOf(trNeighbors[kIndex])]++;
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+}
