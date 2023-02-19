@@ -125,4 +125,109 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
                 + "Management");
         pub.addAuthor(Author.NENAD_TOMASEV);
         pub.addAuthor(Author.MILOS_RADOVANOVIC);
-        pub.addAuthor(Author.DUNJA_MLAD
+        pub.addAuthor(Author.DUNJA_MLADENIC);
+        pub.addAuthor(Author.MIRJANA_IVANOVIC);
+        pub.setTitle("A Probabilistic Approach to Nearest-Neighbor "
+                + "Classification: Naive Hubness Bayesian kNN");
+        pub.setYear(2011);
+        pub.setStartPage(183);
+        pub.setEndPage(195);
+        pub.setPublisher(Publisher.SPRINGER);
+        return pub;
+    }
+    
+    @Override
+    public long getVersion() {
+        return serialVersionUID;
+    }
+
+    @Override
+    public String getName() {
+        return "NHBNN";
+    }
+
+    @Override
+    public void setDistMatrix(float[][] distMatrix) {
+        this.distMat = distMatrix;
+    }
+
+    @Override
+    public float[][] getDistMatrix() {
+        return distMat;
+    }
+
+    @Override
+    public void noRecalcs() {
+        noRecalc = true;
+    }
+
+    @Override
+    public void findK(int kMin, int kMax) throws Exception {
+        DataSet dset = trainingData;
+        float currMaxAcc = -1f;
+        int currMaxK = 0;
+        int currMaxTheta = 0;
+        float maxAlphaParam = 0.4f;
+        int bestApproximationMethod = LOCALH;
+        NHBNN classifier;
+        ArrayList<DataInstance> data = dset.data;
+        Random randa = new Random();
+        ArrayList[] dataFolds = null;
+        ArrayList currentTraining;
+        ArrayList[] foldIndexes = null;
+        ArrayList<Integer> currentIndexes;
+        ArrayList<Integer> currentTest;
+        // Generate folds for training and test.
+        int folds = 2;
+        float choice;
+        boolean noEmptyFolds = false;
+        while (!noEmptyFolds) {
+            dataFolds = new ArrayList[folds];
+            foldIndexes = new ArrayList[folds];
+            for (int j = 0; j < folds; j++) {
+                dataFolds[j] = new ArrayList(2000);
+                foldIndexes[j] = new ArrayList<>(2000);
+            }
+            for (int j = 0; j < data.size(); j++) {
+                choice = randa.nextFloat();
+                if (choice < 0.15) {
+                    dataFolds[1].add(data.get(j));
+                    foldIndexes[1].add(j);
+                } else {
+                    dataFolds[0].add(data.get(j));
+                    foldIndexes[0].add(j);
+                }
+            }
+            // Check to see if some have remained empty, though it is highly
+            // unlikely, since only 2 folds are used in this implementation.
+            noEmptyFolds = true;
+            for (int j = 0; j < folds; j++) {
+                if (dataFolds[j].isEmpty()) {
+                    noEmptyFolds = false;
+                    break;
+                }
+            }
+        }
+        // Generate training and test datasets from the random folds.
+        currentTest = foldIndexes[1];
+        currentTraining = new ArrayList();
+        currentIndexes = new ArrayList();
+        currentTraining.addAll(dataFolds[0]);
+        currentIndexes.addAll(foldIndexes[0]);
+        classifier = (NHBNN) (copyConfiguration());
+        classifier.setDataIndexes(currentIndexes, dset);
+        ClassificationEstimator currEstimator;
+        DataSet dsetTrain = dset.cloneDefinition();
+        dsetTrain.data = currentTraining;
+        NeighborSetFinder nsfAux;
+        ArrayList<Integer> indexPermutation = MultiCrossValidation.
+                getDataIndexes(currentIndexes, dset);
+        for (int i = 0; i < dsetTrain.size(); i++) {
+            dsetTrain.data.set(i, dset.data.get(indexPermutation.get(i)));
+        }
+        // Prepare the sub-training kNN sets.
+        if (distMat == null) {
+            // Calculate the distance matrix from scratch if not already
+            // available.
+            nsfAux = new NeighborSetFinder(dsetTrain, getCombinedMetric());
+  
