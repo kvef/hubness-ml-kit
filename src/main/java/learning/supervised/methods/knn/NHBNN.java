@@ -230,4 +230,84 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
             // Calculate the distance matrix from scratch if not already
             // available.
             nsfAux = new NeighborSetFinder(dsetTrain, getCombinedMetric());
-  
+            nsfAux.calculateDistances();
+        } else {
+            // Generate the fold distance matrix from the already provided
+            // distance matrix.
+            float[][] foldDistMatrix = new float[dsetTrain.size()][];
+            int lowerIndex, upperIndex;
+            for (int index1 = 0; index1 < foldDistMatrix.length; index1++) {
+                foldDistMatrix[index1] =
+                        new float[foldDistMatrix.length - index1 - 1];
+                for (int index2 = index1 + 1; index2
+                        < foldDistMatrix.length; index2++) {
+                    lowerIndex = Math.min(indexPermutation.get(index1),
+                            indexPermutation.get(index2));
+                    upperIndex = Math.max(indexPermutation.get(index1),
+                            indexPermutation.get(index2));
+                    foldDistMatrix[index1][index2 - index1 - 1] =
+                            distMat[lowerIndex][upperIndex - lowerIndex - 1];
+                }
+            }
+            nsfAux = new NeighborSetFinder(dsetTrain, foldDistMatrix,
+                    getCombinedMetric());
+        }
+        nsfAux.calculateNeighborSets(kMax);
+        NeighborSetFinder nsfTIteration;
+        // Iterate over different possible k-values.
+        for (int kCurr = 1; kCurr <= kMax; kCurr++) {
+            nsfTIteration = nsfAux.getSubNSF(kCurr);
+            classifier.nsf = nsfTIteration;
+            classifier.k = kCurr;
+            classifier.train();
+            // Iterate over different internal parameter values.
+            for (thetaValue = 0; thetaValue < 10; thetaValue++) {
+                for (alphaParam = 0; alphaParam <= 0.81; alphaParam += 0.2) {
+                    // Attempt global anti-hub conditional probability
+                    // approximation.
+                    classifier.localEstimateMethod = GLOBAL;
+                    classifier.thetaValue = thetaValue;
+                    classifier.alphaParam = alphaParam;
+                    currEstimator = classifier.test(currentTest, dset,
+                            numClasses);
+                    if (currEstimator.getAccuracy() > currMaxAcc) {
+                        // If current best, save the parameter values.
+                        currMaxAcc = currEstimator.getAccuracy();
+                        currMaxK = kCurr;
+                        currMaxTheta = thetaValue;
+                        maxAlphaParam = alphaParam;
+                        bestApproximationMethod = GLOBAL;
+                    }
+                    // Attempt local anti-hub conditional probability
+                    // approximation.
+                    classifier.localEstimateMethod = LOCALH;
+                    classifier.thetaValue = thetaValue;
+                    classifier.alphaParam = alphaParam;
+                    currEstimator = classifier.test(currentTest, dset,
+                            numClasses);
+                    if (currEstimator.getAccuracy() > currMaxAcc) {
+                        // If current best, save the parameter values.
+                        currMaxAcc = currEstimator.getAccuracy();
+                        currMaxK = kCurr;
+                        currMaxTheta = thetaValue;
+                        maxAlphaParam = alphaParam;
+                        bestApproximationMethod = LOCALH;
+                    }
+                }
+            }
+        }
+        // Set the best parameter values.
+        thetaValue = currMaxTheta;
+        k = currMaxK;
+        alphaParam = maxAlphaParam;
+        localEstimateMethod = bestApproximationMethod;
+    }
+
+    /**
+     * The default constructor.
+     */
+    public NHBNN() {
+    }
+
+    /**
+     * Initializa
