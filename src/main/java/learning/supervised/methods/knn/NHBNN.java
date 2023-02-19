@@ -49,4 +49,80 @@ import preprocessing.instance_selection.InstanceSelector;
  * Conference on Information and Knowledge Management (CIKM) in 2011 in Glasgow.
  * It is a Naive Bayesian interpretation of the k-nearest neighbor rule. Each
  * neighbor occurrence is interpreted as an event, as a new defining feature for
- * the query inst
+ * the query instance. Unlike in standard Naive Bayes, though - some of these
+ * 'features', or rather feature values never occur on the training data and are
+ * observed on the test data. This happens for points that are orphans in the
+ * kNN graph on the training data and points like this arise frequently in
+ * high-dimensional data due to the hubness phenomenon. Even for non-orphan
+ * anti-hub points, deriving proper probability conditionals is difficult. On
+ * the other hand, most neighbor occurrences in high-dimensional data are hub
+ * occurrences and for those points it is possible to derive good
+ * class-conditional occurrence probabilities and occurrence-conditional class
+ * affiliation probabilities as well. In any case, it is possible to apply the
+ * modified Naive Bayes rule for classification based on the kNN set. This
+ * approach has later been shown to be quite promising in class-imbalanced
+ * high-dimensional data. It was also a basis for development of ANHBNN that was
+ * later presented at ECML/PKDD 2013 in Prague.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class NHBNN extends Classifier implements AutomaticKFinderInterface,
+        DistMatrixUserInterface, NSFUserInterface,
+        DistToPointsQueryUserInterface, NeighborPointsQueryUserInterface,
+        Serializable {
+
+    private static final long serialVersionUID = 1L;
+    // The default anti-hub threshold.
+    private int thetaValue = 2;
+    // Neighborhood size.
+    private int k = 5;
+    // The object that holds the kNN information.
+    private NeighborSetFinder nsf = null;
+    // The training dataset.
+    private DataSet trainingData = null;
+    // Number of classes in the data.
+    private int numClasses = 0;
+    // Class-conditional neighbor occurrence frequencies.
+    private float[][] classDataKNeighborRelation = null;
+    // Prior class distribution.
+    private float[] classPriors = null;
+    // The smoothing factor.
+    private float laplaceEstimator = 0.05f;
+    // Neighbor occurrence frequencies on the training data.
+    private int[] neighbOccFreqs = null;
+    // Several arrays for different types of local and global anti-hub vote
+    // estimates, or in this case - conditional probability estimates and
+    // approximations.
+    private float[][][] localHClassDistribution = null;
+    private float[][] classToClassPriors = null;
+    // Upper triangular distance matrix.
+    private float[][] distMat = null;
+    // Variable holding the current estimate type.
+    private int localEstimateMethod = GLOBAL;
+    // The parameter that governs how much emphasis is put on the actual
+    // occurrence counts for anti-hub estimates.
+    private float alphaParam = 0.4f;
+    // Estimation type constants.
+    public static final int GLOBAL = 0;
+    public static final int LOCALH = 1;
+    private static final int K_LOCAL_APPROXIMATION = 20;
+    private boolean noRecalc = false;
+    
+    @Override
+    public HashMap<String, String> getParameterNamesAndDescriptions() {
+        HashMap<String, String> paramMap = new HashMap<>();
+        paramMap.put("k", "Neighborhood size.");
+        paramMap.put("thetaValue", "Anti-hub cut-off point for treating"
+                + "anti-hubs as a special case.");
+        paramMap.put("localEstimateMethod", "Anti-hub handling strategy.");
+        return paramMap;
+    }
+    
+    @Override
+    public Publication getPublicationInfo() {
+        ConferencePublication pub = new ConferencePublication();
+        pub.setConferenceName("Conference on Information and Knowledge "
+                + "Management");
+        pub.addAuthor(Author.NENAD_TOMASEV);
+        pub.addAuthor(Author.MILOS_RADOVANOVIC);
+        pub.addAuthor(Author.DUNJA_MLAD
