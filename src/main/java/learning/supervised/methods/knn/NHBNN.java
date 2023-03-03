@@ -423,3 +423,85 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
      * Initialization.
      *
      * @param categories Category[] representing the training data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public NHBNN(Category[] categories, CombinedMetric cmet, int k) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1
+                    && categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+            }
+        }
+        // Instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size(); i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(i));
+            }
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+        numClasses = trainingData.countCategories();
+    }
+
+    /**
+     * @param laplaceEstimator Float value used as a Laplace estimator for
+     * probability estimate smoothing in probability distributions.
+     */
+    public void setLaplaceEstimator(float laplaceEstimator) {
+        this.laplaceEstimator = laplaceEstimator;
+    }
+
+    @Override
+    public void setClasses(Category[] categories) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1
+                    && categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+            }
+        }
+        // Instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size(); i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(i));
+            }
+        }
+        numClasses = trainingData.countCategories();
+    }
+
+    /**
+     * @param trainingData DataSet object to train the model on.
+     */
+    public void setTrainingSet(DataSet trainingData) {
+        this.trainingData = trainingData;
+    }
+
+    /**
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public void setNumClasses(int numClasses) {
+        this.numClasses = n
