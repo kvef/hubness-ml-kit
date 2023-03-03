@@ -310,4 +310,116 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
     }
 
     /**
-     * Initializa
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     */
+    public NHBNN(int k) {
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public NHBNN(int k, CombinedMetric cmet) {
+        this.k = k;
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public NHBNN(int k, CombinedMetric cmet, int numClasses) {
+        this.k = k;
+        setCombinedMetric(cmet);
+        this.numClasses = numClasses;
+
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param laplaceEstimator Float value used as a Laplace estimator for
+     * probability estimate smoothing in probability distributions.
+     */
+    public NHBNN(int k, float laplaceEstimator) {
+        this.k = k;
+        this.laplaceEstimator = laplaceEstimator;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param laplaceEstimator Float value used as a Laplace estimator for
+     * probability estimate smoothing in probability distributions.
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public NHBNN(int k, float laplaceEstimator, CombinedMetric cmet) {
+        this.k = k;
+        this.laplaceEstimator = laplaceEstimator;
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param laplaceEstimator Float value used as a Laplace estimator for
+     * probability estimate smoothing in probability distributions.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public NHBNN(int k, float laplaceEstimator, CombinedMetric cmet,
+            int numClasses) {
+        this.k = k;
+        this.laplaceEstimator = laplaceEstimator;
+        setCombinedMetric(cmet);
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object used for model training.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public NHBNN(DataSet dset, int numClasses, CombinedMetric cmet, int k) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSet object used for model training.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param nsf NeighborSetFinder object for kNN calculations.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public NHBNN(DataSet dset, int numClasses, NeighborSetFinder nsf,
+            CombinedMetric cmet, int k) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        this.nsf = nsf;
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param categories Category[] representing the training data.
