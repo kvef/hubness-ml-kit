@@ -504,4 +504,106 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
      * @param numClasses Integer that is the number of classes in the data.
      */
     public void setNumClasses(int numClasses) {
-        this.numClasses = n
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * @return Integer that is the number of classes in the data.
+     */
+    public int getNumClasses() {
+        return numClasses;
+    }
+
+    /**
+     * @return Integer that is the neighborhood size used in calculations.
+     */
+    public int getK() {
+        return k;
+    }
+
+    /**
+     * @param k Integer that is the neighborhood size used in calculations.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    /**
+     * Calculate the neighbor sets, if not already calculated.
+     *
+     * @throws Exception
+     */
+    public void calculateNeighborSets() throws Exception {
+        if (distMat == null) {
+            nsf = new NeighborSetFinder(trainingData, getCombinedMetric());
+            nsf.calculateDistances();
+        } else {
+            nsf = new NeighborSetFinder(trainingData, distMat,
+                    getCombinedMetric());
+        }
+        nsf.calculateNeighborSets(k);
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        NHBNN classifierCopy = new NHBNN(k, laplaceEstimator,
+                getCombinedMetric(), numClasses);
+        classifierCopy.noRecalc = noRecalc;
+        classifierCopy.localEstimateMethod = localEstimateMethod;
+        classifierCopy.thetaValue = thetaValue;
+        return classifierCopy;
+    }
+
+    @Override
+    public void train() throws Exception {
+        if (k <= 0) {
+            // If an invalid k-value is provided, calculate the appropriate
+            // neighborhood size automatically from the default lower-end range.
+            findK(1, 20);
+        }
+        if (nsf == null) {
+            calculateNeighborSets();
+        }
+        // Get the class counts and the class priors.
+        int[] classCounts = trainingData.getClassFrequencies();
+        classPriors = trainingData.getClassPriors();
+        // Get the total neighbor occurrence frequencies.
+        neighbOccFreqs = nsf.getNeighborFrequencies();
+        // Initialize the arrays for anti-hub approximations.
+        localHClassDistribution =
+                new float[trainingData.size()][numClasses][numClasses];
+        // First fetch the kNN sets on the trainingdata.
+        int[][] kneighbors = nsf.getKNeighbors();
+        // Calculate the class-conditional occurrences.
+        classDataKNeighborRelation = new float[numClasses][trainingData.size()];
+        float[][] distMatrix = nsf.getDistances();
+        classToClassPriors = new float[numClasses][numClasses];
+        for (int i = 0; i < trainingData.size(); i++) {
+            int currClass = trainingData.data.get(i).getCategory();
+            classDataKNeighborRelation[currClass][i]++;
+            for (int kIndex = 0; kIndex < k; kIndex++) {
+                classDataKNeighborRelation[currClass][kneighbors[i][kIndex]]++;
+                classToClassPriors[trainingData.data.get(
+                        kneighbors[i][kIndex]).getCategory()][currClass]++;
+            }
+            if (neighbOccFreqs[i] <= thetaValue) {
+                // Anti-hub approximation is necessary.
+                float[] localClassCounts = new float[numClasses];
+                if (k >= K_LOCAL_APPROXIMATION) {
+                    // If the neighborhood size is large enough for local
+                    // approximation.
+                    for (int kAppIndex = 0; kAppIndex < K_LOCAL_APPROXIMATION;
+                            kAppIndex++) {
+                        int currLClass = trainingData.data.get(kneighbors[i][
+                                kAppIndex]).getCategory();
+                   
