@@ -606,4 +606,69 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
                             kAppIndex++) {
                         int currLClass = trainingData.data.get(kneighbors[i][
                                 kAppIndex]).getCategory();
+                        localClassCounts[currLClass]++;
+                        localHClassDistribution[i][currLClass][currLClass]++;
+                        for (int nIndex = 0; nIndex < k; nIndex++) {
+                            localHClassDistribution[i][currLClass][
+                                    trainingData.data.get(kneighbors[
+                                    kneighbors[i][kAppIndex]][nIndex]).
+                                    getCategory()]++;
+                            // The first is the query class, the second the
+                            // neighbor class.
+                        }
+                    }
+                    // Normalize and smooth the approximation.
+                    for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+                        for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                            localHClassDistribution[i][cFirst][cSecond] +=
+                                    (1f / numClasses);
+                            localHClassDistribution[i][cFirst][cSecond] /=
+                                    (localClassCounts[cFirst]
+                                    * localClassCounts[cSecond]
+                                    + (numClasses * (1f / numClasses)));
+                        }
+                    }
+
+                } else {
+                    // If the current neighborhood size is too small, calculate
+                    // the remaining neighbor points around the query.
+                    int[] localNeighbors = new int[K_LOCAL_APPROXIMATION];
+                    float[] kDistances = new float[K_LOCAL_APPROXIMATION];
+                    // Re-use what we already know.
+                    for (int kIndex = 0; kIndex < k; kIndex++) {
+                        localNeighbors[kIndex] = kneighbors[i][kIndex];
+                        kDistances[kIndex] = nsf.getKDistances()[i][kIndex];
+                    }
+                    int kcurrLen = k;
+                    int l;
+                    float currDist;
+                    boolean insertable;
+                    for (int j = 0; j < trainingData.size(); j++) {
+                        if (j != i) {
+                            currDist = getDistanceForElements(distMatrix, i, j);
+                            if (kcurrLen == K_LOCAL_APPROXIMATION) {
+                                if (currDist < kDistances[kcurrLen - 1]) {
+                                    // Search to see where to insert if it is
+                                    // not already in present in the knn set.
+                                    insertable = true;
+                                    for (int index = 0; index < kcurrLen;
+                                            index++) {
+                                        if (j == localNeighbors[index]) {
+                                            insertable = false;
+                                            break;
+                                        }
+                                    }
+                                    if (insertable) {
+                                        l = kcurrLen - 1;
+                                        while ((l >= 1) && currDist
+                                                < kDistances[l - 1]) {
+                                            kDistances[l] = kDistances[l - 1];
+                                            localNeighbors[l] =
+                                                    localNeighbors[l - 1];
+                                            l--;
+                                        }
+                                        kDistances[l] = currDist;
+                                        localNeighbors[l] = j;
+                                    }
+                                }
                    
