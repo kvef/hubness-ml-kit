@@ -733,4 +733,77 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
                                     * (K_LOCAL_APPROXIMATION + 1) + (numClasses
                                     * (1f / (2 * numClasses))));
                         }
-           
+                    }
+                }
+            }
+        }
+        // Normalize and smooth the class-conditional neighbor occurrence counts
+        // into conditional probability estimates.
+        float laplaceTotal = trainingData.size() * (1f / (2 * numClasses));
+        for (int i = 0; i < numClasses; i++) {
+            for (int j = 0; j < trainingData.size(); j++) {
+                classDataKNeighborRelation[i][j] += (1f / (2 * numClasses));
+                classDataKNeighborRelation[i][j] /= (k * (float) classCounts[i]
+                        + laplaceTotal);
+            }
+        }
+        // Normalize class-to-class priors.
+        laplaceEstimator = 0.00001f;
+        laplaceTotal = numClasses * laplaceEstimator;
+        for (int i = 0; i < numClasses; i++) {
+            for (int j = 0; j < numClasses; j++) {
+                classToClassPriors[i][j] += laplaceEstimator;
+                classToClassPriors[i][j] /= ((k + 1) * (float) classCounts[j]
+                        * (float) classCounts[i] + laplaceTotal);
+            }
+        }
+    }
+
+    @Override
+    public void trainOnReducedData(InstanceSelector reducer) throws Exception {
+        ArrayList<Integer> indexPermutation = MultiCrossValidation.
+                getIndexPermutation(reducer.getPrototypeIndexes(),
+                reducer.getOriginalDataSet());
+        int kReducer = reducer.getNeighborhoodSize();
+        int[] protoNeighbOccFreqs = reducer.getPrototypeHubness();
+        // Prototypes are the training set.
+        // Get the class counts and the class priors.
+        classPriors = trainingData.getClassPriors();
+        localHClassDistribution =
+                new float[trainingData.size()][numClasses][numClasses];
+        // Get the unbiased prototype occurrence frequencies from the reducer.
+        neighbOccFreqs = new int[protoNeighbOccFreqs.length];
+        for (int i = 0; i < neighbOccFreqs.length; i++) {
+            neighbOccFreqs[i] = protoNeighbOccFreqs[indexPermutation.get(i)];
+        }
+        // Get the kNN sets with prototypes as neighbors from the reducer. We
+        // must take care of the index permutation along the way.
+        int[][] kneighbors = reducer.getProtoNeighborSets();
+        classDataKNeighborRelation = new float[numClasses][trainingData.size()];
+        // The following call obtains the normalized distribution.
+        float[][] classDataKNeighborRelationTemp = reducer.
+                getClassDataNeighborRelationforBayesian(numClasses,
+                laplaceEstimator);
+        // Permute the values.
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            for (int i = 0; i < neighbOccFreqs.length; i++) {
+                classDataKNeighborRelation[cIndex][i] =
+                        classDataKNeighborRelationTemp[cIndex][
+                        indexPermutation.get(i)];
+            }
+        }
+        classToClassPriors = reducer.calculateClassToClassPriorsBayesian();
+        int actualIndex;
+        for (int i = 0; i < trainingData.size(); i++) {
+            actualIndex = indexPermutation.get(i);
+            if (neighbOccFreqs[i] <= thetaValue) {
+                // The anti-hub approximation case.
+                float[] localClassCounts = new float[numClasses];
+                for (int kIndex = 0; kIndex < kReducer; kIndex++) {
+                    int currLClass = reducer.getPrototypeLabel(
+                            kneighbors[actualIndex][kIndex]);
+                    localClassCounts[currLClass]++;
+                    localHClassDistribution[i][currLClass][currLClass]++;
+                    for (int nIndex = 0; nIndex < kReducer; nIndex++) {
+                        localHClassDistribution[i][currLClass][reducer.
+                         
