@@ -806,4 +806,98 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
                     localHClassDistribution[i][currLClass][currLClass]++;
                     for (int nIndex = 0; nIndex < kReducer; nIndex++) {
                         localHClassDistribution[i][currLClass][reducer.
-                         
+                                getPrototypeLabel(kneighbors[kneighbors[
+                                actualIndex][kIndex]][nIndex])]++;
+                        // The first is the query class, the second the
+                        // neighbor class.
+                    }
+                }
+                for (int cFirst = 0; cFirst < numClasses; cFirst++) {
+                    for (int cSecond = 0; cSecond < numClasses; cSecond++) {
+                        localHClassDistribution[i][cFirst][cSecond] +=
+                                (1f / numClasses);
+                        localHClassDistribution[i][cFirst][cSecond] /=
+                                (localClassCounts[cFirst] * localClassCounts[
+                                cSecond] + (numClasses * (1f / numClasses)));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the distance between the two instances from the upper triangular
+     * distance matrix.
+     *
+     * @param distMatrix float[][] that is the upper triangular distance matrix.
+     * @param i Integer that is the index of the first instance.
+     * @param j Integer that is the index of the second instance.
+     * @return Float value that is the distance between the two instances.
+     */
+    private static float getDistanceForElements(float[][] distMatrix, int i,
+            int j) {
+        if (j > i) {
+            return distMatrix[i][j - i - 1];
+        } else if (i > j) {
+            return distMatrix[j][i - j - 1];
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public int classify(DataInstance instance) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance);
+        float maxProb = 0;
+        int maxClass = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClass = cIndex;
+            }
+        }
+        return maxClass;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        // Calculate the kNN set.
+        float[] kDistances = new float[k];
+        Arrays.fill(kDistances, Float.MAX_VALUE);
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDistance = cmet.dist(trainingData.data.get(i), instance);
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        double[] classProbEstimates = new double[numClasses];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            classProbEstimates[cIndex] = classPriors[cIndex];
+        }
+        double maxProb = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            if (neighbOccFreqs[kNeighbors[kIndex]] > thetaValue) {
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    classProbEstimates[cIndex] *= classDataKNeighborRelation[
+                            cIndex][kNeighbors[kIndex]];
+                    if (classProbEstimates[cIndex] > maxProb) {
+                        maxProb = classProbEstimates[cIndex];
+                    }
+                }
+
+            } else {
+                float occTotal = 0;
+                for (int cIndex = 0; cIndex < n
