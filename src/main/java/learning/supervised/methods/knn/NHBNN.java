@@ -900,4 +900,81 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
 
             } else {
                 float occTotal = 0;
-                for (int cIndex = 0; cIndex < n
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    occTotal += classDataKNeighborRelation[cIndex][
+                            kNeighbors[kIndex]];
+                }
+                float globalEstimateDenominator = 0;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    globalEstimateDenominator += classToClassPriors[
+                            trainingData.data.get(kNeighbors[kIndex]).
+                            getCategory()][cIndex];
+                }
+                float localEstimateDenominator = 0;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    localEstimateDenominator += localHClassDistribution[
+                            kNeighbors[kIndex]][cIndex][trainingData.data.get(
+                            kNeighbors[kIndex]).getCategory()];
+                }
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    float gFact = (alphaParam * classDataKNeighborRelation[
+                            cIndex][kNeighbors[kIndex]]) / occTotal
+                            + ((1 - alphaParam) * classToClassPriors[
+                            trainingData.data.get(kNeighbors[kIndex]).
+                            getCategory()][cIndex])
+                            / globalEstimateDenominator;
+                    float lhFact = (alphaParam * classDataKNeighborRelation[
+                            cIndex][kNeighbors[kIndex]]) / occTotal
+                            + ((1 - alphaParam) * localHClassDistribution[
+                            kNeighbors[kIndex]][cIndex][trainingData.data.get(
+                            kNeighbors[kIndex]).getCategory()])
+                            / localEstimateDenominator;
+                    // Some correction is used to avoid floating-point
+                    // issues in case the number of neighbors is too large.
+                    switch (localEstimateMethod) {
+                        case GLOBAL:
+                            classProbEstimates[cIndex] *= 10 * gFact;
+                            break;
+                        case LOCALH:
+                            classProbEstimates[cIndex] *= 10 * lhFact;
+                        default:
+                            classProbEstimates[cIndex] *= 10 * lhFact;
+                    }
+                    if (classProbEstimates[cIndex] > maxProb) {
+                        maxProb = classProbEstimates[cIndex];
+                    }
+                }
+            }
+            if (maxProb > 0) {
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    classProbEstimates[cIndex] /= maxProb;
+                }
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] = classPriors[cIndex];
+            }
+        }
+        float[] floatProbEstimates = new float[numClasses];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            floatProbEstimates[cIndex] = (float) classProbEstimates[cIndex];
+        }
+        return floatProbEstimates;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining) throws Exception {
+        // Calculate the kNN set.
+        float[] kDistances = new float[k];
+        Arrays.fill(kDistances, Float.MAX_VALUE);
+        
