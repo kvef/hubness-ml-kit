@@ -1138,4 +1138,72 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
                 float globalEstimateDenominator = 0;
                 for (int cIndex = 0; cIndex < numClasses; cIndex++) {
                     globalEstimateDenominator += classToClassPriors[
-                            trainingData.data.get(trNeighbor
+                            trainingData.data.get(trNeighbors[kIndex]).
+                            getCategory()][cIndex];
+                }
+                float localEstimateDenominator = 0;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    localEstimateDenominator += localHClassDistribution[
+                            trNeighbors[kIndex]][cIndex][trainingData.data.get(
+                            trNeighbors[kIndex]).getCategory()];
+                }
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    float gFact = (alphaParam * classDataKNeighborRelation[
+                            cIndex][trNeighbors[kIndex]]) / occTotal
+                            + ((1 - alphaParam) * classToClassPriors[
+                            trainingData.data.get(trNeighbors[kIndex]).
+                            getCategory()][cIndex]) / globalEstimateDenominator;
+                    float lhFact = (alphaParam * classDataKNeighborRelation[
+                            cIndex][trNeighbors[kIndex]]) / occTotal
+                            + ((1 - alphaParam) * localHClassDistribution[
+                            trNeighbors[kIndex]][cIndex][trainingData.data.get(
+                            trNeighbors[kIndex]).getCategory()])
+                            / localEstimateDenominator;
+                    switch (localEstimateMethod) {
+                        // Some correction is used to avoid floating-point
+                        // issues in case the number of neighbors is too large.
+                        case GLOBAL:
+                            classProbEstimates[cIndex] *= 10 * gFact;
+                            break;
+                        case LOCALH:
+                            classProbEstimates[cIndex] *= 10 * lhFact;
+                        default:
+                            classProbEstimates[cIndex] *= 10 * lhFact;
+
+                    }
+                    if (classProbEstimates[cIndex] > maxProb) {
+                        maxProb = classProbEstimates[cIndex];
+                    }
+                }
+            }
+            if (maxProb > 0) {
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    classProbEstimates[cIndex] /= maxProb;
+                }
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] = classPriors[cIndex];
+            }
+        }
+        float[] floatProbEstimates = new float[numClasses];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            floatProbEstimates[cIndex] = (float) classProbEstimates[cIndex];
+        }
+        return floatProbEstimates;
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
+    }
+}
