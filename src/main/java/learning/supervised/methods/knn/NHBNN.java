@@ -1047,4 +1047,95 @@ public class NHBNN extends Classifier implements AutomaticKFinderInterface,
                         case LOCALH:
                             classProbEstimates[cIndex] *= 10 * lhFact;
                         default:
-                            classProbEstimates[cIndex] *= 10 *
+                            classProbEstimates[cIndex] *= 10 * lhFact;
+                    }
+                    if (classProbEstimates[cIndex] > maxProb) {
+                        maxProb = classProbEstimates[cIndex];
+                    }
+                }
+            }
+            if (maxProb > 0) {
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    classProbEstimates[cIndex] /= maxProb;
+                }
+            }
+        }
+        float probTotal = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] = classPriors[cIndex];
+            }
+        }
+        float[] floatProbEstimates = new float[numClasses];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            floatProbEstimates[cIndex] = (float) classProbEstimates[cIndex];
+        }
+        return floatProbEstimates;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining)
+            throws Exception {
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] trNeighbors) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance, distToTraining,
+                trNeighbors);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining, int[] trNeighbors) throws Exception {
+        double[] classProbEstimates = new double[numClasses];
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            classProbEstimates[cIndex] = classPriors[cIndex];
+        }
+        double maxProb = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            if (neighbOccFreqs[trNeighbors[kIndex]] > thetaValue) {
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    classProbEstimates[cIndex] *= classDataKNeighborRelation[
+                            cIndex][trNeighbors[kIndex]];
+                    if (classProbEstimates[cIndex] > maxProb) {
+                        maxProb = classProbEstimates[cIndex];
+                    }
+                }
+            } else {
+                float occTotal = 0;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    occTotal += classDataKNeighborRelation[cIndex][
+                            trNeighbors[kIndex]];
+                }
+                float globalEstimateDenominator = 0;
+                for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                    globalEstimateDenominator += classToClassPriors[
+                            trainingData.data.get(trNeighbor
