@@ -348,4 +348,105 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
     }
 
     @Override
-    public int classify(DataI
+    public int classify(DataInstance instance) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance)
+            throws Exception {
+        CombinedMetric cmet = getCombinedMetric();
+        // Calculate the kNN sets.
+        float[] kDistances = new float[k];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            kDistances[kIndex] = Float.MAX_VALUE;
+        }
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDistance = cmet.dist(trainingData.data.get(i), instance);
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+
+        float[] distanceWeights = new float[k];
+        float dwSum = 0;
+        for (int i = 0; i < k; i++) {
+            if (kDistances[i] != 0) {
+                distanceWeights[i] = 1f / ((float) Math.pow(kDistances[i],
+                        (2f / (mValue - 1f))));
+            } else {
+                distanceWeights[i] = 10000f;
+            }
+            dwSum += distanceWeights[i];
+        }
+
+        float[] classProbEstimates = new float[numClasses];
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbEstimates[trainingData.getLabelOf(kNeighbors[kIndex])] +=
+                    (classWeights[trainingData.getLabelOf(kNeighbors[kIndex])]
+                    * distanceWeights[kIndex] / dwSum);
+        }
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+
+
+        return classProbEstimates;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining) throws Exception {
+        // Calculate the kNN sets.
+        float[] kDistances = new float[k];
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            kDistances[kIndex] = Float.MAX_VALUE;
+        }
+        int[] kNeighbors = new int[k];
+        float currDistance;
+        int index;
+        for (int i = 0; i < trainingData.size(); i++) {
+            currDistance = distToTraining[i];
+            if (currDistance < kDistances[k - 1]) {
+                // Insertion.
+                index = k - 1;
+                while (index > 0 && kDistances[index - 1] > currDistance) {
+                    kDistances[index] = kDistances[index - 1];
+                    kNeighbors[index] = kNeighbors[index - 1];
+                    index--;
+                }
+                kDistances[index] = currDistance;
+                kNeighbors[index] = i;
+            }
+        }
+        float[] distanceWeights = new float[k];
+        float dwSum = 0
