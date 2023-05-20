@@ -236,4 +236,116 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
             for (int cSecond = 0; cSecond < categories[cFirst].size();
                     cSecond++) {
                 categories[cFirst].getInstance(cSecond).setCategory(cFirst);
-                trainingData.addDataInsta
+                trainingData.addDataInstance(categories[cFirst].getInstance(
+                        cSecond));
+            }
+        }
+        setCombinedMetric(cmet);
+        this.k = k;
+        numClasses = trainingData.countCategories();
+    }
+
+    @Override
+    public void setClasses(Category[] categories) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1 &&
+                    categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+            }
+        }
+        // Instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cFirst = 0; cFirst < categories.length; cFirst++) {
+            for (int cSecond = 0; cSecond < categories[cFirst].size();
+                    cSecond++) {
+                categories[cFirst].getInstance(cSecond).setCategory(cFirst);
+                trainingData.addDataInstance(categories[cFirst].getInstance(
+                        cSecond));
+            }
+        }
+        numClasses = trainingData.countCategories();
+    }
+
+    /**
+     * @return DataSet object that is the training data.
+     */
+    public DataSet getTrainingSet() {
+        return trainingData;
+    }
+
+    /**
+     * @param trainingData DataSet object that is the training data.
+     */
+    public void setTrainingSet(DataSet trainingData) {
+        this.trainingData = trainingData;
+    }
+
+    /**
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public void setNumClasses(int numClasses) {
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * @return Integer that is the number of classes in the data.
+     */
+    public int getNumClasses() {
+        return numClasses;
+    }
+
+    /**
+     * @return Integer that is the neighborhood size.
+     */
+    public int getK() {
+        return k;
+    }
+
+    /**
+     * @param k Integer that is the neighborhood size.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    @Override
+    public ValidateableInterface copyConfiguration() {
+        NWKNN result = new NWKNN(k, getCombinedMetric(), numClasses);
+        return result;
+    }
+
+    @Override
+    public void train() throws Exception {
+        classPriors = trainingData.getClassPriors();
+        classWeights = new float[classPriors.length];
+        float minSize = Float.MAX_VALUE;
+        // Find the class of minimum size.
+        for (int cIndex = 0; cIndex < classWeights.length; cIndex++) {
+            if (classPriors[cIndex] < minSize && classPriors[cIndex] > 0) {
+                minSize = classPriors[cIndex];
+            }
+        }
+        // Set the class weights.
+        for (int cIndex = 0; cIndex < classWeights.length; cIndex++) {
+            if (classPriors[cIndex] > 0) {
+                classWeights[cIndex] = 1f
+                        / (float) Math.pow(classPriors[cIndex]
+                        / minSize, weightExponent);
+            } else {
+                classWeights[cIndex] = 0;
+            }
+        }
+    }
+
+    @Override
+    public int classify(DataI
