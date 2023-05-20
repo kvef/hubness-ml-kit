@@ -137,4 +137,103 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
      * Initialization.
      *
      * @param k Integer that is the neighborhood size.
-     * @param cmet CombinedMetric object for distance calcul
+     * @param cmet CombinedMetric object for distance calculations.
+     */
+    public NWKNN(int k, CombinedMetric cmet) {
+        this.k = k;
+        setCombinedMetric(cmet);
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClasses Integer that is the number of classes in the data.
+     */
+    public NWKNN(int k, CombinedMetric cmet, int numClasses) {
+        this.k = k;
+        setCombinedMetric(cmet);
+        this.numClasses = numClasses;
+
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param k Integer that is the neighborhood size.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param exponent Float value that is the weight exponent.
+     */
+    public NWKNN(int k, CombinedMetric cmet, int numClasses, float exponent) {
+        this.k = k;
+        setCombinedMetric(cmet);
+        this.numClasses = numClasses;
+        this.weightExponent = exponent;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSrt object that is the training data.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public NWKNN(DataSet dset, int numClasses, CombinedMetric cmet, int k) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        setCombinedMetric(cmet);
+        this.k = k;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param dset DataSrt object that is the training data.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     * @param exponent Float value that is the weight exponent.
+     */
+    public NWKNN(DataSet dset, int numClasses, CombinedMetric cmet, int k,
+            float exponent) {
+        trainingData = dset;
+        this.numClasses = numClasses;
+        setCombinedMetric(cmet);
+        this.k = k;
+        this.weightExponent = exponent;
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param categories Category[] representing the training data.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Integer that is the neighborhood size.
+     */
+    public NWKNN(Category[] categories, CombinedMetric cmet, int k) {
+        int totalSize = 0;
+        int indexFirstNonEmptyClass = -1;
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            totalSize += categories[cIndex].size();
+            if (indexFirstNonEmptyClass == -1
+                    && categories[cIndex].size() > 0) {
+                indexFirstNonEmptyClass = cIndex;
+            }
+        }
+        // Instances are not embedded in the internal data context.
+        trainingData = new DataSet();
+        trainingData.fAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().fAttrNames;
+        trainingData.iAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().iAttrNames;
+        trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
+                getInstance(0).getEmbeddingDataset().sAttrNames;
+        trainingData.data = new ArrayList<>(totalSize);
+        for (int cFirst = 0; cFirst < categories.length; cFirst++) {
+            for (int cSecond = 0; cSecond < categories[cFirst].size();
+                    cSecond++) {
+                categories[cFirst].getInstance(cSecond).setCategory(cFirst);
+                trainingData.addDataInsta
