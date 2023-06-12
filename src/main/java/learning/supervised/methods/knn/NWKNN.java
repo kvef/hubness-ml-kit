@@ -449,4 +449,106 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
             }
         }
         float[] distanceWeights = new float[k];
-        float dwSum = 0
+        float dwSum = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            if (kDistances[kIndex] != 0) {
+                distanceWeights[kIndex] = 1f / ((float) Math.pow(
+                        kDistances[kIndex], (2f / (mValue - 1f))));
+            } else {
+                distanceWeights[kIndex] = 10000f;
+            }
+            dwSum += distanceWeights[kIndex];
+        }
+
+        float[] classProbEstimates = new float[numClasses];
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            classProbEstimates[trainingData.getLabelOf(kNeighbors[kIndex])] +=
+                    (classWeights[trainingData.getLabelOf(kNeighbors[kIndex])]
+                    * distanceWeights[kIndex] / dwSum);
+        }
+        // Normalize.
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+                classProbEstimates[cIndex] /= probTotal;
+            }
+        } else {
+            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
+        }
+        return classProbEstimates;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining)
+            throws Exception {
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int i = 0; i < numClasses; i++) {
+            if (classProbs[i] > maxProb) {
+                maxProb = classProbs[i];
+                maxClassIndex = i;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public int classify(DataInstance instance, float[] distToTraining,
+            int[] trNeighbors) throws Exception {
+        float[] classProbs = classifyProbabilistically(instance, distToTraining,
+                trNeighbors);
+        float maxProb = 0;
+        int maxClassIndex = 0;
+        for (int i = 0; i < numClasses; i++) {
+            if (classProbs[i] > maxProb) {
+                maxProb = classProbs[i];
+                maxClassIndex = i;
+            }
+        }
+        return maxClassIndex;
+    }
+
+    @Override
+    public float[] classifyProbabilistically(DataInstance instance,
+            float[] distToTraining, int[] trNeighbors) throws Exception {
+
+        float[] distanceWeights = new float[k];
+        float dwSum = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            if (distToTraining[trNeighbors[kIndex]] != 0) {
+                distanceWeights[kIndex] = 1f / ((float) Math.pow(
+                        distToTraining[trNeighbors[kIndex]], (2f
+                        / (mValue - 1f))));
+            } else {
+                distanceWeights[kIndex] = 10000f;
+            }
+            dwSum += distanceWeights[kIndex];
+        }
+
+        float[] classProbEstimates = new float[numClasses];
+        float probTotal = 0;
+        for (int kIndex = 0; kIndex < k; kIndex++) {
+            if (trainingData.getLabelOf(trNeighbors[kIndex]) >= numClasses) {
+                continue;
+            }
+            try {
+                classProbEstimates[trainingData.getLabelOf(
+                        trNeighbors[kIndex])] += (
+                        classWeights[trainingData.getLabelOf(
+                        trNeighbors[kIndex])] * distanceWeights[kIndex]
+                        / dwSum);
+            } catch (Exception e) {
+                continue;
+            }
+        }
+        // Normalization.
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            probTotal += classProbEstimates[cIndex];
+        }
+        if (probTotal > 0) {
+            for (int cIndex = 0; cIndex < numClasses; cInd
