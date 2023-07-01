@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -20,6 +21,8 @@ import algref.Author;
 import algref.JournalPublication;
 import algref.Publication;
 import algref.Publisher;
+import data.neighbors.NSFUserInterface;
+import data.neighbors.NeighborSetFinder;
 import data.representation.DataInstance;
 import data.representation.DataSet;
 import distances.primary.CombinedMetric;
@@ -33,54 +36,67 @@ import learning.supervised.evaluation.ValidateableInterface;
 import learning.supervised.interfaces.DistMatrixUserInterface;
 import learning.supervised.interfaces.DistToPointsQueryUserInterface;
 import learning.supervised.interfaces.NeighborPointsQueryUserInterface;
+import util.AuxSort;
 
 /**
- * Implements the algorithm described in Neighbor-weighted K-nearest neighbor
- * for unbalanced text corpus by Songbo Tan in Expert Systems with Applications
- * 28 (2005) 667–671. A weighting factor is included in the voting procedure to
- * compensate for class imbalance.
+ * This class implements the re-ranked k-nearest neighbor classifier, which
+ * performs hubness-aware re-ranking of the original kNN set and then performs
+ * voting by a subset of the original neighbors, the better ranked ones. The
+ * ranking that is used in this algorithm was first proposed in the paper
+ * Exploiting Hubs for Self-Adaptive Secondary Re-Ranking In Bug Report
+ * Duplicate Detection which was presented at the ITI conference in 2013. The
+ * algorithms itself was proposed in the journal paper version of the paper
+ * Image Hub Explorer: Evaluating Representations and Metrics for Content-based
+ * Image Retrieval and Object Recognition. Both of these papers were authored by
+ * Nenad Tomasev.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class NWKNN extends Classifier implements DistMatrixUserInterface,
-        DistToPointsQueryUserInterface, NeighborPointsQueryUserInterface,
-        Serializable {
+public class RRKNN extends Classifier implements DistMatrixUserInterface,
+        NSFUserInterface, DistToPointsQueryUserInterface,
+        NeighborPointsQueryUserInterface, Serializable {
     
     private static final long serialVersionUID = 1L;
 
+    // The larger neighborhood size.
     private int k = 5;
+    // Object for kNN calculations.
+    private NeighborSetFinder nsf = null;
     private DataSet trainingData = null;
     private int numClasses = 0;
-    private float[][] distMat;
-    private float[] classPriors;
-    private float[] classWeights;
-    private float weightExponent = 0.25f;
-    private float mValue = 2;
+    private float[][] distMat = null;
+    // Total neighbor occurrence frequencies.
+    private int[] neighbOccFreqs;
+    // Bad neighbor occurrence frequencies.
+    private int[] badNeighbOccFreqs;
+    // The inferred distance-altering factors for re-ranking.
+    private float[] multiplicativeFactors;
+    // The smaller neighborhood size.
+    private int kVoting;
+    private DWKNN knnInternal;
+    private boolean noRecalc = false;
     
     @Override
     public HashMap<String, String> getParameterNamesAndDescriptions() {
         HashMap<String, String> paramMap = new HashMap<>();
         paramMap.put("k", "Neighborhood size.");
-        paramMap.put("weightExponent", "Exponent for class-specific vote "
-                + "weights.");
-        paramMap.put("mValue", "Exponent for distance weighting. Defaults"
-                + " to 2.");
+        paramMap.put("kVoting", "Neighborhood size to use on re-ranked sub-kNN"
+                + "sets for voting and prediction.");
         return paramMap;
     }
     
     @Override
     public Publication getPublicationInfo() {
         JournalPublication pub = new JournalPublication();
-        pub.setTitle("Neighbor-weighted K-nearest neighbor for unbalanced text"
-                + " corpus");
-        pub.addAuthor(new Author("Songbo", "Tan"));
-        pub.setPublisher(Publisher.ELSEVIER);
-        pub.setJournalName("Expert Systems with Applications");
-        pub.setYear(2005);
-        pub.setStartPage(667);
-        pub.setEndPage(671);
-        pub.setVolume(28);
-        pub.setIssue(4);
+        pub.setTitle("Image Hub Explorer: Evaluating Representations and "
+                + "Metrics for Content-based Image Retrieval and Object "
+                + "Recognition");
+        pub.addAuthor(Author.NENAD_TOMASEV);
+        pub.addAuthor(Author.DUNJA_MLADENIC);
+        pub.setPublisher(Publisher.ACM);
+        pub.setJournalName("Multimedia Tools and Applications");
+        pub.setYear(2014);
+        pub.setDoi("10.1007/s11042-014-2254-1");
         return pub;
     }
     
@@ -91,7 +107,7 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
 
     @Override
     public String getName() {
-        return "NWKNN";
+        return "RRKNN";
     }
 
     @Override
@@ -104,24 +120,15 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
         return distMat;
     }
 
-    /**
-     * @return Float value that is the weight exponent.
-     */
-    public float getWeightExponent() {
-        return weightExponent;
+    @Override
+    public void noRecalcs() {
+        noRecalc = true;
     }
 
     /**
-     * @param exponent Float value that is the weight exponent.
+     * The default constructor.
      */
-    public void setWeightExponent(float exponent) {
-        this.weightExponent = exponent;
-    }
-
-    /**
-     * Default constructor.
-     */
-    public NWKNN() {
+    public RRKNN() {
     }
 
     /**
@@ -129,7 +136,7 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
      *
      * @param k Integer that is the neighborhood size.
      */
-    public NWKNN(int k) {
+    public RRKNN(int k) {
         this.k = k;
     }
 
@@ -139,7 +146,7 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
      * @param k Integer that is the neighborhood size.
      * @param cmet CombinedMetric object for distance calculations.
      */
-    public NWKNN(int k, CombinedMetric cmet) {
+    public RRKNN(int k, CombinedMetric cmet) {
         this.k = k;
         setCombinedMetric(cmet);
     }
@@ -151,7 +158,7 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
      * @param cmet CombinedMetric object for distance calculations.
      * @param numClasses Integer that is the number of classes in the data.
      */
-    public NWKNN(int k, CombinedMetric cmet, int numClasses) {
+    public RRKNN(int k, CombinedMetric cmet, int numClasses) {
         this.k = k;
         setCombinedMetric(cmet);
         this.numClasses = numClasses;
@@ -161,27 +168,12 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
     /**
      * Initialization.
      *
-     * @param k Integer that is the neighborhood size.
-     * @param cmet CombinedMetric object for distance calculations.
-     * @param numClasses Integer that is the number of classes in the data.
-     * @param exponent Float value that is the weight exponent.
-     */
-    public NWKNN(int k, CombinedMetric cmet, int numClasses, float exponent) {
-        this.k = k;
-        setCombinedMetric(cmet);
-        this.numClasses = numClasses;
-        this.weightExponent = exponent;
-    }
-
-    /**
-     * Initialization.
-     *
-     * @param dset DataSrt object that is the training data.
+     * @param dset DataSet object that is the training data.
      * @param numClasses Integer that is the number of classes in the data.
      * @param cmet CombinedMetric object for distance calculations.
      * @param k Integer that is the neighborhood size.
      */
-    public NWKNN(DataSet dset, int numClasses, CombinedMetric cmet, int k) {
+    public RRKNN(DataSet dset, int numClasses, CombinedMetric cmet, int k) {
         trainingData = dset;
         this.numClasses = numClasses;
         setCombinedMetric(cmet);
@@ -191,19 +183,19 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
     /**
      * Initialization.
      *
-     * @param dset DataSrt object that is the training data.
+     * @param dset DataSet object that is the training data.
      * @param numClasses Integer that is the number of classes in the data.
+     * @param nsf NeighborSetFinder object for kNN calculations.
      * @param cmet CombinedMetric object for distance calculations.
      * @param k Integer that is the neighborhood size.
-     * @param exponent Float value that is the weight exponent.
      */
-    public NWKNN(DataSet dset, int numClasses, CombinedMetric cmet, int k,
-            float exponent) {
+    public RRKNN(DataSet dset, int numClasses, NeighborSetFinder nsf,
+            CombinedMetric cmet, int k) {
         trainingData = dset;
         this.numClasses = numClasses;
+        this.nsf = nsf;
         setCombinedMetric(cmet);
         this.k = k;
-        this.weightExponent = exponent;
     }
 
     /**
@@ -213,7 +205,7 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
      * @param cmet CombinedMetric object for distance calculations.
      * @param k Integer that is the neighborhood size.
      */
-    public NWKNN(Category[] categories, CombinedMetric cmet, int k) {
+    public RRKNN(Category[] categories, CombinedMetric cmet, int k) {
         int totalSize = 0;
         int indexFirstNonEmptyClass = -1;
         for (int cIndex = 0; cIndex < categories.length; cIndex++) {
@@ -232,12 +224,11 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
         trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
                 getInstance(0).getEmbeddingDataset().sAttrNames;
         trainingData.data = new ArrayList<>(totalSize);
-        for (int cFirst = 0; cFirst < categories.length; cFirst++) {
-            for (int cSecond = 0; cSecond < categories[cFirst].size();
-                    cSecond++) {
-                categories[cFirst].getInstance(cSecond).setCategory(cFirst);
-                trainingData.addDataInstance(categories[cFirst].getInstance(
-                        cSecond));
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size(); i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(
+                        i));
             }
         }
         setCombinedMetric(cmet);
@@ -265,15 +256,23 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
         trainingData.sAttrNames = categories[indexFirstNonEmptyClass].
                 getInstance(0).getEmbeddingDataset().sAttrNames;
         trainingData.data = new ArrayList<>(totalSize);
-        for (int cFirst = 0; cFirst < categories.length; cFirst++) {
-            for (int cSecond = 0; cSecond < categories[cFirst].size();
-                    cSecond++) {
-                categories[cFirst].getInstance(cSecond).setCategory(cFirst);
-                trainingData.addDataInstance(categories[cFirst].getInstance(
-                        cSecond));
+        for (int cIndex = 0; cIndex < categories.length; cIndex++) {
+            for (int i = 0; i < categories[cIndex].size(); i++) {
+                categories[cIndex].getInstance(i).setCategory(cIndex);
+                trainingData.addDataInstance(categories[cIndex].getInstance(i));
             }
         }
         numClasses = trainingData.countCategories();
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
     }
 
     /**
@@ -318,33 +317,54 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
         this.k = k;
     }
 
+    /**
+     * Calculate the kNN sets.
+     *
+     * @throws Exception
+     */
+    public void calculateNeighborSets() throws Exception {
+        if (distMat == null) {
+            nsf = new NeighborSetFinder(trainingData, getCombinedMetric());
+            nsf.calculateDistances();
+        } else {
+            nsf = new NeighborSetFinder(trainingData, distMat,
+                    getCombinedMetric());
+        }
+        nsf.calculateNeighborSets(k);
+    }
+
     @Override
     public ValidateableInterface copyConfiguration() {
-        NWKNN result = new NWKNN(k, getCombinedMetric(), numClasses);
-        return result;
+        RRKNN classifierCopy = new RRKNN(k, getCombinedMetric(), numClasses);
+        classifierCopy.noRecalc = noRecalc;
+        return classifierCopy;
     }
 
     @Override
     public void train() throws Exception {
-        classPriors = trainingData.getClassPriors();
-        classWeights = new float[classPriors.length];
-        float minSize = Float.MAX_VALUE;
-        // Find the class of minimum size.
-        for (int cIndex = 0; cIndex < classWeights.length; cIndex++) {
-            if (classPriors[cIndex] < minSize && classPriors[cIndex] > 0) {
-                minSize = classPriors[cIndex];
-            }
+        if (k <= 0) {
+            // If the neighborhood size wasn't specified, use the default value.
+            k = 10;
         }
-        // Set the class weights.
-        for (int cIndex = 0; cIndex < classWeights.length; cIndex++) {
-            if (classPriors[cIndex] > 0) {
-                classWeights[cIndex] = 1f
-                        / (float) Math.pow(classPriors[cIndex]
-                        / minSize, weightExponent);
-            } else {
-                classWeights[cIndex] = 0;
-            }
+        // Check to see if the kNN sets were already calculated.
+        if (nsf == null) {
+            calculateNeighborSets();
         }
+        if (!noRecalc) {
+            nsf.recalculateStatsForSmallerK(k);
+        }
+        neighbOccFreqs = nsf.getNeighborFrequencies();
+        badNeighbOccFreqs = nsf.getBadFrequencies();
+        multiplicativeFactors = new float[trainingData.size()];
+        // Calculate the hubness-aware multiplicative factors.
+        for (int i = 0; i < trainingData.size(); i++) {
+            multiplicativeFactors[i] = ((float) badNeighbOccFreqs[i])
+                    / ((float) neighbOccFreqs[i] + 1);
+        }
+        kVoting = (int) Math.max(1, ((float) k) / 2);
+        knnInternal = new DWKNN(trainingData, numClasses, getCombinedMetric(),
+                kVoting);
+        knnInternal.train();
     }
 
     @Override
@@ -365,7 +385,7 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
     public float[] classifyProbabilistically(DataInstance instance)
             throws Exception {
         CombinedMetric cmet = getCombinedMetric();
-        // Calculate the kNN sets.
+        // Calculate the kNN set.
         float[] kDistances = new float[k];
         for (int kIndex = 0; kIndex < k; kIndex++) {
             kDistances[kIndex] = Float.MAX_VALUE;
@@ -387,46 +407,27 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
                 kNeighbors[index] = i;
             }
         }
-
-        float[] distanceWeights = new float[k];
-        float dwSum = 0;
-        for (int i = 0; i < k; i++) {
-            if (kDistances[i] != 0) {
-                distanceWeights[i] = 1f / ((float) Math.pow(kDistances[i],
-                        (2f / (mValue - 1f))));
-            } else {
-                distanceWeights[i] = 10000f;
-            }
-            dwSum += distanceWeights[i];
-        }
-
-        float[] classProbEstimates = new float[numClasses];
-        float probTotal = 0;
+        // Update the distances based on the hubness-aware multiplicative
+        // factors.
         for (int kIndex = 0; kIndex < k; kIndex++) {
-            classProbEstimates[trainingData.getLabelOf(kNeighbors[kIndex])] +=
-                    (classWeights[trainingData.getLabelOf(kNeighbors[kIndex])]
-                    * distanceWeights[kIndex] / dwSum);
+            kDistances[kIndex] *= multiplicativeFactors[kNeighbors[kIndex]];
         }
-        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
-            probTotal += classProbEstimates[cIndex];
+        // Sort, ascending.
+        int[] indexPermutation = AuxSort.sortIndexedValue(kDistances, false);
+        // Re-calculate the kNN set.
+        float[] kDistsNew = Arrays.copyOf(kDistances, kVoting);
+        int[] kNeighborsNew = new int[kVoting];
+        for (int kIndex = 0; kIndex < kVoting; kIndex++) {
+            kNeighborsNew[kIndex] = kNeighbors[indexPermutation[kIndex]];
         }
-
-        if (probTotal > 0) {
-            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
-                classProbEstimates[cIndex] /= probTotal;
-            }
-        } else {
-            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
-        }
-
-
-        return classProbEstimates;
+        return knnInternal.classifyProbabilisticallyWithKDistAndNeighbors(
+                instance, kDistsNew, kNeighborsNew);
     }
 
     @Override
     public float[] classifyProbabilistically(DataInstance instance,
             float[] distToTraining) throws Exception {
-        // Calculate the kNN sets.
+        // Calculate the kNN set.
         float[] kDistances = new float[k];
         for (int kIndex = 0; kIndex < k; kIndex++) {
             kDistances[kIndex] = Float.MAX_VALUE;
@@ -448,37 +449,20 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
                 kNeighbors[index] = i;
             }
         }
-        float[] distanceWeights = new float[k];
-        float dwSum = 0;
+        // Update the distances.
         for (int kIndex = 0; kIndex < k; kIndex++) {
-            if (kDistances[kIndex] != 0) {
-                distanceWeights[kIndex] = 1f / ((float) Math.pow(
-                        kDistances[kIndex], (2f / (mValue - 1f))));
-            } else {
-                distanceWeights[kIndex] = 10000f;
-            }
-            dwSum += distanceWeights[kIndex];
+            kDistances[kIndex] *= multiplicativeFactors[kNeighbors[kIndex]];
         }
-
-        float[] classProbEstimates = new float[numClasses];
-        float probTotal = 0;
-        for (int kIndex = 0; kIndex < k; kIndex++) {
-            classProbEstimates[trainingData.getLabelOf(kNeighbors[kIndex])] +=
-                    (classWeights[trainingData.getLabelOf(kNeighbors[kIndex])]
-                    * distanceWeights[kIndex] / dwSum);
+        // Sort, ascending.
+        int[] indexPermutation = AuxSort.sortIndexedValue(kDistances, false);
+        // Re-calculate the kNN set.
+        float[] kDistsNew = Arrays.copyOf(kDistances, kVoting);
+        int[] kNeighborsNew = new int[kVoting];
+        for (int i = 0; i < kVoting; i++) {
+            kNeighborsNew[i] = kNeighbors[indexPermutation[i]];
         }
-        // Normalize.
-        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
-            probTotal += classProbEstimates[cIndex];
-        }
-        if (probTotal > 0) {
-            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
-                classProbEstimates[cIndex] /= probTotal;
-            }
-        } else {
-            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
-        }
-        return classProbEstimates;
+        return knnInternal.classifyProbabilisticallyWithKDistAndNeighbors(
+                instance, kDistsNew, kNeighborsNew);
     }
 
     @Override
@@ -500,14 +484,14 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
     @Override
     public int classify(DataInstance instance, float[] distToTraining,
             int[] trNeighbors) throws Exception {
-        float[] classProbs = classifyProbabilistically(instance, distToTraining,
-                trNeighbors);
+        float[] classProbs = classifyProbabilistically(instance,
+                distToTraining, trNeighbors);
         float maxProb = 0;
         int maxClassIndex = 0;
-        for (int i = 0; i < numClasses; i++) {
-            if (classProbs[i] > maxProb) {
-                maxProb = classProbs[i];
-                maxClassIndex = i;
+        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
+            if (classProbs[cIndex] > maxProb) {
+                maxProb = classProbs[cIndex];
+                maxClassIndex = cIndex;
             }
         }
         return maxClassIndex;
@@ -516,47 +500,28 @@ public class NWKNN extends Classifier implements DistMatrixUserInterface,
     @Override
     public float[] classifyProbabilistically(DataInstance instance,
             float[] distToTraining, int[] trNeighbors) throws Exception {
-
-        float[] distanceWeights = new float[k];
-        float dwSum = 0;
+        float[] kDistances = new float[k];
         for (int kIndex = 0; kIndex < k; kIndex++) {
-            if (distToTraining[trNeighbors[kIndex]] != 0) {
-                distanceWeights[kIndex] = 1f / ((float) Math.pow(
-                        distToTraining[trNeighbors[kIndex]], (2f
-                        / (mValue - 1f))));
-            } else {
-                distanceWeights[kIndex] = 10000f;
-            }
-            dwSum += distanceWeights[kIndex];
+            kDistances[kIndex] = distToTraining[trNeighbors[kIndex]];
         }
-
-        float[] classProbEstimates = new float[numClasses];
-        float probTotal = 0;
+        // Update the distances.
         for (int kIndex = 0; kIndex < k; kIndex++) {
-            if (trainingData.getLabelOf(trNeighbors[kIndex]) >= numClasses) {
-                continue;
-            }
-            try {
-                classProbEstimates[trainingData.getLabelOf(
-                        trNeighbors[kIndex])] += (
-                        classWeights[trainingData.getLabelOf(
-                        trNeighbors[kIndex])] * distanceWeights[kIndex]
-                        / dwSum);
-            } catch (Exception e) {
-                continue;
-            }
+            kDistances[kIndex] *= multiplicativeFactors[trNeighbors[kIndex]];
         }
-        // Normalization.
-        for (int cIndex = 0; cIndex < numClasses; cIndex++) {
-            probTotal += classProbEstimates[cIndex];
+        // Sort, ascending.
+        int[] indexPermutation = AuxSort.sortIndexedValue(kDistances, false);
+        // Recalculate the kNN set.
+        float[] kDistsNew = Arrays.copyOf(kDistances, kVoting);
+        int[] kNeighborsNew = new int[kVoting];
+        for (int kIndex = 0; kIndex < kVoting; kIndex++) {
+            kNeighborsNew[kIndex] = trNeighbors[indexPermutation[kIndex]];
         }
-        if (probTotal > 0) {
-            for (int cIndex = 0; cIndex < numClasses; cIndex++) {
-                classProbEstimates[cIndex] /= probTotal;
-            }
-        } else {
-            classProbEstimates = Arrays.copyOf(classPriors, numClasses);
-        }
-        return classProbEstimates;
+        return knnInternal.classifyProbabilisticallyWithKDistAndNeighbors(
+                instance, kDistsNew, kNeighborsNew);
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
     }
 }
