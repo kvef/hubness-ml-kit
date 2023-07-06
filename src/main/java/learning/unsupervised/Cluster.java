@@ -278,4 +278,102 @@ public class Cluster implements Serializable {
                 centroid.sAttr[i] = "dummy" + i;
             }
         }
-        for (int i = 0; i < d
+        for (int i = 0; i < dataContext.getNumIntAttr(); i++) {
+            if (integerCounts[i] > 0) {
+                centroid.iAttr[i] = (int) (integerSums[i] / integerCounts[i]);
+            }
+        }
+        for (int i = 0; i < dataContext.getNumFloatAttr(); i++) {
+            if (floatCounts[i] > 0) {
+                centroid.fAttr[i] = floatSums[i] / floatCounts[i];
+            }
+        }
+        Set<Integer> keys = sparseSums.keySet();
+        for (int index : keys) {
+            // These two map contain all the same keys
+            if (sparseCounts.get(index) > 0) {
+                sparseSums.put(index, sparseSums.get(index)
+                        / sparseCounts.get(index));
+            }
+        }
+        centroid.setWordIndexesHash(sparseSums);
+        centroid.corpus = (BOWDataSet) dataContext;
+        return centroid;
+    }
+
+    /**
+     * @throws Exception
+     * @return DataInstance that is the cluster centroid.
+     */
+    private DataInstance getCentroidDense() throws Exception {
+        DataInstance centroid = new DataInstance(dataContext);
+        int[] integerCounts = new int[dataContext.getNumIntAttr()];
+        int[] floatCounts = new int[dataContext.getNumFloatAttr()];
+        float[] integerSums = new float[dataContext.getNumIntAttr()];
+        float[] floatSums = new float[dataContext.getNumFloatAttr()];
+        for (int i = 0; i < size(); i++) {
+            for (int j = 0; j < dataContext.getNumIntAttr(); j++) {
+                if (DataMineConstants.isAcceptableInt(
+                        getInstance(i).iAttr[j])) {
+                    integerSums[j] += getInstance(i).iAttr[j];
+                    integerCounts[j]++;
+                }
+            }
+            for (int j = 0; j < dataContext.getNumFloatAttr(); j++) {
+                if (DataMineConstants.isAcceptableFloat(
+                        getInstance(i).fAttr[j])) {
+                    floatSums[j] += getInstance(i).fAttr[j];
+                    floatCounts[j]++;
+                }
+            }
+        }
+        if (dataContext.getNumNominalAttr() > 0) {
+            for (int i = 0; i < dataContext.getNumNominalAttr(); i++) {
+                centroid.sAttr[i] = "dummy" + i;
+            }
+        }
+        for (int i = 0; i < dataContext.getNumIntAttr(); i++) {
+            if (integerCounts[i] > 0) {
+                centroid.iAttr[i] = (int) (integerSums[i] / integerCounts[i]);
+            }
+        }
+        for (int i = 0; i < dataContext.getNumFloatAttr(); i++) {
+            if (floatCounts[i] > 0) {
+                centroid.fAttr[i] = floatSums[i] / floatCounts[i];
+            }
+        }
+        return centroid;
+    }
+
+    /**
+     * @throws Exception
+     * @return DataInstance closest to the cluster centroid.
+     */
+    public DataInstance getMedoid() throws Exception {
+        return getMedoid(CombinedMetric.EUCLIDEAN);
+    }
+
+    /**
+     * @param cmet CombinedMetric for calculating the distances.
+     * @throws Exception
+     * @return DataInstance closest to the cluster centroid.
+     */
+    public DataInstance getMedoid(CombinedMetric cmet) throws Exception {
+        if (dataContext == null || dataContext.isEmpty() || isEmpty()) {
+            throw new EmptyClusterException();
+        }
+        DataInstance centroid = getCentroid();
+        DataInstance medoid = getInstance(0);
+        float currDistance = cmet.dist(centroid, medoid);
+        if (!DataMineConstants.isAcceptableFloat(currDistance)) {
+            currDistance = Float.MAX_VALUE;
+        }
+        float minDistance = currDistance;
+        for (int i = 1; i < size(); i++) {
+            currDistance = cmet.dist(centroid, getInstance(i));
+            if (!DataMineConstants.isAcceptableFloat(currDistance)) {
+                currDistance = Float.MAX_VALUE;
+            }
+            if (currDistance < minDistance) {
+                minDistance = currDistance;
+  
