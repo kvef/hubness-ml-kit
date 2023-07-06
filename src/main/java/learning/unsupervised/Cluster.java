@@ -190,4 +190,92 @@ public class Cluster implements Serializable {
     /**
      * @param associations Integer array representing cluster associations.
      * @param dset Data set.
-     * 
+     * @return The cluster configuration array.
+     */
+    public static Cluster[] getConfigurationFromAssociations(int[] associations,
+            DataSet dset) {
+        int numClusters = ArrayUtil.max(associations) + 1;
+        Cluster[] clusters = new Cluster[numClusters];
+        for (int i = 0; i < numClusters; i++) {
+            clusters[i] = new Cluster(dset);
+        }
+        if ((dset != null) && (associations != null)) {
+            for (int i = 0; i < dset.size(); i++) {
+                if (associations[i] >= 0) {
+                    clusters[associations[i]].addInstance(i);
+                }
+            }
+        }
+        return clusters;
+    }
+
+    /**
+     * @return DataInstance that is the cluster centroid.
+     * @throws Exception
+     */
+    public DataInstance getCentroid() throws Exception {
+        if (dataContext == null || dataContext.isEmpty() || isEmpty()) {
+            throw new EmptyClusterException();
+        }
+        if (dataContext instanceof BOWDataSet) {
+            return getCentroidSparse();
+        } else {
+            return getCentroidDense();
+        }
+    }
+
+    /**
+     * @return DataInstance that is the cluster centroid.
+     * @throws Exception
+     */
+    private DataInstance getCentroidSparse() throws Exception {
+        BOWInstance centroid = new BOWInstance((BOWDataSet) dataContext);
+        // I use sparse vectors with headers usually, so the first element holds
+        // the cardinality of the list.
+        HashMap<Integer, Float> sparseSums = new HashMap<>(1000);
+        HashMap<Integer, Integer> sparseCounts = new HashMap<>(1000);
+        int[] integerCounts = new int[dataContext.getNumIntAttr()];
+        int[] floatCounts = new int[dataContext.getNumFloatAttr()];
+        float[] integerSums = new float[dataContext.getNumIntAttr()];
+        float[] floatSums = new float[dataContext.getNumFloatAttr()];
+        for (int i = 0; i < size(); i++) {
+            BOWInstance instance = (BOWInstance) (getInstance(i));
+            HashMap<Integer, Float> indexMap =
+                    instance.getWordIndexesHash();
+            Set<Integer> keys = indexMap.keySet();
+            for (int index : keys) {
+                float value = indexMap.get(index);
+                if (DataMineConstants.isAcceptableFloat(value)) {
+                    if (!sparseCounts.containsKey(index)) {
+                        sparseCounts.put(index, 1);
+                    } else {
+                        sparseCounts.put(index, sparseCounts.get(index) + 1);
+                    }
+                    if (!sparseSums.containsKey(index)) {
+                        sparseSums.put(index, 1f);
+                    } else {
+                        sparseSums.put(index, sparseSums.get(index) + 1);
+                    }
+                }
+            }
+            for (int j = 0; j < dataContext.getNumIntAttr(); j++) {
+                if (DataMineConstants.isAcceptableInt(
+                        getInstance(i).iAttr[j])) {
+                    integerSums[j] += getInstance(i).iAttr[j];
+                    integerCounts[j]++;
+                }
+            }
+            for (int j = 0; j < dataContext.getNumFloatAttr(); j++) {
+                if (DataMineConstants.isAcceptableFloat(
+                        getInstance(i).fAttr[j])) {
+                    floatSums[j] += getInstance(i).fAttr[j];
+                    floatCounts[j]++;
+                }
+            }
+        }
+        if (dataContext.getNumNominalAttr() > 0) {
+            for (int i = 0; i < dataContext.getNumNominalAttr(); i++) {
+                centroid.sAttr[i] = "dummy" + i;
+            }
+        }
+        for (int i = 0; i < d
