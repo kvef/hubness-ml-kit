@@ -376,4 +376,100 @@ public class Cluster implements Serializable {
             }
             if (currDistance < minDistance) {
                 minDistance = currDistance;
-  
+                medoid = getInstance(i);
+            }
+        }
+        return medoid;
+    }
+
+    /**
+     * @param cmet CombinedMetric for calculating the distances.
+     * @throws Exception
+     * @return Index of the DataInstance closest to the cluster centroid.
+     */
+    public int getMedoidIndex(CombinedMetric cmet) throws Exception {
+        if (dataContext == null || dataContext.isEmpty() || isEmpty()) {
+            throw new EmptyClusterException();
+        }
+        DataInstance centroid = getCentroid();
+        int medoidIndex = indexes.get(0);
+        float currDistance = cmet.dist(centroid,
+                dataContext.getInstance(medoidIndex));
+        if (!DataMineConstants.isAcceptableFloat(currDistance)) {
+            currDistance = Float.MAX_VALUE;
+        }
+        float minDistance = currDistance;
+        for (int i = 1; i < size(); i++) {
+            currDistance = cmet.dist(centroid, getInstance(i));
+            if (!DataMineConstants.isAcceptableFloat(currDistance)) {
+                currDistance = Float.MAX_VALUE;
+            }
+            if (currDistance < minDistance) {
+                minDistance = currDistance;
+                medoidIndex = indexes.get(i);
+            }
+        }
+        return medoidIndex;
+    }
+
+    /**
+     * @param featureIndex Integer index of the feature.
+     * @param featureType Feature type: floats or ints.
+     * @throws Exception
+     * @return The featureMedian value for the desired data feature.
+     */
+    public float getMedianForDimension(int featureIndex, int featureType)
+            throws Exception {
+        if (dataContext == null || dataContext.isEmpty() || isEmpty()) {
+            return 0;
+        }
+        if (featureIndex < 0
+                || (featureType == DataMineConstants.FLOAT
+                && featureIndex > dataContext.getNumFloatAttr())
+                || (featureType == DataMineConstants.INTEGER
+                && featureIndex > dataContext.getNumIntAttr())) {
+            throw new Exception("Non-negative index within bounds required.");
+        }
+        float featureMedian = 0;
+        switch (featureType) {
+            case DataMineConstants.FLOAT: {
+                DataInstanceDimComparator dataComparator =
+                        new DataInstanceDimComparator(
+                        featureIndex, featureType);
+                ArrayList<DataInstance> data = getAllInstances();
+                DataSortUtil.sort(data, dataComparator);
+                if (data.size() % 2 == 0) {
+                    featureMedian =
+                            ((data.get(data.size() / 2)).fAttr[featureIndex]
+                            + (data.get((data.size() / 2) - 1)).fAttr[
+                            featureIndex]) / 2;
+                } else {
+                    featureMedian =
+                            (data.get(data.size() / 2)).fAttr[featureIndex];
+                }
+                break;
+            }
+            case DataMineConstants.INTEGER: {
+                DataInstanceDimComparator dataComparator =
+                        new DataInstanceDimComparator(
+                        featureIndex, featureType);
+                ArrayList<DataInstance> data = getAllInstances();
+                DataSortUtil.sort(data, dataComparator);
+                if (data.size() % 2 == 0) {
+                    featureMedian =
+                            ((data.get(data.size() / 2)).iAttr[featureIndex]
+                            + (data.get((data.size() / 2) - 1)).iAttr[
+                            featureIndex]) / 2;
+                } else {
+                    featureMedian =
+                            (data.get(data.size() / 2)).iAttr[featureIndex];
+                }
+                break;
+            }
+        }
+        return featureMedian;
+    }
+
+    /**
+     * @throws Exception
+     * @return Diameter of the c
