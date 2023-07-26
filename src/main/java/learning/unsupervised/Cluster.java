@@ -472,4 +472,118 @@ public class Cluster implements Serializable {
 
     /**
      * @throws Exception
-     * @return Diameter of the c
+     * @return Diameter of the cluster.
+     */
+    public float calculateDiameter() throws Exception {
+        DataInstance centroid = getCentroid();
+        return calculateDiameter(centroid);
+    }
+
+    /**
+     * @param cmet CombinedMetric used to calculate the distances.
+     * @throws Exception
+     * @return Diameter of the cluster.
+     */
+    public float calculateDiameter(CombinedMetric cmet) throws Exception {
+        DataInstance centroid = getCentroid();
+        return calculateDiameter(centroid, cmet);
+    }
+
+    /**
+     * @param DataInstance that is the Cluster centroid.
+     * @throws Exception
+     * @return Diameter of the cluster.
+     */
+    public float calculateDiameter(DataInstance centroid) throws Exception {
+        return calculateDiameter(centroid, CombinedMetric.EUCLIDEAN);
+    }
+
+    /**
+     * @param cmet CombinedMetric used to calculate the distances.
+     * @param DataInstance that is the Cluster centroid.
+     * @throws Exception
+     * @return Diameter of the cluster.
+     */
+    public float calculateDiameter(DataInstance centroid, CombinedMetric cmet)
+            throws Exception {
+        if (dataContext == null || dataContext.isEmpty() || isEmpty()) {
+            return 0;
+        }
+        if (cmet == null) {
+            throw new Exception("Metrics object required.");
+        }
+        if (centroid == null) {
+            throw new Exception("Centroid required.");
+        }
+        float clusterDiameter = 0;
+        for (DataInstance instance : getAllInstances()) {
+            clusterDiameter = Math.max(clusterDiameter,
+                    cmet.dist(centroid, instance));
+        }
+        return clusterDiameter;
+    }
+
+    /**
+     * @throws Exception
+     * @return Average distance between data instances within the cluster.
+     */
+    public float averageIntraDistance() throws Exception {
+        DataInstance centroid = getCentroid();
+        return averageIntraDistance(centroid);
+    }
+
+    /**
+     * @param DataInstance that is the Cluster centroid.
+     * @throws Exception
+     * @return Average distance between data instances within the cluster.
+     */
+    public float averageIntraDistance(DataInstance centroid) throws Exception {
+        return averageIntraDistance(centroid, CombinedMetric.EUCLIDEAN);
+    }
+
+    /**
+     * @param cmet CombinedMetric object.
+     * @throws Exception
+     * @return Average distance between data instances within the cluster.
+     */
+    public float averageIntraDistance(CombinedMetric cmet) throws Exception {
+        DataInstance centroid = getCentroid();
+        return averageIntraDistance(centroid, cmet);
+    }
+
+    /**
+     * @param DataInstance that is the Cluster centroid.
+     * @param cmet CombinedMetric object.
+     * @throws Exception
+     * @return Average distance between data instances within the cluster.
+     */
+    public float averageIntraDistance(DataInstance centroid,
+            CombinedMetric cmet) throws Exception {
+        if (dataContext == null || dataContext.isEmpty() || isEmpty()) {
+            return 0;
+        }
+        if (cmet == null) {
+            throw new Exception("Metrics object required.");
+        }
+        if (centroid == null) {
+            throw new Exception("Centroid required.");
+        }
+        float distance = 0;
+        for (DataInstance instance : getAllInstances()) {
+            distance += cmet.dist(centroid, instance);
+        }
+        return distance / size();
+    }
+
+    /**
+     * @return True in case of an empty cluster, false otherwise.
+     */
+    public boolean isEmpty() {
+        return (size() == 0);
+    }
+
+    /**
+     * @return A new cluster that is a copy of the current cluster.
+     */
+    public Cluster copy() {
+        if (dataContext ==
