@@ -778,4 +778,45 @@ public class Cluster implements Serializable {
      * Extract data classes as cluster objects.
      *
      * @param dset DataSet object.
-     * @return An array of c
+     * @return An array of clusters representing data classes.
+     * @throws Exception
+     */
+    public static Cluster[] getClustersFromCategorizedData(
+            DataSet dset) throws Exception {
+        Cluster[] config;
+        if (dset.isEmpty()) {
+            return null;
+        }
+        // Find biggest category index.
+        int maxCat = -1;
+        for (DataInstance instance : dset.data) {
+            if (instance.getCategory() > maxCat) {
+                maxCat = instance.getCategory();
+            }
+        }
+        int numCat = maxCat + 1;
+        config = new Cluster[numCat];
+        for (int i = 0; i < numCat; i++) {
+            config[i] = new Cluster(dset);
+        }
+        for (int i = 0; i < dset.size(); i++) {
+            config[dset.getLabelOf(i)].addInstance(i);
+        }
+        return config;
+    }
+
+    /**
+     * @param index The index of the desired index within the indexes ArrayList
+     * in the Cluster object.
+     * @return Index of DataInstance in the embedding DataSet object that is
+     * located at position equal to the passed index parameter in the Cluster
+     * ArrayList of indexes.
+     */
+    public int getIndex(int index) {
+        if (indexes == null || index < 0 || index > indexes.size()) {
+            return -1;
+        } else {
+            return indexes.get(index);
+        }
+    }
+}
