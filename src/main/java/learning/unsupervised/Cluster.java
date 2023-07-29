@@ -586,4 +586,100 @@ public class Cluster implements Serializable {
      * @return A new cluster that is a copy of the current cluster.
      */
     public Cluster copy() {
-        if (dataContext ==
+        if (dataContext == null || dataContext.isEmpty() || isEmpty()) {
+            return new Cluster(dataContext);
+        }
+        Cluster newCluster = new Cluster(dataContext);
+        newCluster.indexes = new ArrayList<>(size());
+        for (int i = 0; i < size(); i++) {
+            newCluster.indexes.add(indexes.get(i));
+        }
+        return newCluster;
+    }
+
+    /**
+     * Loads the cluster configuration from a file.
+     *
+     * @param f File where the configuration is to be loaded from.
+     * @return
+     */
+    public static Cluster[] loadConfigurationFromFile(File f) {
+        Cluster[] configuration;
+        DataSet dset = null;
+        IOARFF saverloader = new IOARFF();
+        try {
+            dset = saverloader.load(f.getPath());
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        if (dset == null) {
+            return null;
+        }
+        // See how many clusters there are and make an empty configuration.
+        int max = -1;
+        for (int i = 0; i < dset.size(); i++) {
+            max = Math.max(max,
+                    dset.getInstance(i).iAttr[
+                        dset.getInstance(i).iAttr.length - 1]);
+        }
+        if (max == -1) {
+            return null;
+        }
+        configuration = new Cluster[max + 1];
+        // Make a new dataset without the cluster number.
+        DataSet newDS = new DataSet();
+        newDS.fAttrNames = dset.fAttrNames;
+        newDS.sAttrNames = dset.sAttrNames;
+        if (dset.getNumIntAttr() == 1) {
+            newDS.iAttrNames = null;
+        } else {
+            newDS.iAttrNames = new String[dset.getNumIntAttr() - 1];
+            for (int i = 0; i < dset.getNumIntAttr() - 1; i++) {
+                newDS.iAttrNames[i] = dset.iAttrNames[i];
+            }
+        }
+        // Initialize clusters.
+        for (int i = 0; i < configuration.length; i++) {
+            configuration[i] = new Cluster(newDS);
+        }
+        DataInstance newInstance;
+        for (int i = 0; i < dset.size(); i++) {
+            newInstance = new DataInstance();
+            newInstance.embedInDataset(newDS);
+            newDS.addDataInstance(newInstance);
+            newInstance.fAttr = dset.getInstance(i).fAttr;
+            newInstance.sAttr = dset.getInstance(i).sAttr;
+            if (newDS.iAttrNames != null) {
+                newInstance.iAttr = new int[newDS.iAttrNames.length];
+                for (int j = 0; j < newDS.iAttrNames.length; j++) {
+                    newInstance.iAttr[j] = dset.getInstance(i).iAttr[j];
+                }
+            }
+            configuration[dset.getInstance(i).iAttr[
+                    dset.getInstance(i).iAttr.length - 1]].addInstance(i);
+        }
+        return configuration;
+    }
+
+    /**
+     * Write the cluster configuration to a file.
+     *
+     * @param f File where the configuration is to be written.
+     * @param configuration Cluster configuration
+     * @param dset Data set.
+     */
+    public static void writeConfigurationToFile(File f,
+            Cluster[] configuration, DataSet dset) {
+        if (f == null || f.isDirectory() || configuration == null
+                || configuration.length == 0) {
+            return;
+        }
+        try (PrintWriter pw = new PrintWriter(new FileWriter(f));) {
+            // Set header.
+            pw.println("@RELATION ClusterConfiguration");
+            for (int i = 0; i < dset.getNumIntAttr(); i++) {
+                pw.println("@ATTRIBUTE " + dset.iAttrNames[i] + " integer");
+            }
+            pw.println("@ATTRIBUTE " + "cluster" + " integer");
+            for (int i = 0; i < dset.getNumFloatAttr(); i++) {
+                pw.println("@ATTRIBUTE " + dset.fAttrNames[i] + " 
