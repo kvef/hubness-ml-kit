@@ -62,4 +62,60 @@ public class ClusterConfigurationCleaner {
             if (representedClusters[i]) {
                 rereferencer[i] = numClustersNew++;
             } else {
-                rereferencer[i] =
+                rereferencer[i] = -1;
+            }
+        }
+        for (int i = 0; i < associations.length; i++) {
+            associations[i] = rereferencer[associations[i]];
+        }
+    }
+
+    /**
+     *
+     * @return The number of clusters in the cleaned association array.
+     */
+    public int getNewNumberOfClusters() {
+        return numClustersNew;
+    }
+
+    /**
+     * @return The cleaned and re-indexed cluster associations array.
+     */
+    public int[] getNewAssociationArray() {
+        return associations;
+    }
+
+    /**
+     *
+     * @return Cluster configuration defined by the re-indexed associations.
+     */
+    public Cluster[] getNewConfiguration() {
+        return Cluster.getConfigurationFromAssociations(associations,
+                dataContext);
+    }
+
+    /**
+     * @param configuration Initial cluster configuration.
+     * @return Cleaned cluster configuration.
+     */
+    public static Cluster[] removeEmptyClusters(Cluster[] configuration) {
+        if (configuration == null) {
+            return null;
+        }
+        Cluster[] newConfiguration;
+        int count = 0;
+        for (int i = 0; i < configuration.length; i++) {
+            if (!(configuration[i] == null) || !(configuration[i].isEmpty())) {
+                count++;
+            }
+        }
+        newConfiguration = new Cluster[count];
+        count = 0;
+        for (int i = 0; i < configuration.length; i++) {
+            if (!(configuration[i] == null) || !(configuration[i].isEmpty())) {
+                newConfiguration[count++] = configuration[i];
+            }
+        }
+        return newConfiguration;
+    }
+}
