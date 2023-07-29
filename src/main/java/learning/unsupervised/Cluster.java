@@ -682,4 +682,100 @@ public class Cluster implements Serializable {
             }
             pw.println("@ATTRIBUTE " + "cluster" + " integer");
             for (int i = 0; i < dset.getNumFloatAttr(); i++) {
-                pw.println("@ATTRIBUTE " + dset.fAttrNames[i] + " 
+                pw.println("@ATTRIBUTE " + dset.fAttrNames[i] + " real");
+            }
+            for (int i = 0; i < dset.getNumNominalAttr(); i++) {
+                pw.println("@ATTRIBUTE " + dset.sAttrNames[i] + " string");
+            }
+            pw.println("@DATA");
+            for (int i = 0; i < configuration.length; i++) {
+                if (configuration[i] != null && !configuration[i].isEmpty()) {
+                    for (int j = 0; j < configuration[i].size(); j++) {
+                        boolean first = true;
+                        if (dset.iAttrNames != null) {
+                            for (int k = 0; k < dset.getNumIntAttr(); k++) {
+                                if (!first) {
+                                    pw.print(","
+                                            + configuration[i].getInstance(
+                                            j).iAttr[k]);
+                                } else {
+                                    pw.print(configuration[i].getInstance(
+                                            j).iAttr[k]);
+                                    first = false;
+                                }
+                            }
+                            if (!first) {
+                                pw.print("," + i);
+                            } else {
+                                pw.print(i);
+                                first = false;
+                            }
+                        } else {
+                            if (!first) {
+                                pw.print("," + i);
+                            } else {
+                                pw.print(i);
+                                first = false;
+                            }
+                        }
+                        for (int k = 0; k < dset.getNumFloatAttr(); k++) {
+                            if (!first) {
+                                pw.print(","
+                                        + configuration[i].getInstance(
+                                        j).fAttr[k]);
+                            } else {
+                                pw.print(configuration[i].getInstance(
+                                        j).fAttr[k]);
+                                first = false;
+                            }
+                        }
+                        for (int k = 0; k < dset.getNumNominalAttr(); k++) {
+                            if (!first) {
+                                pw.print(","
+                                        + configuration[i].getInstance(
+                                        j).sAttr[k]);
+                            } else {
+                                pw.print(configuration[i].getInstance(
+                                        j).sAttr[k]);
+                                first = false;
+                            }
+                        }
+                        pw.println();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    /**
+     * @return Size of the cluster.
+     */
+    public int size() {
+        if (indexes == null) {
+            return 0;
+        } else {
+            return indexes.size();
+        }
+    }
+
+    /**
+     * Transforms the cluster into a DataSet of its own.
+     *
+     * @return
+     */
+    public DataSet intoDataSet() {
+        DataSet container = dataContext.cloneDefinition();
+        container.data = new ArrayList<>(size());
+        for (int i = 0; i < size(); i++) {
+            container.addDataInstance(getInstance(i));
+        }
+        return container;
+    }
+
+    /**
+     * Extract data classes as cluster objects.
+     *
+     * @param dset DataSet object.
+     * @return An array of c
