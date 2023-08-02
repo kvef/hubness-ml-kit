@@ -135,4 +135,88 @@ public class ClustererFactory {
             case "kernel-kmeans":
             case "ker-kmeans":
             case "kernelkmeans":
-            case "learning.unsupervised.methods.kernelk
+            case "learning.unsupervised.methods.kernelkmeans":
+                clusterer = new KernelKMeans(dset, ker, nClust);
+                break;
+            case "kmeansplusplus":
+            case "learning.unsupervised.methods.kmeansplusplus":
+                clusterer = new KMeansPlusPlus(dset, cmet, nClust);
+                break;
+            case "fastkmeans":
+            case "learning.unsupervised.methods.fastkmeans":
+                clusterer = new FastKMeans(dset, cmet, nClust);
+                break;
+            case "fastkmeansplusplus":
+            case "learning.unsupervised.methods.fastkmeansplusplus":
+                clusterer = new FastKMeansPlusPlus(dset, cmet, nClust);
+                break;
+            case "kmedoids":
+            case "learning.unsupervised.methods.kmedoids":
+                clusterer = new KMedoids(dset, cmet, nClust);
+                break;
+            case "kmedoidsplusplus":
+            case "learning.unsupervised.methods.kmedoidsplusplus":
+                clusterer = new KMedoidsPlusPlus(dset, cmet, nClust);
+                break;
+            case "harmonickmeans":
+            case "learning.unsupervised.methods.harmonickmeans":
+                clusterer = new HarmonicKMeans(dset, cmet, nClust);
+                break;
+            case "dbscan":
+            case "learning.unsupervised.methods.dbscan" :
+                clusterer = new DBScan(dset, cmet, 10);
+                ((DBScan) clusterer).setNSF(nsf);
+                break;
+        }
+        if (clusterer instanceof NSFUserInterface) {
+            ((NSFUserInterface) clusterer).setNSF(nsf);
+        }
+        if (clusterer instanceof KernelMatrixUserInterface) {
+            ((KernelMatrixUserInterface) clusterer).setKernelMatrix(
+                    trainingKernelMat);
+        }
+        return clusterer;
+    }
+    
+    /**
+     * This method generates all supported clusterers representing different
+     * algorithms, for the given data. It can be used in unit testing.
+     *
+     * @param dset DataSet object.
+     * @param k Neighborhood size.
+     * @param distMat Distance matrix.
+     * @param nsf NeighborSetFinder object for kNN sets.
+     * @param trainingKernelMat Kernel matrix.
+     * @param nsfKernel Kernel kNN object.
+     * @param numClusters Number of clusters.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param ker Kernel object for kernel mappings.
+     * @return
+     */
+    public static ArrayList<ClusteringAlg> getAllClusterers(
+            DataSet dset,
+            int k,
+            float[][] distMat,
+            NeighborSetFinder nsf,
+            float[][] trainingKernelMat,
+            NeighborSetFinder nsfKernel,
+            int nClust,
+            CombinedMetric cmet,
+            Kernel ker) {
+        ArrayList<ClusteringAlg> allClusterers = new ArrayList<>(50);
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.ghpc", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "sup-ghpc", dset, k, distMat, nsf, trainingKernelMat, nsfKernel,
+                nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.gkh", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.ghpkm", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "sup-ghpkm", dset, k, distMat, nsf, trainingKernelMat,
+                nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForNam
