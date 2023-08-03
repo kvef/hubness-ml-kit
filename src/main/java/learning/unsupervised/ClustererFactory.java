@@ -219,4 +219,42 @@ public class ClustererFactory {
         allClusterers.add(getClustererForName(
                 "sup-ghpkm", dset, k, distMat, nsf, trainingKernelMat,
                 nsfKernel, nClust, cmet, ker));
-        allClusterers.add(getClustererForNam
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.kernelghpkm", dset, k, distMat,
+                nsf, trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.lhpc", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.lkh", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.kmeans", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.kernelkmeans", dset, k, distMat,
+                nsf, trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.kmeansplusplus", dset, k,
+                distMat, nsf, trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.fastkmeans", dset, k, distMat,
+                nsf, trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.fastkmeansplusplus", dset, k,
+                distMat, nsf, trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.kmedoids", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.kmedoidsplusplus", dset, k,
+                distMat, nsf, trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.harmonickmeans", dset, k,
+                distMat, nsf, trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        allClusterers.add(getClustererForName(
+                "learning.unsupervised.methods.dbscan", dset, k, distMat, nsf,
+                trainingKernelMat, nsfKernel, nClust, cmet, ker));
+        return allClusterers;
+    }
+}
