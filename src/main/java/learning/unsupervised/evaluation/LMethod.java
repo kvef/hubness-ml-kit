@@ -113,4 +113,25 @@ public class LMethod {
             }
             RMSE /= (lastIndex - i);
             RMSE = Math.sqrt(RMSE);
- 
+            currError = (1 / (lastIndex + 1)) * (LMSE * (i + 1) + RMSE
+                    * (lastIndex - i));
+            if (currError < minError) {
+                minError = currError;
+                bestFitIndex = i - 1;
+            }
+        }
+        // So, the best fit index is found, now find the knee and reiterate.
+        double dKnee = ((rightB[bestFitIndex] - leftB[bestFitIndex])
+                / (leftA[bestFitIndex] - rightA[bestFitIndex]));
+        int currKnee = (int) dKnee;
+        if (dKnee - currKnee > 0.5) {
+            currKnee++;
+        }
+        int tempIndex;
+        if (currKnee < kneeIndex) {
+            tempIndex = kneeIndex;
+            kneeIndex = currKnee;
+            findKnee(Math.min(tempIndex * 2, lastIndex - 1));
+        }
+    }
+}
