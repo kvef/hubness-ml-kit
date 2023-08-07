@@ -179,4 +179,74 @@ public class EvaluateOnNoisyMix {
             float avgMinErr = 0;
             float avgMinEntropy = 0;
             File currPGKHOutFile = new File(writerDir,
-                    "PGKH_N
+                    "PGKH_Noise_level" + numNoisy + "nClust"
+                    + numClusters + ".csv");
+            File currMinOutFile = new File(writerDir,
+                    "PGKH_MIN_Noise_level" + numNoisy + "nClust"
+                    + numClusters + ".csv");
+            File currKMOutFile = new File(writerDir,
+                    "KM_Noise_level" + numNoisy + "nClust" + numClusters
+                    + ".csv");
+            File currGKHOutFile = new File(writerDir,
+                    "GKH_Noise_level" + numNoisy + "nClust" + numClusters
+                    + ".csv");
+            File currHPKMOutFile = new File(writerDir, ""
+                    + "GHPKM_Noise_level" + numNoisy + "nClust" + numClusters
+                    + ".csv");
+            FileUtil.createFile(currPGKHOutFile);
+            FileUtil.createFile(currKMOutFile);
+            FileUtil.createFile(currGKHOutFile);
+            FileUtil.createFile(currMinOutFile);
+            FileUtil.createFile(currHPKMOutFile);
+            pwPGKH = new PrintWriter(new FileWriter(currPGKHOutFile), true);
+            pwHPKM = new PrintWriter(new FileWriter(currHPKMOutFile), true);
+            pwKM = new PrintWriter(new FileWriter(currKMOutFile), true);
+            pwGKH = new PrintWriter(new FileWriter(currGKHOutFile), true);
+            pwMin = new PrintWriter(new FileWriter(currMinOutFile), true);
+            pwPGKH.println("time, " + "SILHOUETTE" + ", " + "AVG_ERROR" + ", "
+                    + "AVG_CLUSTER_ENTROPY");
+            pwHPKM.println("time, " + "SILHOUETTE" + ", " + "AVG_ERROR" + ", "
+                    + "AVG_CLUSTER_ENTROPY");
+            pwKM.println("time, " + "SILHOUETTE" + ", " + "AVG_ERROR" + ", "
+                    + "AVG_CLUSTER_ENTROPY");
+            pwGKH.println("time, " + "SILHOUETTE" + ", " + "AVG_ERROR" + ", "
+                    + "AVG_CLUSTER_ENTROPY");
+            pwMin.println("time, " + "SILHOUETTE" + ", " + "AVG_ERROR" + ", "
+                    + "AVG_CLUSTER_ENTROPY");
+            for (int i = 0; i < numTimes; i++) {
+                System.out.println("PGKH " + i + "th iteration");
+
+                boolean doneCorrectly = false;
+                do {
+                    if (cmet == null) {
+                        cmet = CombinedMetric.FLOAT_MANHATTAN;
+                    }
+                    clusterer.setNumClusters(numClusters);
+                    clusterer.setCombinedMetric(cmet);
+                    clusterer.setDataSet(dsetTest);
+                    clusterer.setK(hubnessK);
+                    clusterer.probabilisticIterations = 100;
+                    avgTime = 0;
+                    startTimer();
+                    try {
+                        clusterer.cluster();
+                        doneCorrectly = true;
+                    } catch (Exception e) {
+                        System.out.println("error: " + e.getMessage());
+                        stopTimer();
+                        numSec = 0;
+                    }
+                } while (!doneCorrectly);
+                avgTime += numSec;
+                pwPGKH.print(numSec + ", ");
+                stopTimer();
+                Cluster[] config = clusterer.getClusters();
+                Cluster[] configMin = clusterer.getMinimizingClusters();
+                for (int l = 10000; l < dsetTest.size(); l++) {
+                    dsetTest.data.get(l).setCategory(-1);
+                }
+                QIndexSilhouette silIndex = new QIndexSilhouette(
+                        numClusters, clusterer.getClusterAssociations(),
+                        dsetTest);
+                silIndex.setDistanceMatrix(clusterer.getNSFDistances());
+                silScores[i] = silIndex
