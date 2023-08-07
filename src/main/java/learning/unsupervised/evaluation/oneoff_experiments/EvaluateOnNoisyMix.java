@@ -68,4 +68,115 @@ public class EvaluateOnNoisyMix {
     private float[] silScores;
     private float[] avgError;
     private float[] avgClusterEntropy;
-    private flo
+    private float avgSil;
+    private float avgErr;
+    private float avgTime;
+    private float avgEntropy;
+    private CombinedMetric cmet;
+
+    public EvaluateOnNoisyMix(DataSet testDC) {
+        this.dsetTest = testDC;
+    }
+
+    public EvaluateOnNoisyMix() {
+    }
+
+    /**
+     * Starts the timer.
+     */
+    public void startTimer() {
+        timeTimer = new javax.swing.Timer(1000, timerListener);
+        timeTimer.start();
+    }
+    ActionListener timerListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            numSec++;
+            try {
+            } catch (Exception exc) {
+            }
+        }
+    };
+
+    /**
+     * Stops the timer.
+     */
+    public void stopTimer() {
+        timeTimer.stop();
+        numSec = 0;
+    }
+
+    /**
+     * Loads the test data from the specified path.
+     *
+     * @param path Path to load the data from.
+     * @throws Exception
+     */
+    public void loadData(String path) throws Exception {
+        IOARFF persister = new IOARFF();
+        dsetTest = persister.load(path);
+    }
+
+    /**
+     * Sets the writer directory to the specified path.
+     *
+     * @param path File path to set the writer directory to.
+     * @throws Exception
+     */
+    public void setWriterDir(String path) throws Exception {
+        writerDir = new File(path);
+    }
+
+    /**
+     * @param numTimes Repetitions.
+     * @param numClusters Number of Gaussian clusters to generate.
+     * @throws Exception
+     */
+    public void clusterWithAlgorithmOnLabeledData(
+            int numTimes, int numClusters) throws Exception {
+        NoisyGaussianMix genMix = new NoisyGaussianMix(numClusters, dim,
+                DATA_SIZE, false, 0);
+        dsetTest = genMix.generateRandomDataSet();
+        System.out.println("Random data generated.");
+        for (int numNoisy = 0; numNoisy <= MAX_NOISY_INSTANCES;
+                numNoisy += NOISE_INCREMENT) {
+            System.out.println("noise level: " + numNoisy);
+            GHPC clusterer = new GHPC();
+            KMeansPlusPlus clustererKM = new KMeansPlusPlus();
+            GKH clustererGKH = new GKH();
+            GHPKM clustererHPKM = new GHPKM();
+            if (numNoisy > 0) {
+                genMix.addNoiseToCollection(dsetTest, 500);
+            }
+            silScores = new float[numTimes];
+            avgError = new float[numTimes];
+            avgClusterEntropy = new float[numTimes];
+            avgSil = 0;
+            avgErr = 0;
+            avgEntropy = 0;
+            float[] silKMScores = new float[numTimes];
+            float[] avgKMError = new float[numTimes];
+            float[] avgKMClusterEntropy = new float[numTimes];
+            float avgKMSil = 0;
+            float avgKMErr = 0;
+            float avgKMEntropy = 0;
+            float[] silHPKMScores = new float[numTimes];
+            float[] avgHPKMError = new float[numTimes];
+            float[] avgHPKMClusterEntropy = new float[numTimes];
+            float avgHPKMSil = 0;
+            float avgHPKMErr = 0;
+            float avgHPKMEntropy = 0;
+            float[] silGKHScores = new float[numTimes];
+            float[] avgGKHError = new float[numTimes];
+            float[] avgGKHClusterEntropy = new float[numTimes];
+            float avgGKHSil = 0;
+            float avgGKHErr = 0;
+            float avgGKHEntropy = 0;
+            float[] silMinScores = new float[numTimes];
+            float[] avgMinError = new float[numTimes];
+            float[] avgMinClusterEntropy = new float[numTimes];
+            float avgMinSil = 0;
+            float avgMinErr = 0;
+            float avgMinEntropy = 0;
+            File currPGKHOutFile = new File(writerDir,
+                    "PGKH_N
