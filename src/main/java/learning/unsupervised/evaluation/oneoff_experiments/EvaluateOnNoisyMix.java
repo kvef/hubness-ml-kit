@@ -407,4 +407,81 @@ public class EvaluateOnNoisyMix {
                 int numNonEmpty = 0;
                 for (int j = 0; j < centroids.length; j++) {
                     if (config[j] != null && config[j].size() > 0) {
-                 
+                        centroids[j] = config[j].getCentroid();
+                        numNonEmpty++;
+                        for (int p = 0; p < config[j].size(); p++) {
+                            avgHPKMError[i] += cmet.dist(centroids[j],
+                                    config[j].getInstance(p));
+                        }
+                    }
+                }
+                avgHPKMError[i] /= dsetTest.size();
+                avgHPKMErr += avgHPKMError[i];
+
+
+                // And now for supervised estimates - the cluster entropies.
+                // First make the split.
+                int currIndex = -1;
+                ArrayList<Integer>[] split = new ArrayList[numNonEmpty];
+                for (int j = 0; j < split.length; j++) {
+                    split[j] = new ArrayList(1500);
+                }
+                for (int j = 0; j < config.length; j++) {
+                    if (config[j] != null && config[j].size() > 0) {
+                        ++currIndex;
+                        for (int k = 0; k < config[j].indexes.size(); k++) {
+                            if ((dsetTest.data.get(
+                                    config[j].indexes.get(k))).
+                                    getCategory() != -1) {
+                                split[currIndex].add((dsetTest.data.get(
+                                        config[j].indexes.get(k))).
+                                        getCategory());
+                            }
+                        }
+                    }
+                }
+
+                centroids = new DataInstance[configMin.length];
+                numNonEmpty = 0;
+                for (int j = 0; j < centroids.length; j++) {
+                    if (configMin[j] != null && configMin[j].size() > 0) {
+                        centroids[j] = configMin[j].getCentroid();
+                        numNonEmpty++;
+                        for (int p = 0; p < configMin[j].size(); p++) {
+                            avgMinError[i] += cmet.dist(centroids[j],
+                                    config[j].getInstance(p));
+                        }
+                    }
+                }
+                avgMinError[i] /= dsetTest.size();
+                avgMinErr += avgMinError[i];
+
+                avgHPKMClusterEntropy[i] = Info.evaluateInfoOfCategorySplit(
+                        split, numClusters);
+                avgHPKMEntropy += avgHPKMClusterEntropy[i];
+                pwHPKM.println(silHPKMScores[i] + ", " + avgHPKMError[i]
+                        + ", " + avgHPKMClusterEntropy[i]);
+
+                currIndex = -1;
+                split = new ArrayList[numNonEmpty];
+                for (int j = 0; j < split.length; j++) {
+                    split[j] = new ArrayList(1500);
+                }
+                for (int j = 0; j < configMin.length; j++) {
+                    if (configMin[j] != null && configMin[j].size() > 0) {
+                        ++currIndex;
+                        for (int k = 0; k < configMin[j].indexes.size();
+                                k++) {
+                            if ((dsetTest.data.get(
+                                    configMin[j].indexes.get(k))).
+                                    getCategory() != -1) {
+                                split[currIndex].add((dsetTest.data.get(
+                                        configMin[j].indexes.get(k))).
+                                        getCategory());
+                            }
+                        }
+                    }
+                }
+
+                avgMinClusterEntropy[i] = Info.evaluateInfoOfCategorySplit(
+                        split, numClusters)
