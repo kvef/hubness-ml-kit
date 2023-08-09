@@ -326,4 +326,85 @@ public class EvaluateOnNoisyMix {
                         ++currIndex;
                         for (int k = 0; k < configMin[j].indexes.size();
                                 k++) {
-      
+                            if ((dsetTest.data.get(
+                                    configMin[j].indexes.get(k))).
+                                    getCategory() != -1) {
+                                split[currIndex].add((dsetTest.data.get(
+                                        configMin[j].indexes.get(k))).
+                                        getCategory());
+                            }
+                        }
+                    }
+                }
+
+                avgMinClusterEntropy[i] = Info.evaluateInfoOfCategorySplit(
+                        split, numClusters);
+                avgMinEntropy += avgMinClusterEntropy[i];
+                pwMin.println(silMinScores[i] + ", " + avgMinError[i] + ", "
+                        + avgMinClusterEntropy[i]);
+
+            }
+            avgSil /= numTimes;
+            avgErr /= numTimes;
+            avgTime /= numTimes;
+            avgEntropy /= numTimes;
+            pwPGKH.println(avgTime + ", " + avgSil + ", " + avgErr + ", "
+                    + avgEntropy);
+            pwPGKH.close();
+
+            avgMinSil /= numTimes;
+            avgMinErr /= numTimes;
+            avgMinEntropy /= numTimes;
+            pwMin.println(avgTime + ", " + avgMinSil + ", " + avgMinErr + ", "
+                    + avgMinEntropy);
+            pwMin.close();
+
+            for (int i = 0; i < numTimes; i++) {
+                System.out.println("HPKM " + i + "th iteration");
+
+                boolean doneCorrectly = false;
+                do {
+                    if (cmet == null) {
+                        cmet = CombinedMetric.FLOAT_MANHATTAN;
+                    }
+                    clustererHPKM.setNumClusters(numClusters);
+                    clustererHPKM.setCombinedMetric(cmet);
+                    clustererHPKM.setDataSet(dsetTest);
+                    clustererHPKM.setK(hubnessK);
+                    clustererHPKM.probabilisticIterations = 100;
+                    avgTime = 0;
+                    startTimer();
+                    try {
+                        clustererHPKM.cluster();
+                        doneCorrectly = true;
+                    } catch (Exception e) {
+                        System.out.println("error: " + e.getMessage());
+                        stopTimer();
+                        numSec = 0;
+                    }
+                } while (!doneCorrectly);
+                avgTime += numSec;
+                pwHPKM.print(numSec + ", ");
+                stopTimer();
+                Cluster[] config = clustererHPKM.getClusters();
+                Cluster[] configMin = clustererHPKM.getMinimizingClusters();
+                for (int l = 10000; l < dsetTest.size(); l++) {
+                    dsetTest.data.get(l).setCategory(-1);
+                }
+                QIndexSilhouette silIndex = new QIndexSilhouette(
+                        numClusters, clustererHPKM.getClusterAssociations(),
+                        dsetTest);
+                silIndex.setDistanceMatrix(clustererHPKM.getNSFDistances());
+                silHPKMScores[i] = silIndex.validity();
+                silIndex = new QIndexSilhouette(numClusters,
+                        clustererHPKM.getMinimizingAssociations(),
+                        dsetTest);
+                silIndex.setDistanceMatrix(clustererHPKM.getNSFDistances());
+                silMinScores[i] = silIndex.validity();
+                avgHPKMSil += silHPKMScores[i];
+                avgMinSil += silMinScores[i];
+                DataInstance[] centroids = new DataInstance[config.length];
+                int numNonEmpty = 0;
+                for (int j = 0; j < centroids.length; j++) {
+                    if (config[j] != null && config[j].size() > 0) {
+                 
