@@ -565,4 +565,86 @@ public class EvaluateOnNoisyMix {
                                     getCategory() != -1) {
                                 split[currIndex].add((dsetTest.data.get(
                                         config[j].indexes.get(k))).
-                                        getCategory()
+                                        getCategory());
+                            }
+                        }
+                    }
+                }
+                avgKMClusterEntropy[i] = Info.evaluateInfoOfCategorySplit(
+                        split, numClusters);
+                avgKMEntropy += avgKMClusterEntropy[i];
+                pwKM.println(silKMScores[i] + ", " + avgKMError[i] + ", "
+                        + avgKMClusterEntropy[i]);
+
+            }
+            avgKMSil /= numTimes;
+            avgKMErr /= numTimes;
+            avgTime /= numTimes;
+            avgKMEntropy /= numTimes;
+            pwKM.println(avgTime + ", " + avgKMSil + ", " + avgKMErr + ", "
+                    + avgKMEntropy);
+            pwKM.close();
+
+            for (int i = 0; i < numTimes; i++) {
+                System.out.println("GKH " + i + "th iteration");
+
+                boolean doneCorrectly = false;
+                do {
+                    if (cmet == null) {
+                        cmet = CombinedMetric.FLOAT_MANHATTAN;
+                    }
+                    clustererGKH.setNumClusters(numClusters);
+                    clustererGKH.setCombinedMetric(cmet);
+                    clustererGKH.setDataSet(dsetTest);
+                    clustererGKH.setK(hubnessK);
+                    avgTime = 0;
+                    startTimer();
+                    try {
+                        clustererGKH.cluster();
+                        doneCorrectly = true;
+                    } catch (Exception e) {
+                        System.out.println("error: " + e.getMessage());
+                        stopTimer();
+                        numSec = 0;
+                    }
+                } while (!doneCorrectly);
+                avgTime += numSec;
+                pwGKH.print(numSec + ", ");
+                stopTimer();
+                Cluster[] config = clustererGKH.getClusters();
+                for (int l = 10000; l < dsetTest.size(); l++) {
+                    dsetTest.data.get(l).setCategory(-1);
+                }
+                QIndexSilhouette silIndex = new QIndexSilhouette(
+                        numClusters, clustererGKH.getClusterAssociations(),
+                        dsetTest);
+                silIndex.setDistanceMatrix(clusterer.getNSFDistances());
+                silGKHScores[i] = silIndex.validity();
+                avgGKHSil += silGKHScores[i];
+                DataInstance[] centroids = new DataInstance[config.length];
+                int numNonEmpty = 0;
+                for (int j = 0; j < centroids.length; j++) {
+                    if (config[j] != null && config[j].size() > 0) {
+                        centroids[j] = config[j].getCentroid();
+                        numNonEmpty++;
+                        for (int p = 0; p < config[j].size(); p++) {
+                            avgGKHError[i] += cmet.dist(centroids[j],
+                                    config[j].getInstance(p));
+                        }
+                    }
+                }
+                avgGKHError[i] /= dsetTest.size();
+                avgGKHErr += avgGKHError[i];
+                // And now for supervised estimates - the cluster entropies.
+                // First make the split.
+                int currIndex = -1;
+                ArrayList<Integer>[] split = new ArrayList[numNonEmpty];
+                for (int j = 0; j < split.length; j++) {
+                    split[j] = new ArrayList(1500);
+                }
+                for (int j = 0; j < config.length; j++) {
+                    if (config[j] != null && config[j].size() > 0) {
+                        ++currIndex;
+                        for (int k = 0; k < config[j].indexes.size(); k++) {
+                            if ((dsetTest.data.get(
+                                
