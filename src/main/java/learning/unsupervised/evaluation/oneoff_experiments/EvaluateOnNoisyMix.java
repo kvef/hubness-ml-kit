@@ -647,4 +647,53 @@ public class EvaluateOnNoisyMix {
                         ++currIndex;
                         for (int k = 0; k < config[j].indexes.size(); k++) {
                             if ((dsetTest.data.get(
-                                
+                                    config[j].indexes.get(k))).
+                                    getCategory() != -1) {
+                                split[currIndex].add((dsetTest.data.get(
+                                        config[j].indexes.get(k))).
+                                        getCategory());
+                            }
+                        }
+                    }
+                }
+                avgGKHClusterEntropy[i] = Info.evaluateInfoOfCategorySplit(
+                        split, numClusters);
+                avgGKHEntropy += avgGKHClusterEntropy[i];
+                pwGKH.println(silGKHScores[i] + ", " + avgGKHError[i] + ", "
+                        + avgGKHClusterEntropy[i]);
+
+            }
+            avgGKHSil /= numTimes;
+            avgGKHErr /= numTimes;
+            avgTime /= numTimes;
+            avgGKHEntropy /= numTimes;
+            pwGKH.println(avgTime + ", " + avgGKHSil + ", " + avgGKHErr + ", "
+                    + avgGKHEntropy);
+            pwGKH.close();
+        }
+    }
+
+    /**
+     * Information about the required command line parameters.
+     */
+    public static void info() {
+        System.out.println("outDir");
+        System.out.println("nTimes on dataset");
+        System.out.println("nClusters");
+        System.out.println("k");
+        System.out.println("dim");
+    }
+
+    public static void main(String[] args) throws Exception {
+        if (args.length != 5) {
+            info();
+            return;
+        }
+        EvaluateOnNoisyMix noiser = new EvaluateOnNoisyMix();
+        noiser.setWriterDir(args[0]);
+        noiser.hubnessK = Integer.parseInt(args[3]);
+        noiser.dim = Integer.parseInt(args[4]);
+        noiser.clusterWithAlgorithmOnLabeledData(Integer.parseInt(args[1]),
+                Integer.parseInt(args[2]));
+    }
+}
