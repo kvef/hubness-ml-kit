@@ -484,4 +484,85 @@ public class EvaluateOnNoisyMix {
                 }
 
                 avgMinClusterEntropy[i] = Info.evaluateInfoOfCategorySplit(
-                        split, numClusters)
+                        split, numClusters);
+                avgMinEntropy += avgMinClusterEntropy[i];
+
+            }
+            avgHPKMSil /= numTimes;
+            avgHPKMErr /= numTimes;
+            avgTime /= numTimes;
+            avgHPKMEntropy /= numTimes;
+            pwHPKM.println(avgTime + ", " + avgHPKMSil + ", " + avgHPKMErr
+                    + ", " + avgHPKMEntropy);
+            pwHPKM.close();
+
+            avgMinSil /= numTimes;
+            avgMinErr /= numTimes;
+            avgMinEntropy /= numTimes;
+
+            for (int i = 0; i < numTimes; i++) {
+                System.out.println("KM " + i + "th iteration");
+
+                boolean doneCorrectly = false;
+                do {
+                    if (cmet == null) {
+                        cmet = CombinedMetric.FLOAT_MANHATTAN;
+                    }
+                    clustererKM.setNumClusters(numClusters);
+                    clustererKM.setCombinedMetric(cmet);
+                    clustererKM.setDataSet(dsetTest);
+                    avgTime = 0;
+                    startTimer();
+                    try {
+                        clustererKM.cluster();
+                        doneCorrectly = true;
+                    } catch (Exception e) {
+                        System.out.println("error: " + e.getMessage());
+                        stopTimer();
+                        numSec = 0;
+                    }
+                } while (!doneCorrectly);
+                avgTime += numSec;
+                pwKM.print(numSec + ", ");
+                stopTimer();
+                Cluster[] config = clustererKM.getClusters();
+                for (int l = 10000; l < dsetTest.size(); l++) {
+                    dsetTest.data.get(l).setCategory(-1);
+                }
+                QIndexSilhouette silIndex = new QIndexSilhouette(
+                        numClusters, clustererKM.getClusterAssociations(),
+                        dsetTest);
+                silIndex.setDistanceMatrix(clusterer.getNSFDistances());
+                silKMScores[i] = silIndex.validity();
+                avgKMSil += silKMScores[i];
+                DataInstance[] centroids = new DataInstance[config.length];
+                int numNonEmpty = 0;
+                for (int j = 0; j < centroids.length; j++) {
+                    if (config[j] != null && config[j].size() > 0) {
+                        centroids[j] = config[j].getCentroid();
+                        numNonEmpty++;
+                        for (int p = 0; p < config[j].size(); p++) {
+                            avgKMError[i] += cmet.dist(centroids[j],
+                                    config[j].getInstance(p));
+                        }
+                    }
+                }
+                avgKMError[i] /= dsetTest.size();
+                avgKMErr += avgKMError[i];
+                // And now for supervised estimates - the cluster entropies.
+                // First make the split.
+                int currIndex = -1;
+                ArrayList<Integer>[] split = new ArrayList[numNonEmpty];
+                for (int j = 0; j < split.length; j++) {
+                    split[j] = new ArrayList(1500);
+                }
+                for (int j = 0; j < config.length; j++) {
+                    if (config[j] != null && config[j].size() > 0) {
+                        ++currIndex;
+                        for (int k = 0; k < config[j].indexes.size(); k++) {
+                            if ((dsetTest.data.get(
+                                    config[j].indexes.get(k))).
+                                    getCategory() != -1) {
+                                split[currIndex].add((dsetTest.data.get(
+                                        config[j].indexes.get(k))).
+                                        getCategory()
