@@ -24,4 +24,92 @@ import java.util.Collections;
 
 /**
  * This class implements a complement of the C index that was introduced by
- * Hubert and Schultz in 1976
+ * Hubert and Schultz in 1976 - so that we have "the higher the better", as in
+ * other quality indices. C index is calculated by comparing the sum of
+ * intra-cluster distances to max and min distance sums that have the same
+ * number of distances as there are intra-cluster pairs.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class QIndexCIndex extends ClusteringQualityIndex {
+
+    private CombinedMetric cmet = null;
+    private int[] clusterAssociations;
+    private float[][] distMat;
+
+    /**
+     * @param clusterAssociations Cluster association array for the points.
+     * @param dataset DataSet object.
+     */
+    public QIndexCIndex(int[] clusterAssociations, DataSet dataset) {
+        this.clusterAssociations = clusterAssociations;
+        setDataSet(dataset);
+        cmet = CombinedMetric.EUCLIDEAN;
+    }
+
+    /**
+     * @param clusterAssociations Cluster association array for the points.
+     * @param dataset DataSet object.
+     * @param cmet CombinedMetricObject.
+     */
+    public QIndexCIndex(int[] clusterAssociations, DataSet dataset,
+            CombinedMetric cmet) {
+        setDataSet(dataset);
+        this.clusterAssociations = clusterAssociations;
+        this.cmet = cmet;
+    }
+
+    /**
+     * @param distances Float matrix of distances between data points.
+     */
+    public void setDistanceMatrix(float[][] distances) {
+        this.distMat = distances;
+    }
+
+    @Override
+    public float validity() throws Exception {
+        DataSet instances = getDataSet();
+        if (distMat == null) {
+            distMat = instances.calculateDistMatrix(cmet);
+        }
+        int size = instances.size();
+        float CIndexComplement;
+        int numIntraDistances = 0;
+        float sumIntraDistances = 0;
+        int intraPairCount = 0;
+
+        ArrayList<Float> admissableDistances =
+                new ArrayList<>(size * (size - 1) / 2);
+        for (int i = 0; i < size; i++) {
+            for (int j = i + 1; j < size; j++) {
+                if (instances.getInstance(i).notNoise()
+                        && instances.getInstance(j).notNoise()) {
+                    intraPairCount++;
+                    admissableDistances.add(distMat[i][j - i - 1]);
+                    if (clusterAssociations[i] == clusterAssociations[j]) {
+                        numIntraDistances++;
+                        sumIntraDistances += distMat[i][j - i - 1];
+                    }
+                }
+            }
+        }
+        if (numIntraDistances == 0 || !DataMineConstants.isAcceptableFloat(
+                sumIntraDistances)) {
+            return 0;
+        }
+        Collections.sort(admissableDistances); // Ascending order.
+        float minSums = 0;
+        float maxSums = 0;
+        for (int i = 0; i < numIntraDistances; i++) {
+            minSums += admissableDistances.get(i);
+            maxSums += admissableDistances.get(intraPairCount - 1 - i);
+        }
+        if (DataMineConstants.isZero(maxSums - minSums)) {
+            return 0;
+        } else {
+            CIndexComplement = (sumIntraDistances - minSums)
+                    / (maxSums - minSums);
+            return 1f - CIndexComplement;
+        }
+    }
+}
