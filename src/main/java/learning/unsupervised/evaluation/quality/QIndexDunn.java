@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -23,82 +24,82 @@ import distances.primary.CombinedMetric;
 import learning.unsupervised.Cluster;
 
 /**
- * Davies-Bouldin index is a sum of maximized inter-cluster ratios of cumulative
- * dispersion over inter-cluster distance.
+ * Dunn index is the ratio of the smallest inter-cluster distance and the
+ * maximum cluster diameter.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class QIndexDaviesBouldin extends ClusteringQualityIndex {
+public class QIndexDunn extends ClusteringQualityIndex {
 
-    CombinedMetric cmet = null;
-
-    /**
-     * @param clusteringConfiguration An array of clusters.
-     * @param dataset DataSet object.
-     */
-    public QIndexDaviesBouldin(Cluster[] clusteringConfiguration,
-            DataSet dataset) {
-        setClusters(clusteringConfiguration);
-        setDataSet(dataset);
-        cmet = CombinedMetric.EUCLIDEAN;
-    }
+    private CombinedMetric cmet = null;
 
     /**
      * @param clusteringConfiguration An array of clusters.
-     * @param dataset DataSet object.
+     * @param dataset Dataset object.
      * @param cmet CombinedMetric object.
      */
-    public QIndexDaviesBouldin(Cluster[] clusteringConfiguration,
-            DataSet dataset, CombinedMetric cmet) {
+    public QIndexDunn(Cluster[] clusteringConfiguration, DataSet dataset,
+            CombinedMetric cmet) {
         setClusters(clusteringConfiguration);
         setDataSet(dataset);
         this.cmet = cmet;
     }
 
+    /**
+     * @param clusteringConfiguration An array indicating data to cluster
+     * associations.
+     * @param cmet CombinedMetric object.
+     */
+    public QIndexDunn(Cluster[] clusteringConfiguration, CombinedMetric cmet) {
+        setClusters(clusteringConfiguration);
+        this.cmet = cmet;
+    }
+
+    /**
+     * @param clusteringConfiguration An array indicating data to cluster
+     * associations.
+     * @param dataset DataSet object.
+     */
+    public QIndexDunn(Cluster[] clusteringConfiguration, DataSet dataset) {
+        setClusters(clusteringConfiguration);
+        setDataSet(dataset);
+        cmet = CombinedMetric.EUCLIDEAN;
+    }
+
     @Override
     public float validity() throws Exception {
-        float dbIndex = 0;
         Cluster[] clusters = getClusters();
         if (clusters == null || clusters.length == 0) {
             return 0;
         }
         int numClusters = clusters.length;
+        float maxClusterDiameter = 0;
         DataInstance[] centroids = new DataInstance[numClusters];
+        // Here we calculate the maximal cluster diameter.
         for (int i = 0; i < numClusters; i++) {
+            if (clusters[i] == null || clusters[i].isEmpty()) {
+                continue;
+            }
             centroids[i] = clusters[i].getCentroid();
+            maxClusterDiameter = Math.max(maxClusterDiameter,
+                    clusters[i].calculateDiameter(centroids[i], cmet));
         }
-        // R-factors for each cluster, that maximize the between-cluster
-        // dispersion over distance ratios.
-        float[] R = new float[numClusters];
-        // An array of dispersion measures.
-        float[] dispersions = new float[numClusters];
-        for (int i = 0; i < R.length; i++) {
-            dispersions[i] = clusters[i].averageIntraDistance(centroids[i],
-                    cmet);
-        }
-        float centroidDistance;
+        // Now we calculate the minimal between-cluster distance.
+        float minBetweenClusterDistance = Float.MAX_VALUE;
         for (int i = 0; i < numClusters; i++) {
-            for (int j = 0; j < i; j++) {
-                centroidDistance = cmet.dist(centroids[i], centroids[j]);
-                if (DataMineConstants.isZero(centroidDistance)) {
-                    return 0;
-                }
-                R[i] = Math.max(R[i],
-                        ((dispersions[i] + dispersions[j]) / centroidDistance));
-
-            }
             for (int j = i + 1; j < numClusters; j++) {
-                centroidDistance = cmet.dist(centroids[i], centroids[j]);
-                if (DataMineConstants.isZero(centroidDistance)) {
-                    return 0;
+                if (clusters[i] == null || clusters[j] == null
+                        || clusters[i].isEmpty() || clusters[j].isEmpty()) {
+                    continue;
                 }
-                R[i] = Math.max(R[i],
-                        ((dispersions[i] + dispersions[j]) / centroidDistance));
-
+                minBetweenClusterDistance = Math.min(minBetweenClusterDistance,
+                        cmet.dist(centroids[i], centroids[j]));
             }
-            dbIndex += R[i];
         }
-        dbIndex = dbIndex / numClusters;
-        return 1f / dbIndex;
+        if (DataMineConstants.isZero(maxClusterDiameter)) {
+            return Float.MAX_VALUE;
+        } else {
+            return (minBetweenClusterDistance / maxClusterDiameter);
+        }
     }
 }
