@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -22,26 +23,27 @@ import java.util.Arrays;
 import learning.unsupervised.Cluster;
 
 /**
- * This class implements the G+ clustering quality index. The value returned 
- * will in fact be the complement of G+, to satisfy the property that higher 
- * index values correspond to better clustering quality, as with other indexes.
- * 
+ * It calculates an index which measures how concordant are the distances with
+ * respect to data clusters. Standardized categories are assumed. The index
+ * takes a value betwen -1 and 1. (Nc - Nd) / (Nc + Nd), Nc - concordant, Nd -
+ * discordant distances.
+ *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class QIndexGPlusComplement extends ClusteringQualityIndex {
-    
+public class QIndexGoodmanKruskal extends ClusteringQualityIndex {
+
     private CombinedMetric cmet = null;
     private int[] clusterAssociations;
     private float[][] distances;
     private boolean dGiven = false;
-    
+
     /**
      * Initialization.
      * 
      * @param clusterAssociations Cluster association array for the points.
      * @param dset DataSet object.
      */
-    public QIndexGPlusComplement(int[] clusterAssociations,
+    public QIndexGoodmanKruskal(int[] clusterAssociations,
             DataSet dset) {
         this.clusterAssociations = clusterAssociations;
         setDataSet(dset);
@@ -55,8 +57,8 @@ public class QIndexGPlusComplement extends ClusteringQualityIndex {
      * @param dset DataSet object.
      * @param cmet CombinedMetric object for distance calculations.
      */
-    public QIndexGPlusComplement(int[] clusterAssociations,
-            DataSet dset, CombinedMetric cmet) {
+    public QIndexGoodmanKruskal(int[] clusterAssociations, DataSet dset,
+            CombinedMetric cmet) {
         this.clusterAssociations = clusterAssociations;
         setDataSet(dset);
         this.cmet = cmet;
@@ -70,13 +72,15 @@ public class QIndexGPlusComplement extends ClusteringQualityIndex {
         this.distances = distances;
         this.dGiven = true;
     }
-    
+
     @Override
     public float validity() throws Exception {
+        float gkIndex;
         DataSet instances = getDataSet();
         if (!dGiven) {
             distances = instances.calculateDistMatrix(cmet);
         }
+
         Cluster[] clusterConfiguration =
                 Cluster.getConfigurationFromAssociations(clusterAssociations,
                 instances);
@@ -102,11 +106,8 @@ public class QIndexGPlusComplement extends ClusteringQualityIndex {
         float[] interDists = new float[numInterDists];
         int intraIndex = -1;
         int interIndex = -1;
-        int numNoisyPoints = 0;
         for (int i = 0; i < distances.length; i++) {
-            if (instances.getInstance(i).isNoise() ||
-                    clusterAssociations[i] < 0) {
-                numNoisyPoints++;
+            if (instances.getInstance(i).isNoise()) {
                 continue;
             }
             for (int j = 0; j < distances[i].length; j++) {
@@ -124,10 +125,12 @@ public class QIndexGPlusComplement extends ClusteringQualityIndex {
         Arrays.sort(interDists); //ascending sort
         intraIndex = 0;
         interIndex = 0;
+        long totalDists = numIntraDists + numInterDists;
+        long totalPairs = numIntraDists * numInterDists;
         // This is the sum of concordant and discordant pairs.
+        long Nc; // Num concordant pairs.
         long Nd = 0; // Num discordant pairs.
         // We will only count the breaches.
-        long totalDists = numIntraDists + numInterDists;
         do {
             while (intraIndex < numIntraDists
                     && intraDists[intraIndex] < interDists[interIndex]) {
@@ -138,15 +141,14 @@ public class QIndexGPlusComplement extends ClusteringQualityIndex {
             }
             // Then the interDists[interIndex] is discordant with all
             // intraDists[i] for i >= intraIndex. There are numIntraDists -
-            // intraIndex of them.
-            Nd += (numIntraDists - intraIndex);
+            //intraIndex of them
+            Nd += numIntraDists - intraIndex;
             // The inter-distance at interIndex has been processed, so it is
             // time to move on.
             interIndex++;
         } while (intraIndex < numIntraDists && interIndex < numInterDists);
-        double maxPairComparisons = (totalDists * (totalDists - 1)) / 2.;
-        double gPlusIndex = Nd / maxPairComparisons;
-        return (float) (1 - gPlusIndex);
+        Nc = totalPairs - Nd;
+        gkIndex = (float) (Nc - Nd) / (float) (Nc + Nd);
+        return gkIndex;
     }
-    
 }
