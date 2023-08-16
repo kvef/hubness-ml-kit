@@ -21,4 +21,78 @@ import data.neighbors.NeighborSetFinder;
 
 /**
  * Isolation index was defined by Pauwels and Frederix in 1999 as the average
- * proportion of elements in k-nearest neig
+ * proportion of elements in k-nearest neighbor sets that are in the same
+ * cluster as the point itself. It is a measure of clustering homogeneity.
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class QIndexIsolation extends ClusteringQualityIndex {
+
+    private NeighborSetFinder nsf = null;
+    private int[] clusterAssociations = null;
+    // If left as null, it will be calculated from getCategory() calls.
+
+    /**
+     * @param nsf NeighborSetFinder object.
+     */
+    public QIndexIsolation(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        setDataSet(nsf.getDataSet());
+    }
+
+    /**
+     * @param nsf NeighborSetFinder object.
+     * @param clusterAssociations An array indicating data to cluster
+     * associations.
+     */
+    public QIndexIsolation(NeighborSetFinder nsf, int[] clusterAssociations) {
+        this.nsf = nsf;
+        if (nsf != null) {
+            setDataSet(nsf.getDataSet());
+        }
+        this.clusterAssociations = clusterAssociations;
+    }
+
+    @Override
+    public float validity() throws Exception {
+        DataSet instances = getDataSet();
+        if (nsf == null || instances == null) {
+            return Float.NaN;
+        }
+        int[][] kneighbors = nsf.getKNeighbors();
+        int k = nsf.getCurrK(); //k = kneighbors[0].length;
+        float localNotNoisy;
+        float localSameClust;
+        float nonNoisyNum = 0;
+        float sameClusterRate = 0;
+        for (int i = 0; i < instances.size(); i++) {
+            if (instances.data.get(i).notNoise()) {
+                localNotNoisy = 0;
+                localSameClust = 0;
+                for (int j = 0; j < k; j++) {
+                    if (instances.getInstance(kneighbors[i][j]).notNoise()) {
+                        localNotNoisy++;
+                        if (clusterAssociations != null) {
+                            if (clusterAssociations[i]
+                                    == clusterAssociations[j]) {
+                                localSameClust++;
+                            }
+                        } else {
+                            if (instances.getInstance(
+                                    kneighbors[i][j]).getCategory()
+                                    == instances.getInstance(i).getCategory()) {
+                                localSameClust++;
+                            }
+                        }
+                    }
+                }
+                if (localNotNoisy != 0) {
+                    nonNoisyNum++;
+                    sameClusterRate += (localSameClust / localNotNoisy);
+                }
+            }
+        }
+        sameClusterRate /= nonNoisyNum;
+        return sameClusterRate;
+    }
+}
