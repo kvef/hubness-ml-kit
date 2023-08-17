@@ -21,4 +21,52 @@ import data.representation.DataSet;
 /**
  * Jaccard index is defined as: A / A + B + C where: A = Number of pairs of
  * points in same cluster with same labels; B = Number of pairs of points in
- * same cluster with different labels; C = Number of
+ * same cluster with different labels; C = Number of pairs of points in
+ * different clusters with same labels;
+ *
+ * @author Nenad Tomasev <nenad.tomasev at gmail.com>
+ */
+public class QIndexJaccard extends ClusteringQualityIndex {
+
+    private int[] clusterAssociations;
+    private DataSet dataContext = null;
+
+    /**
+     * @param dataset DataSet object.
+     * @param clusterAssociations An array of clusters.
+     */
+    public QIndexJaccard(DataSet dataset, int[] clusterAssociations) {
+        this.dataContext = dataset;
+        this.clusterAssociations = clusterAssociations;
+    }
+
+    @Override
+    public float validity() throws Exception {
+        float jaccardIndex;
+        float a = 0;
+        float b = 0;
+        float c = 0;
+        int size = dataContext.size();
+        for (int i = 0; i < size; i++) {
+            for (int j = i + 1; j < size; j++) {
+                if (dataContext.getInstance(i).isNoise()
+                        || dataContext.getInstance(j).isNoise()) {
+                    continue;
+                }
+                if (dataContext.getLabelOf(i) == dataContext.getLabelOf(j)) {
+                    if (clusterAssociations[i] == clusterAssociations[j]) {
+                        a++;
+                    } else {
+                        c++;
+                    }
+                } else {
+                    if (clusterAssociations[i] == clusterAssociations[j]) {
+                        b++;
+                    }
+                }
+            }
+        }
+        jaccardIndex = a / (a + b + c);
+        return jaccardIndex;
+    }
+}
