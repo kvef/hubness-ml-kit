@@ -62,4 +62,80 @@ public class QIndexMcClainRao extends ClusteringQualityIndex {
     }
 
     /**
-     * @param dista
+     * @param distances float[][] representing the upper triangular distance 
+     * matrix of the data.
+     */
+    public void setDistanceMatrix(float[][] distances) {
+        this.distances = distances;
+        this.dGiven = true;
+    }
+    
+    @Override
+    public float validity() throws Exception {
+        DataSet instances = getDataSet();
+        if (!dGiven) {
+            distances = instances.calculateDistMatrix(cmet);
+        }
+        Cluster[] clusterConfiguration =
+                Cluster.getConfigurationFromAssociations(clusterAssociations,
+                instances);
+        // The number of intra- and inter-cluster distances.
+        long numIntraDists = 0;
+        long numInterDists = 0;
+        int numClusters = clusterConfiguration.length;
+        if (numClusters < 2) {
+            return 0;
+        }
+        int minIndex, maxIndex;
+        DataInstance instanceFirst, instanceSecond;
+        // Average intra- and inter-cluster distances.
+        double avgIntraDist = 0;
+        double avgInterDist = 0;
+        for (int c1 = 0; c1 < numClusters; c1++) {
+            // Skip empty clusters.
+            if (clusterConfiguration[c1].isEmpty()) {
+                continue;
+            }
+            for (int i = 0; i < clusterConfiguration[c1].size(); i++) {
+                for (int j = i + 1; j < clusterConfiguration[c1].size(); j++) {
+                    minIndex = Math.min(clusterConfiguration[c1].indexes.get(i),
+                            clusterConfiguration[c1].indexes.get(j));
+                    maxIndex = Math.max(clusterConfiguration[c1].indexes.get(i),
+                            clusterConfiguration[c1].indexes.get(j));
+                    instanceFirst = instances.getInstance(minIndex);
+                    instanceSecond = instances.getInstance(maxIndex);
+                    if (!instanceFirst.isNoise() && !instanceSecond.isNoise() &&
+                            clusterAssociations[minIndex] >= 0 &&
+                            clusterAssociations[maxIndex] >= 0) {
+                        // Update the average.
+                        ++numIntraDists;
+                        avgIntraDist = (avgIntraDist / numIntraDists) *
+                                (numIntraDists - 1) + distances[minIndex][
+                                maxIndex - minIndex - 1] / numIntraDists;
+                    }
+                }
+            }
+            for (int c2 = c1 + 1; c2 < numClusters; c2++) {
+                // Skip empty clusters.
+                if (clusterConfiguration[c2].isEmpty()) {
+                    continue;
+                }
+                for (int i = 0; i < clusterConfiguration[c1].size(); i++) {
+                    for (int j = 0; j < clusterConfiguration[c2].size(); j++) {
+                        minIndex = Math.min(
+                                clusterConfiguration[c1].indexes.get(i),
+                                clusterConfiguration[c2].indexes.get(j));
+                        maxIndex = Math.max(
+                                clusterConfiguration[c1].indexes.get(i),
+                                clusterConfiguration[c2].indexes.get(j));
+                        instanceFirst = instances.getInstance(minIndex);
+                        instanceSecond = instances.getInstance(maxIndex);
+                        if (!instanceFirst.isNoise() &&
+                                !instanceSecond.isNoise() &&
+                                clusterAssociations[minIndex] >= 0 &&
+                                clusterAssociations[maxIndex] >= 0) {
+                            // Update the average.
+                            ++numInterDists;
+                            avgInterDist = (avgInterDist / numInterDists) *
+                                    (numInterDists - 1) + distances[minIndex][
+  
