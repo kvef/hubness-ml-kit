@@ -178,4 +178,85 @@ public class QIndexSimplifiedSilhouette extends ClusteringQualityIndex {
         AHBTOTAL = 0;
         REGATOTAL = 0;
         REGBTOTAL = 0;
-        float[] e
+        float[] elementsPerCluster = new float[numClusters];
+        float[][] pointToCentroidDist = new float[dataSize][numClusters];
+        for (int i = 0; i < dataSize; i++) {
+            if (!instances.data.get(i).isNoise()
+                    && clusterAssociations[i] >= 0) {
+                trueDataSize++;
+                elementsPerCluster[clusterAssociations[i]]++;
+                for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                    pointToCentroidDist[i][cIndex] =
+                            cmet.dist(instances.data.get(i),
+                            clusterCentroids[cIndex]);
+                }
+            }
+        }
+        boolean[] nonEmpty = new boolean[numClusters];
+        // Detect if there are any empty clusters, since they will be ignored.
+        for (int i = 0; i < numClusters; i++) {
+            if (elementsPerCluster[i] == 0) {
+                nonEmpty[i] = false;
+            } else {
+                nonEmpty[i] = true;
+            }
+        }
+        // Now find the actual index values for all the data instances and track
+        // the totals for the clusters.
+        instanceSilhouetteArray = new float[dataSize];
+        instanceAarray = new float[dataSize];
+        instanceBarray = new float[dataSize];
+        clusterSilhouetteArray = new float[numClusters];
+        float a; // Avg dist to own cluster.
+        float b; // Avg dist to closest other cluster.
+        int ownCluster;
+        for (int i = 0; i < dataSize; i++) {
+            b = Float.MAX_VALUE;
+            ownCluster = clusterAssociations[i];
+            if (!instances.data.get(i).isNoise()
+                    && clusterAssociations[i] >= 0) {
+                a = pointToCentroidDist[i][ownCluster];
+                for (int cIndex = 0; cIndex < ownCluster; cIndex++) {
+                    if (nonEmpty[cIndex]) {
+                        b = Math.min(b, pointToCentroidDist[i][cIndex]);
+                    }
+                }
+                for (int cIndex = ownCluster + 1; cIndex < numClusters;
+                        cIndex++) {
+                    if (nonEmpty[cIndex]) {
+                        b = Math.min(b, pointToCentroidDist[i][cIndex]);
+                    }
+                }
+                instanceSilhouetteArray[i] = (b - a) / Math.max(Math.abs(a),
+                        Math.abs(b));
+                instanceAarray[i] = a;
+                instanceBarray[i] = b;
+                ATOTAL += a;
+                BTOTAL += b;
+                clusterSilhouetteArray[ownCluster] +=
+                        instanceSilhouetteArray[i];
+            }
+        }
+        // Now find the actual average index for each cluster.
+        for (int i = 0; i < numClusters; i++) {
+            if (nonEmpty[i]) {
+                clusterSilhouetteArray[i] /= elementsPerCluster[i];
+            }
+        }
+        // Now find the actual SilhouetteIndex.
+        for (int i = 0; i < numClusters; i++) {
+            resultingIndex += elementsPerCluster[i] * clusterSilhouetteArray[i];
+        }
+        resultingIndex /= (float) trueDataSize;
+        ATOTAL /= (float) trueDataSize;
+        BTOTAL /= (float) trueDataSize;
+        if (hubnessArray != null) {
+            // Now here we've got to do some stuff with hubness correlations...
+            // first of all, we need to divide points into: hubs, anti-hubs and
+            // regular. Hubs will be those that are 2 stdevs away from the AVG
+            // hubness. We will take the same number of points as anti-hubs.
+            // Afterwards, we calculate the averages of Silhouette index
+            // components for these point types.
+            float med = HigherMoments.calculateArrayMean(hubnessArray);
+            float stDev = HigherMoments.calculateArrayStDev(med, hubnessArray);
+  
