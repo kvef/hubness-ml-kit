@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -22,12 +23,11 @@ import distances.primary.CombinedMetric;
 import learning.unsupervised.Cluster;
 
 /**
- * This class implements the McClain-Rao clustering configuration quality index.
- * It is the ratio between the mean intra- and inter-cluster distances.
+ * This class implements the point-biserial clustering quality index.
  * 
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class QIndexMcClainRao extends ClusteringQualityIndex {
+public class QIndexPointBiserial extends ClusteringQualityIndex {
     
     private CombinedMetric cmet = null;
     private int[] clusterAssociations;
@@ -40,7 +40,7 @@ public class QIndexMcClainRao extends ClusteringQualityIndex {
      * @param clusterAssociations Cluster association array for the points.
      * @param dset DataSet object.
      */
-    public QIndexMcClainRao(int[] clusterAssociations,
+    public QIndexPointBiserial(int[] clusterAssociations,
             DataSet dset) {
         this.clusterAssociations = clusterAssociations;
         setDataSet(dset);
@@ -54,7 +54,7 @@ public class QIndexMcClainRao extends ClusteringQualityIndex {
      * @param dset DataSet object.
      * @param cmet CombinedMetric object for distance calculations.
      */
-    public QIndexMcClainRao(int[] clusterAssociations,
+    public QIndexPointBiserial(int[] clusterAssociations,
             DataSet dset, CombinedMetric cmet) {
         this.clusterAssociations = clusterAssociations;
         setDataSet(dset);
@@ -144,7 +144,35 @@ public class QIndexMcClainRao extends ClusteringQualityIndex {
                 }
             }
         }
-        return (float) (avgIntraDist / avgInterDist);
+        long numTotalDists = numInterDists + numIntraDists;
+        double distMean = ((avgInterDist * numInterDists) +
+                (avgIntraDist * numIntraDists)) / numTotalDists;
+        double distVariance = 0;
+        long pairCounter = 0;
+        float currDist;
+        // Now do a pass to determine the overall distance variance.
+        for (int i = 0; i < instances.size(); i++) {
+            for (int j = i + 1; j < instances.size(); j++) {
+                instanceFirst = instances.getInstance(i);
+                instanceSecond = instances.getInstance(j);
+                if (!instanceFirst.isNoise() && !instanceSecond.isNoise() &&
+                        clusterAssociations[i] >= 0 &&
+                        clusterAssociations[j] >= 0) {
+                    currDist = distances[i][j - i - 1];
+                    ++pairCounter;
+                    distVariance = (distVariance / pairCounter) *
+                            (pairCounter - 1) + ((1d / pairCounter) *
+                            (currDist - distMean) *
+                            (currDist - distMean));
+                }
+            }
+        }
+        double distStDev = Math.sqrt(distVariance);
+        double totalDists = numIntraDists + numInterDists;
+        double pbValue = ((avgInterDist - avgIntraDist) *
+                Math.sqrt((numInterDists * numIntraDists) /
+                (totalDists * totalDists))) / distStDev;
+        return (float) pbValue;
     }
-
+    
 }
