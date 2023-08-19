@@ -53,3 +53,101 @@ public class QIndexSD extends ClusteringQualityIndex {
     public void setAlpha(float alpha) {
         this.alpha = alpha;
     }
+
+    @Override
+    public float validity() throws Exception {
+        if (!DataMineConstants.isAcceptableFloat(alpha)) {
+            throw new Exception("Parameter alpha in alpha*scatter + dist"
+                    + " needs to be set.");
+        }
+        float dist = calcCentroidDistanceRatio();
+        float scatter = calcScatter();
+        float sd = (alpha * scatter) + dist;
+        // Original index: better clustering corresponds to lower values. This
+        // is transformed to be in accordance with the overall strategy of
+        // higher=better that is used throughout other quality indices.
+        return 1 / sd;
+    }
+
+    /**
+     * Calculates the factor that measures between-cluster separation based on
+     * distances between the centroids.
+     *
+     * @return The separation factor for SD index formula.
+     * @throws Exception
+     */
+    private float calcCentroidDistanceRatio() throws Exception {
+        Cluster[] clusteringConfiguration = getClusters();
+        if (clusteringConfiguration == null
+                || clusteringConfiguration.length == 0) {
+            throw new Exception("No clustering configuration provided.");
+        }
+        CombinedMetric cmet = CombinedMetric.EUCLIDEAN;
+        int numClusters = clusteringConfiguration.length;
+        DataInstance[] centroids = new DataInstance[numClusters];
+        for (int i = 0; i < centroids.length; i++) {
+            centroids[i] = clusteringConfiguration[i].getCentroid();
+        }
+        float maxCentroidDistance = 0;
+        float minCentroidDistance = Float.MAX_VALUE;
+        float centroidDistance;
+        float[] denomSums = new float[numClusters];
+        for (int i = 0; i < numClusters; i++) {
+            if (centroids[i] == null) {
+                continue;
+            }
+            for (int j = i + 1; j < numClusters; j++) {
+                if (centroids[j] == null) {
+                    continue;
+                }
+                centroidDistance = cmet.dist(centroids[i], centroids[j]);
+                maxCentroidDistance = Math.max(maxCentroidDistance,
+                        centroidDistance);
+                minCentroidDistance = Math.min(minCentroidDistance,
+                        centroidDistance);
+                denomSums[i] += centroidDistance;
+                denomSums[j] += centroidDistance;
+            }
+        }
+        float distFactor = 0;
+        for (int i = 0; i < numClusters; i++) {
+            if (DataMineConstants.isAcceptableFloat(denomSums[i])) {
+                distFactor += 1f / denomSums[i];
+            }
+        }
+        if (DataMineConstants.isPositive(minCentroidDistance)
+                && DataMineConstants.isAcceptableFloat(maxCentroidDistance)) {
+            distFactor *= (maxCentroidDistance / minCentroidDistance);
+            return distFactor;
+        } else {
+            return Float.MAX_VALUE;
+        }
+    }
+
+    /**
+     * Calculates the relative variance of the clusters compared to all of data.
+     *
+     * @return Float value that is the scatter component of the SD index.
+     * @throws Exception
+     */
+    private float calcScatter() throws Exception {
+        DataSet dataset = getDataSet();
+        Cluster[] clusteringConfiguration = getClusters();
+        if (dataset == null || dataset.isEmpty()
+                || clusteringConfiguration == null) {
+            throw new Exception("No data provided.");
+        }
+        FeatureVariances dataVariance = new FeatureVariances(dataset);
+        dataVariance.calculateAllVariances();
+        float varianceNorm = dataVariance.varianceNorm();
+        int numClusters = clusteringConfiguration.length;
+        float scatter = 0;
+        for (int i = 0; i < numClusters; i++) {
+            FeatureVariances clusterVariance = new FeatureVariances(dataset);
+            clusterVariance.calculateAllVariances(clusteringConfiguration[i]);
+            scatter += clusterVariance.varianceNorm();
+        }
+        scatter = scatter / (varianceNorm * numClusters);
+        return scatter;
+    }
+}
