@@ -259,4 +259,48 @@ public class QIndexSimplifiedSilhouette extends ClusteringQualityIndex {
             // components for these point types.
             float med = HigherMoments.calculateArrayMean(hubnessArray);
             float stDev = HigherMoments.calculateArrayStDev(med, hubnessArray);
-  
+            float up = med + 2 * stDev;
+            ArrayList<Integer> hubs = new ArrayList<>(500);
+            ArrayList<Integer> antiHubs = new ArrayList<>(2000);
+            ArrayList<Integer> regulars = new ArrayList<>(2000);
+            for (int i = 0; i < hubnessArray.length; i++) {
+                if (hubnessArray[i] > up) {
+                    hubs.add(i);
+                }
+            }
+            int n = hubs.size();
+            // Now pick n antihubs.
+            int[] hArrCopy = Arrays.copyOf(hubnessArray, hubnessArray.length);
+            // Ascending sort.
+            int[] reSortIndexes = AuxSort.sortIndexedValue(hArrCopy, false);
+            for (int i = 0; i < n; i++) {
+                antiHubs.add(reSortIndexes[i]);
+            }
+            for (int i = n; i < hubnessArray.length - n; i++) {
+                regulars.add(reSortIndexes[i]);
+            }
+            // Ok, the points are divided, now calculate the relevant quantities
+            for (int i = 0; i < hubs.size(); i++) {
+                HATOTAL += instanceAarray[hubs.get(i)];
+                HBTOTAL += instanceBarray[hubs.get(i)];
+            }
+            HATOTAL /= hubs.size();
+            HBTOTAL /= hubs.size();
+            for (int i = 0; i < antiHubs.size(); i++) {
+                AHATOTAL += instanceAarray[antiHubs.get(i)];
+                AHBTOTAL += instanceBarray[antiHubs.get(i)];
+            }
+            AHATOTAL /= antiHubs.size();
+            AHBTOTAL /= antiHubs.size();
+            for (int i = 0; i < regulars.size(); i++) {
+                REGATOTAL += instanceAarray[regulars.get(i)];
+                REGBTOTAL += instanceBarray[regulars.get(i)];
+            }
+            REGATOTAL /= regulars.size();
+            REGBTOTAL /= regulars.size();
+            hubnessArray = null;
+        }
+        return resultingIndex;
+    }
+    
+}
