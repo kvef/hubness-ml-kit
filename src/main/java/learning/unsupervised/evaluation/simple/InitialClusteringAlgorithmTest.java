@@ -52,4 +52,26 @@ public class InitialClusteringAlgorithmTest {
         Random rGen = new Random();
         for (int i = 0; i < NUM_INSTANCES; i++) {
             randomSet[i] = new DataInstance(dset);
-        
+            randomSet[i].fAttr[0] = 1000 * rGen.nextFloat();
+            randomSet[i].fAttr[1] = 1000 * rGen.nextFloat();
+            dset.addDataInstance(randomSet[i]);
+        }
+        clust.setDataSet(dset);
+        clust.setNumClusters(numClusters);
+        clust.cluster();
+        Cluster[] clusters = clust.getClusters();
+        PrintWriter pw = new PrintWriter(new FileWriter(outFile));
+        try {
+            for (int i = 0; i < clusters.length; i++) {
+                DataInstance centroid = clusters[i].getCentroid();
+                pw.print("centroid + " + i + " :");
+                pw.print(centroid.fAttr[0]);
+                pw.print(",");
+                pw.print(centroid.fAttr[1]);
+                pw.println();
+            }
+        } catch (Exception e) {
+            pw.close();
+        }
+    }
+}
