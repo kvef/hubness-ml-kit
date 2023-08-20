@@ -144,4 +144,27 @@ public class QIndexTau extends ClusteringQualityIndex {
             // intraDists[i] for i >= intraIndex. There are numIntraDists -
             // intraIndex of them.
             Nd += (numIntraDists - intraIndex);
-            /
+            // The inter-distance at interIndex has been processed, so it is
+            // time to move on.
+            interIndex++;
+        } while (intraIndex < numIntraDists && interIndex < numInterDists);
+        Nc = totalIntraInterPairs - Nd;
+        double maxPairComparisons = (totalDists * (totalDists - 1)) / 2.;
+        // Final parameters.
+        double wd = 0;
+        double bd = 0;
+        int numNonNoisy = instances.size() - numNoisyPoints;
+        for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+            long clSize = clusterConfiguration[cIndex].size();
+            if (clSize > 0) {
+                wd += (clSize * (clSize - 1) / 2.);
+                bd += (clSize * (numNonNoisy - clSize) / 2.);
+            }
+        }
+        double tie = (wd * (wd - 1) / 2.) + (bd * (bd - 1) / 2.);
+        double tauValue = (Nc - Nd) /
+                Math.sqrt((maxPairComparisons * (maxPairComparisons - tie)));
+        return (float) tauValue;
+    }
+    
+}
