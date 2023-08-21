@@ -67,4 +67,119 @@ public class DBScan extends ClusteringAlg implements
         pub.addAuthor(new Author("Martin", "Ester"));
         pub.addAuthor(new Author("Hans-Peter", "Kriegel"));
         pub.addAuthor(new Author("Jorg", "Sander"));
-   
+        pub.addAuthor(new Author("Xiaowei", "Xu"));
+        pub.setTitle("A density-based algorithm for discovering clusters in "
+                + "large spatial databases with noise");
+        pub.setYear(1996);
+        pub.setPublisher(Publisher.ACM);
+        return pub;
+    }
+    
+    @Override
+    public HashMap<String, String> getParameterNamesAndDescriptions() {
+        HashMap<String, String> paramMap = new HashMap<>();
+        paramMap.put("k", "Neighborhood size.");
+        paramMap.put("minPoints", "Minimal number of points in a neighborhood"
+                + "so that the point is not considered to be noise.");
+        return paramMap;
+    }
+
+    /**
+     * This method searches for a good parameter configuration. This is achieved
+     * by a pre-defined threshold bias where the distances to the k-th nearest
+     * neighbor are sorted and then a certain number is discarded as noise. The
+     * borderline k-distance is then taken as a limit.
+     *
+     * @throws Exception
+     */
+    public void searchForGoodParameters() throws Exception {
+        float[][] kdistances = nsf.getKDistances();
+        float[] kthdistance = new float[kdistances.length];
+        for (int i = 0; i < kdistances.length; i++) {
+            kthdistance[i] = kdistances[i][k - 1];
+        }
+        int[] rearrIndex = AuxSort.sortIndexedValue(kthdistance, true);
+        minPoints = k;
+        int threshold = (int) (noisePerc * rearrIndex.length);
+        epsilonNeighborhoodDist = kthdistance[threshold];
+    }
+
+    /**
+     * @return Integer that is the minimal number of points a neighborhood can
+     * have not to be considered noise.
+     */
+    public int getMinPoints() {
+        return minPoints;
+    }
+
+    /**
+     * @param minPoints Integer that is the minimal number of points a
+     * neighborhood can have not to be considered noise.
+     */
+    public void setMinPoints(int minPoints) {
+        this.minPoints = minPoints;
+    }
+
+    /**
+     * @return Epsilon-neighborhood diameter.
+     */
+    public float getEpsilon() {
+        return epsilonNeighborhoodDist;
+    }
+
+    /**
+     * @param epsilon Float that is the epsilon-neighborhood diameter.
+     */
+    public void setEpsilon(float epsilon) {
+        this.epsilonNeighborhoodDist = epsilon;
+    }
+
+    public DBScan() {
+    }
+
+    /**
+     * @param dset DataSet object for clustering.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Neighborhood size.
+     * @param minPoints Minimal number of points in neighborhoods of non-noisy
+     * data points.
+     * @param epsilon Diameter of the epsilon-neighborhood.
+     */
+    public DBScan(DataSet dset, CombinedMetric cmet, int k, int minPoints,
+            float epsilon) {
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+        this.k = k;
+        this.minPoints = minPoints;
+        epsilonNeighborhoodDist = epsilon;
+    }
+
+    /**
+     * @param dset DataSet object for clustering.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Neighborhood size.
+     */
+    public DBScan(DataSet dset, CombinedMetric cmet, int k) {
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+        this.k = k;
+    }
+
+    /**
+     * @param dset DataSet object for clustering.
+     * @param k Neighborhood size.
+     * @param minPoints Minimal number of points in neighborhoods of non-noisy
+     * data points.
+     * @param epsilon Diameter of the epsilon-neighborhood.
+     */
+    public DBScan(DataSet dset, int k, int minPoints, float epsilon) {
+        setCombinedMetric(CombinedMetric.EUCLIDEAN);
+        setDataSet(dset);
+        this.k = k;
+        this.minPoints = minPoints;
+        epsilonNeighborhoodDist = epsilon;
+    }
+
+    /**
+     * @param dset DataSet object for clustering.
+     * @param cm
