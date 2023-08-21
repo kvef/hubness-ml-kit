@@ -182,4 +182,98 @@ public class DBScan extends ClusteringAlg implements
 
     /**
      * @param dset DataSet object for clustering.
-     * @param cm
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param k Neighborhood size.
+     * @param minPoints Minimal number of points in neighborhoods of non-noisy
+     * data points.
+     * @param epsilon Diameter of the epsilon-neighborhood.
+     * @param noisePerc Expected percentage of noise in the data.
+     */
+    public DBScan(DataSet dset, CombinedMetric cmet, int k, int minPoints,
+            float epsilon, float noisePerc) {
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+        this.k = k;
+        this.minPoints = minPoints;
+        epsilonNeighborhoodDist = epsilon;
+        this.noisePerc = noisePerc;
+    }
+
+    /**
+     * @param dset DataSet object for clustering.
+     * @param k Neighborhood size.
+     * @param minPoints Minimal number of points in neighborhoods of non-noisy
+     * data points.
+     * @param epsilon Diameter of the epsilon-neighborhood.
+     * @param noisePerc Expected percentage of noise in the data.
+     */
+    public DBScan(DataSet dset, int k, int minPoints, float epsilon,
+            float noisePerc) {
+        setCombinedMetric(CombinedMetric.EUCLIDEAN);
+        setDataSet(dset);
+        this.k = k;
+        this.minPoints = minPoints;
+        epsilonNeighborhoodDist = epsilon;
+        this.noisePerc = noisePerc;
+    }
+
+    @Override
+    public void cluster() throws Exception {
+        performBasicChecks();
+        flagAsActive();
+        DataSet dset = getDataSet();
+        int size = dset.size();
+        visited = new boolean[size];
+        Arrays.fill(visited, false);
+        int cNum = 0;
+        ArrayList<Cluster> clusters = new ArrayList<>(10);
+        bestAssociations = new int[size];
+        Arrays.fill(bestAssociations, -1);
+        if (epsilonNeighborhoodDist == Float.MAX_VALUE) {
+            searchForGoodParameters();
+        }
+        int neighbSize;
+        CombinedMetric cmet = getCombinedMetric();
+        // Only calculates them if the current NeighborSetFinder object doesn't
+        // have them properly calculated.
+        calculateNeighborSets(k, cmet);
+        int[] perm = Permutation.obtainRandomPermutation(size);
+        for (int i = 0; i < size; i++) {
+            if (!visited[perm[i]]) {
+                visited[perm[i]] = true;
+                neighbSize = queryNumNPoints(perm[i], nsf);
+                if (neighbSize < minPoints) {
+                    bestAssociations[perm[i]] = -1; // Marked as noise.
+                } else {
+                    cNum++;
+                    Cluster clust = new Cluster(dset, size / 10);
+                    expandCluster(perm[i], neighbSize, clust, cNum - 1);
+                    clusters.add(clust);
+                }
+            }
+        }
+        setClusterAssociations(bestAssociations);
+    }
+
+    /**
+     * Expands the cluster around the considered core point as much as possible.
+     *
+     * @param index Index of the considered data point.
+     * @param neighbSize Neighborhood size.
+     * @param currentCluster Current cluster.
+     * @param clustIndex Current cluster index.
+     */
+    private void expandCluster(int index, int neighbSize,
+            Cluster currentCluster, int clustIndex) {
+        currentCluster.addInstance(index);
+        bestAssociations[index] = clustIndex;
+        Stack<Integer> potentialStack = new Stack<>();
+        int[][] kneighbors = nsf.getKNeighbors();
+        for (int i = 0; i < neighbSize; i++) {
+            potentialStack.push(kneighbors[index][i]);
+        }
+        while (!potentialStack.empty()) {
+            int i = potentialStack.pop();
+            if (!visited[i]) {
+                visited[i] = true;
+              
