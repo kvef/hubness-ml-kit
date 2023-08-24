@@ -276,4 +276,99 @@ public class DBScan extends ClusteringAlg implements
             int i = potentialStack.pop();
             if (!visited[i]) {
                 visited[i] = true;
-              
+                int nSize2 = queryNumNPoints(i, nsf);
+                if (nSize2 >= minPoints) {
+                    for (int j = 0; j < nSize2; j++) {
+                        potentialStack.push(kneighbors[i][j]);
+                    }
+                }
+            }
+            if (bestAssociations[i] == -1) { // Not yet assigned to a cluster.
+                // Assign it to the current cluster.
+                bestAssociations[i] = clustIndex;
+                currentCluster.addInstance(i);
+            }
+        }
+    }
+
+    /**
+     * Counts how many neighbor points are at a distance closer than the epsilon
+     * neighborhood diameter.
+     *
+     * @param index Index of the considered data point.
+     * @param nsf NeighborSetFinder object.
+     * @return An integer count representing the number of data points closer
+     * than epsilon.
+     */
+    private int queryNumNPoints(int index, NeighborSetFinder nsf) {
+        int closePointCounter = 0;
+        float[][] kdistances = nsf.getKDistances();
+        while (closePointCounter < kdistances[index].length
+                && kdistances[index][closePointCounter]
+                < epsilonNeighborhoodDist) {
+            closePointCounter++;
+        }
+        return closePointCounter;
+    }
+
+    /**
+     * Counts how many neighbor points are at a distance closer than the epsilon
+     * neighborhood diameter.
+     *
+     * @param index Index of the considered data point.
+     * @param nsf NeighborSetFinder object.
+     * @param epsilonNeighborhoodTest Epsilon neighborhood diameter to use for
+     * the count.
+     * @return An integer count representing the number of data points closer
+     * than epsilon.
+     */
+    private int queryNumNPoints(int index, NeighborSetFinder nsf,
+            float epsilonNeighborhoodTest) {
+        int closePointCounter = 0;
+        float[][] kdistances = nsf.getKDistances();
+        while (closePointCounter < kdistances[index].length
+                && kdistances[index][closePointCounter]
+                < epsilonNeighborhoodTest) {
+            closePointCounter++;
+        }
+        return closePointCounter;
+    }
+
+    @Override
+    public int[] assignPointsToModelClusters(DataSet dsetTest,
+            NeighborSetFinder nsfTest) {
+        if (dsetTest == null || dsetTest.isEmpty()) {
+            return null;
+        } else {
+            int[] clusterAssociations = new int[dsetTest.size()];
+            Arrays.fill(clusterAssociations, -1);
+            CombinedMetric cmet = getCombinedMetric();
+            Cluster[] clusterConfiguration = getClusters();
+            int numClusters = clusterConfiguration.length;
+            Cluster[] clusterConfigurationCopy = new Cluster[numClusters];
+            DataInstance[] centroids = new DataInstance[numClusters];
+            for (int i = 0; i < centroids.length; i++) {
+                try {
+                    centroids[i] = clusterConfiguration[i].getCentroid();
+                } catch (Exception e) {
+                }
+            }
+            for (int i = 0; i < clusterConfigurationCopy.length; i++) {
+                clusterConfigurationCopy[i] = clusterConfiguration[i].copy();
+            }
+            int cNum = 0;
+            int neighbSize = 0;
+            float minDist;
+            float currentDistance;
+            float[][] kdistances = nsfTest.getKDistances();
+            float[] kthdistance = new float[kdistances.length];
+            for (int i = 0; i < kdistances.length; i++) {
+                kthdistance[i] = kdistances[i][k - 1];
+            }
+            int[] rearrIndex;
+            try {
+                rearrIndex = AuxSort.sortIndexedValue(kthdistance, true);
+            } catch (Exception e) {
+                return null;
+            }
+            int threshold = (int) (
