@@ -458,4 +458,113 @@ public class DBScan extends ClusteringAlg implements
                         potentialStack.push(kneighbors[i][j]);
                     }
                 }
-            
+            }
+            if (clusterAssociations[i] == -1) {
+                // Not yet assigned to a cluster, so we assign it here.
+                clusterAssociations[i] = clustIndex;
+                currCluster.addInstance(i);
+            }
+        }
+    }
+
+    @Override
+    public void setDistMatrix(float[][] distances) {
+        this.distances = distances;
+    }
+
+    @Override
+    public float[][] getDistMatrix() {
+        return distances;
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    @Override
+    public void noRecalcs() {
+    } // A dummy method here, to satisfy the interface.
+
+    /**
+     * @return Best cluster associations.
+     */
+    public int[] getMinimizingAssociations() {
+        return bestAssociations;
+    }
+
+    @Override
+    public Cluster[] getMinimizingClusters() {
+        int[] clusterAssociations = getMinimizingAssociations();
+        int numClusters = ArrayUtil.max(clusterAssociations) + 1;
+        Cluster[] clusters = new Cluster[numClusters];
+        DataSet dset = getDataSet();
+        for (int i = 0; i < numClusters; i++) {
+            int initSize = Math.max(dset.size() / numClusters, 100);
+            clusters[i] = new Cluster(dset, initSize);
+        }
+        if ((dset != null) && (clusterAssociations != null)) {
+            for (int i = 0; i < dset.size(); i++) {
+                if (clusterAssociations[i] >= 0) {
+                    clusters[clusterAssociations[i]].addInstance(i);
+                }
+            }
+        }
+        return clusters;
+    }
+
+    /**
+     * @return Data matrix of float distances.
+     */
+    public float[][] getAllDistances() {
+        return nsf.getDistances();
+    }
+
+    /**
+     * @param k Neighborhood size.
+     * @param cmet CombinedMetric object.
+     * @throws Exception
+     */
+    private void calculateNeighborSets(int k, CombinedMetric cmet)
+            throws Exception {
+        if (nsf == null) {
+            if (cmet == null) {
+                cmet = CombinedMetric.EUCLIDEAN;
+            }
+            nsf = new NeighborSetFinder(getDataSet(), cmet);
+            if (distances != null) {
+                nsf.setDistances(distances);
+            } else {
+                nsf.calculateDistances();
+            }
+            nsf.calculateNeighborSets(k);
+        } else {
+            if (!nsf.isCalculatedUpToK(k)) {
+                if (nsf.getDistances() == null) {
+                    if (distances != null) {
+                        nsf.setDistances(distances);
+                    } else {
+                        nsf.calculateDistances();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param k Neighborhood size.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
+    }
+}
