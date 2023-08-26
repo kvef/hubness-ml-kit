@@ -371,4 +371,91 @@ public class DBScan extends ClusteringAlg implements
             } catch (Exception e) {
                 return null;
             }
-            int threshold = (int) (
+            int threshold = (int) (noisePerc * rearrIndex.length);
+            // And here we have the epsilon diameter for the test data.
+            float epsilonNeighborhoodTest = kthdistance[threshold];
+            boolean[] visitedTest = new boolean[dsetTest.size()];
+            Arrays.fill(visitedTest, false);
+            for (int i = 0; i < dsetTest.size(); i++) {
+                if (!visitedTest[i]) {
+                    visitedTest[i] = true;
+                    neighbSize = queryNumNPoints(i, nsfTest,
+                            epsilonNeighborhoodTest);
+                    if (neighbSize < minPoints) {
+                        clusterAssociations[i] = -1; // Marked as noise.
+                    } else {
+                        // Find the closest cluster.
+                        cNum = 0;
+                        minDist = Float.MAX_VALUE;
+                        currentDistance = Float.MAX_VALUE;
+                        for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                            try {
+                                currentDistance = cmet.dist(
+                                        dsetTest.data.get(i),
+                                        centroids[cIndex]);
+                            } catch (Exception e) {
+                            }
+                            if (currentDistance < minDist) {
+                                minDist = currentDistance;
+                                cNum = cIndex;
+                            }
+                        }
+                        expandTestCluster(
+                                i,
+                                neighbSize,
+                                clusterConfigurationCopy[cNum],
+                                cNum,
+                                nsfTest,
+                                clusterAssociations,
+                                visitedTest,
+                                epsilonNeighborhoodTest);
+                    }
+                }
+            }
+            return clusterAssociations;
+        }
+    }
+
+    /**
+     * Expands the cluster around the considered core test point as much as
+     * possible.
+     *
+     * @param index Index of the observed test core point.
+     * @param neighbSize Neighborhood size.
+     * @param currCluster Current cluster.
+     * @param clustIndex Index of the current cluster.
+     * @param nsfTest NeighborSetFinder object on the test set.
+     * @param clusterAssociations Cluster associations.
+     * @param visitedTest Boolean array indicating which test points have been
+     * visited up until this point.
+     * @param epsilonNeighborhoodTest Epsilon neighborhood diameter on the test
+     * data.
+     */
+    public void expandTestCluster(
+            int index,
+            int neighbSize,
+            Cluster currCluster,
+            int clustIndex,
+            NeighborSetFinder nsfTest,
+            int[] clusterAssociations,
+            boolean[] visitedTest,
+            float epsilonNeighborhoodTest) {
+        currCluster.addInstance(index);
+        clusterAssociations[index] = clustIndex;
+        Stack<Integer> potentialStack = new Stack<>();
+        int[][] kneighbors = nsfTest.getKNeighbors();
+        for (int i = 0; i < neighbSize; i++) {
+            potentialStack.push(kneighbors[index][i]);
+        }
+        while (!potentialStack.empty()) {
+            int i = potentialStack.pop();
+            if (!visitedTest[i]) {
+                visitedTest[i] = true;
+                int nSize2 = queryNumNPoints(i, nsfTest,
+                        epsilonNeighborhoodTest);
+                if (nSize2 >= minPoints) {
+                    for (int j = 0; j < nSize2; j++) {
+                        potentialStack.push(kneighbors[i][j]);
+                    }
+                }
+            
