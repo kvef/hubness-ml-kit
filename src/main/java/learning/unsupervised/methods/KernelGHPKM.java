@@ -217,4 +217,85 @@ public class KernelGHPKM extends ClusteringAlg implements
         }
         if (instanceWeights == null) {
             instanceWeights = new float[size];
-            Arrays.fill(instanceWeigh
+            Arrays.fill(instanceWeights, 1);
+        }
+        if (kmat == null) {
+            kmat = dset.calculateKernelMatrixMultThr(ker, 4);
+        }
+        double errorPrevious;
+        double errorCurrent = Double.MAX_VALUE;
+        setIterationIndex(0);
+        boolean noReassignments;
+        boolean errorDifferenceSignificant = true;
+        int closestHubIndex;
+        double smallestDistance;
+        int[] iterHubInd;
+        double currentDistance;
+        DataInstance[] iterHubDI;
+        int fi, se;
+        // It's best if the first assignment is done before and if the
+        // assignments are done at the end of the do-while loop, therefore
+        // allowing for better calculateIterationError estimates.              
+        for (int i = 0; i < dset.size(); i++) {
+            if (history) {
+                iterHubDI = new DataInstance[clusterHubIndexes.length];
+                iterHubInd = new int[clusterHubIndexes.length];
+                System.arraycopy(clusterHubs, 0, iterHubDI, 0,
+                        clusterHubs.length);
+                System.arraycopy(clusterHubIndexes, 0, iterHubInd, 0,
+                        clusterHubIndexes.length);
+                historyDIArrayList.add(iterHubDI);
+                historyIndexArrayList.add(iterHubInd);
+            }
+            closestHubIndex = -1;
+            smallestDistance = Double.MAX_VALUE;
+            for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                if (clusterHubIndexes[cIndex] >= 0) {
+                    if (clusterHubIndexes[cIndex] != i) {
+                        fi = Math.min(i, clusterHubIndexes[cIndex]);
+                        se = Math.max(i, clusterHubIndexes[cIndex]);
+                        currentDistance = kmat[i][0]
+                                + kmat[clusterHubIndexes[cIndex]][0]
+                                - 2 * kmat[Math.min(i, clusterHubIndexes[cIndex])][
+                                Math.max(i, clusterHubIndexes[cIndex])
+                                - Math.min(i, clusterHubIndexes[cIndex])];
+                    } else {
+                        closestHubIndex = cIndex;
+                        break;
+                    }
+                } else {
+                    currentDistance = Double.MAX_VALUE;
+                }
+                if (currentDistance < smallestDistance) {
+                    smallestDistance = currentDistance;
+                    closestHubIndex = cIndex;
+                }
+            }
+            clusterAssociations[i] = closestHubIndex;
+        }
+        setIterationIndex(0);
+        Random randa = new Random();
+        do {
+            nextIteration();
+            error = 0;
+            noReassignments = true;
+            clusters = getClusters();
+            int currSize;
+            float probDet = getProbFromSchedule();
+            for (int cIndex = 0; cIndex < clusters.length; cIndex++) {
+                currSize = clusters[cIndex].indexes.size();
+                if (currSize == 1) {
+                    clusterHubs[cIndex] = clusters[cIndex].getInstance(0);
+                    clusterHubIndexes[cIndex] = clusters[cIndex].indexes.get(0);
+                    continue;
+                }
+                double decision = randa.nextFloat();
+                if (decision > probDet) {
+                    // Squared hubness proportional stochastic selection.
+                    cumulativeProbabilities = new double[Math.max(1, currSize)];
+                    cumulativeProbabilities[0] = 0;
+                    for (int j = 1; j < currSize; j++) {
+                        cumulativeProbabilities[j] =
+                                cumulativeProbabilities[j - 1]
+                                + hubnessArray[clusters[cIndex].indexes.get(j)]
+                               
