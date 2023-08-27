@@ -111,4 +111,110 @@ public class KernelGHPKM extends ClusteringAlg implements
     /**
      * @param dset DataSet object.
      * @param cmet CombinedMetric object for distance calculations.
-     * @param ker Kerne
+     * @param ker Kernel object.
+     * @param numClusters A pre-defined number of clusters.
+     * @param k Neighborhood size.
+     */
+    public KernelGHPKM(DataSet dset, CombinedMetric cmet, Kernel ker,
+            int numClusters, int k) {
+        setNumClusters(numClusters);
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+        this.k = k;
+        this.ker = ker;
+    }
+
+    /**
+     * @param dset DataSet object.
+     * @param ker Kernel object.
+     * @param numClusters A pre-defined number of clusters.
+     * @param k Neighborhood size.
+     */
+    public KernelGHPKM(DataSet dset, int numClusters, Kernel ker, int k) {
+        setNumClusters(numClusters);
+        setCombinedMetric(CombinedMetric.EUCLIDEAN);
+        setDataSet(dset);
+        this.k = k;
+        this.ker = ker;
+    }
+
+    /**
+     * @param dset DataSet object.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClusters A pre-defined number of clusters.
+     * @param k Neighborhood size.
+     */
+    public KernelGHPKM(DataSet dset, CombinedMetric cmet, int numClusters,
+            int k) {
+        setNumClusters(numClusters);
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+        this.k = k;
+        ker = new MinKernel();
+    }
+
+    /**
+     * @param dset DataSet object.
+     * @param numClusters A pre-defined number of clusters.
+     * @param k Neighborhood size.
+     */
+    public KernelGHPKM(DataSet dset, int numClusters, int k) {
+        setNumClusters(numClusters);
+        setCombinedMetric(CombinedMetric.EUCLIDEAN);
+        setDataSet(dset);
+        this.k = k;
+        ker = new MinKernel();
+    }
+
+    @Override
+    public void cluster() throws Exception {
+        performBasicChecks();
+        flagAsActive();
+        DataSet dset = getDataSet();
+        CombinedMetric cmet = getCombinedMetric();
+        int numClusters = getNumClusters();
+        cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+        boolean trivial = checkIfTrivial();
+        if (trivial) {
+            return;
+        } // Nothing needs to be done in this case.
+        int[] clusterAssociations = new int[dset.size()];
+        Arrays.fill(clusterAssociations, 0, dset.size(), -1);
+        setClusterAssociations(clusterAssociations);
+        PlusPlusSeeder seeder = new PlusPlusSeeder(numClusters,
+                dset.data, cmet);
+        clusterHubIndexes = seeder.getCentroidIndexes();
+        clusterKerFactors = new double[numClusters];
+        int[] initialIndexes = new int[numClusters];
+        DataInstance[] clusterHubs = new DataInstance[numClusters];
+        Cluster[] clusters;
+        for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+            clusterAssociations[clusterHubIndexes[cIndex]] = cIndex;
+            clusterHubs[cIndex] = (dset.data.get(clusterHubIndexes[cIndex]));
+            clusterKerFactors[cIndex] = kmat[cIndex][0];
+            initialIndexes[cIndex] = clusterHubIndexes[cIndex];
+        }
+        int size = dset.size();
+        if (hubnessArray == null) {
+            calculateHubness(k, cmet);
+        }
+        if (history) {
+            historyIndexArrayList = new ArrayList<>(2 * MAX_ITER);
+            historyDIArrayList = new ArrayList<>(2 * MAX_ITER);
+        }
+        try {
+            if (distances == null) {
+                distances = getNSFDistances();
+            }
+        } catch (Exception e) {
+        }
+        if (distances == null) {
+            distances = dset.calculateDistMatrixMultThr(cmet, 4);
+        }
+        if (ker == null) {
+            throw new Exception("No kernel was provided to the clustering"
+                    + " algorithm. Unable to cluster.");
+        }
+        if (instanceWeights == null) {
+            instanceWeights = new float[size];
+            Arrays.fill(instanceWeigh
