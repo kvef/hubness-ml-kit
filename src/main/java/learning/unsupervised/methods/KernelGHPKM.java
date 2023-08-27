@@ -298,4 +298,74 @@ public class KernelGHPKM extends ClusteringAlg implements
                         cumulativeProbabilities[j] =
                                 cumulativeProbabilities[j - 1]
                                 + hubnessArray[clusters[cIndex].indexes.get(j)]
-                               
+                                * hubnessArray[clusters[cIndex].indexes.get(j)];
+                    }
+                    decision = randa.nextFloat()
+                            * cumulativeProbabilities[Math.max(
+                            0, currSize - 1)];
+                    int foundIndex = findIndex(decision, 0, currSize - 1);
+                    if (foundIndex > 0) {
+                        clusterHubIndexes[cIndex] =
+                                clusters[cIndex].indexes.get(foundIndex);
+                        clusterHubs[cIndex] = dset.getInstance(
+                                clusters[cIndex].indexes.get(foundIndex));
+                    } else {
+                        clusterHubIndexes[cIndex] = 0;
+                        clusterHubs[cIndex] = null;
+                    }
+                } else {
+                    // Deterministic approach.
+                    clusterHubs[cIndex] = clusters[cIndex].getCentroid();
+                    clusterHubIndexes[cIndex] = -1;
+                }
+            }
+            if (history) {
+                iterHubDI = new DataInstance[clusterHubIndexes.length];
+                iterHubInd = new int[clusterHubIndexes.length];
+                System.arraycopy(clusterHubs, 0, iterHubDI, 0,
+                        clusterHubs.length);
+                System.arraycopy(clusterHubIndexes, 0, iterHubInd, 0,
+                        clusterHubIndexes.length);
+                historyDIArrayList.add(iterHubDI);
+                historyIndexArrayList.add(iterHubInd);
+            }
+            for (int i = 0; i < dset.size(); i++) {
+                closestHubIndex = -1;
+                smallestDistance = Double.MAX_VALUE;
+                double[] clusterDistances = new double[clusters.length];
+                if (getIterationIndex() > 1) {
+                    for (int cIndex = 0; cIndex < clusters.length; cIndex++) {
+                        clusterDistances[cIndex] = kmat[i][0]
+                                + clusterKerFactors[cIndex];
+                    }
+                    for (int index = 0; index < dset.size(); index++) {
+                        if (clusterAssociations[index] != -1) {
+                            clusterDistances[clusterAssociations[index]] -=
+                                    2 * instanceWeights[index]
+                                    * kmat[Math.min(i, index)][Math.max(
+                                    i, index) - Math.min(i, index)]
+                                    * (1f / Math.max(1,
+                                    clusters[clusterAssociations[
+                                    index]].size()));
+                            // Diagonal entries are included in the kernel
+                            // matrix.
+                        }
+                    }
+                } else {
+                    int min, max;
+                    for (int cIndex = 0; cIndex < clusters.length; cIndex++) {
+                        min = Math.min(initialIndexes[cIndex], i);
+                        max = Math.max(initialIndexes[cIndex], i);
+                        clusterDistances[cIndex] = -kmat[min][max - min];
+                    }
+                }
+                for (int cIndex = 0; cIndex < clusters.length; cIndex++) {
+                    if (clusterHubIndexes[cIndex] < 0) {
+                        currentDistance = clusterDistances[cIndex];
+                    } else {
+                        currentDistance = kmat[i][0]
+                                + kmat[clusterHubIndexes[cIndex]][0]
+                                - 2 * kmat[Math.min(i,
+                                clusterHubIndexes[cIndex])][
+                                Math.max(i, clusterHubIndexes[cIndex])
+                   
