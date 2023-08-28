@@ -368,4 +368,82 @@ public class KernelGHPKM extends ClusteringAlg implements
                                 - 2 * kmat[Math.min(i,
                                 clusterHubIndexes[cIndex])][
                                 Math.max(i, clusterHubIndexes[cIndex])
-                   
+                                - Math.min(i, clusterHubIndexes[cIndex])];
+                    }
+                    if (currentDistance < smallestDistance) {
+                        smallestDistance = currentDistance;
+                        closestHubIndex = cIndex;
+                    } else if (currentDistance == smallestDistance) {
+                        if (randa.nextFloat() > 0.5) {
+                            smallestDistance = currentDistance;
+                            closestHubIndex = cIndex;
+                        }
+                    }
+                }
+                error += smallestDistance;
+                if (closestHubIndex != clusterAssociations[i]) {
+                    noReassignments = false;
+                }
+                clusterAssociations[i] = closestHubIndex;
+            }
+            clusters = getClusters();
+            // Recalculate the clust kernel factors.
+            int min, max;
+            for (int cIndex = 0; cIndex < clusters.length; cIndex++) {
+                clusterKerFactors[cIndex] = 0;
+                for (int i = 0; i < clusters[cIndex].size(); i++) {
+                    for (int j = i; j < clusters[cIndex].size(); j++) {
+                        // Including the self-kernel dist.
+                        min = Math.min(clusters[cIndex].indexes.get(j),
+                                clusters[cIndex].indexes.get(i));
+                        max = Math.max(clusters[cIndex].indexes.get(j),
+                                clusters[cIndex].indexes.get(i));
+                        clusterKerFactors[cIndex] +=
+                                instanceWeights[clusters[cIndex].indexes.get(i)]
+                                * instanceWeights[clusters[cIndex].
+                                indexes.get(j)] * kmat[min][max - min] *
+                                (1f / (Math.max(1, clusters[cIndex].size()) *
+                                Math.max(1, (clusters[cIndex].size()))));
+                    }
+                }
+            }
+            errorPrevious = errorCurrent;
+            errorCurrent = error;
+            if (errorCurrent < smallestError) {
+                bestAssociations = clusterAssociations;
+            }
+            if (getIterationIndex() >= probabilisticIterations) {
+                if (DataMineConstants.isAcceptableDouble(errorPrevious)
+                        && DataMineConstants.isAcceptableDouble(errorCurrent)
+                        && (Math.abs(errorCurrent / errorPrevious) - 1f)
+                        < ERROR_THRESHOLD) {
+                    errorDifferenceSignificant = false;
+                } else {
+                    errorDifferenceSignificant = true;
+                }
+            }
+        } while (errorDifferenceSignificant && !noReassignments
+                && getIterationIndex() < MAX_ITER);
+        endCentroids = clusterHubs;
+        setClusterAssociations(clusterAssociations);
+        flagAsInactive();
+    }
+
+    @Override
+    public int[] assignPointsToModelClusters(
+            DataSet dset,
+            NeighborSetFinder nsfTest,
+            float[][] kernelSimToTraining,
+            float[] selfKernels) {
+        if (dset == null || dset.isEmpty()) {
+            return null;
+        } else {
+            int[] associations = new int[dset.size()];
+            double min;
+            double dist;
+            int[] modelAssociations = getClusterAssociations();
+            for (int i = 0; i < dset.size(); i++) {
+                Cluster[] clust = this.getClusters();
+                double[] clustDists = new double[clust.length];
+                for (int cIndex = 0; cIndex < clustDists.length; cIndex++) {
+                    clustDists[cIndex] = clusterKerFactors
