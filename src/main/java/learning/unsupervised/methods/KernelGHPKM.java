@@ -446,4 +446,118 @@ public class KernelGHPKM extends ClusteringAlg implements
                 Cluster[] clust = this.getClusters();
                 double[] clustDists = new double[clust.length];
                 for (int cIndex = 0; cIndex < clustDists.length; cIndex++) {
-                    clustDists[cIndex] = clusterKerFactors
+                    clustDists[cIndex] = clusterKerFactors[cIndex];
+                }
+                for (int index = 0; index < modelAssociations.length; index++) {
+                    if (modelAssociations[index] >= 0
+                            && modelAssociations[index] < clustDists.length) {
+                        clustDists[modelAssociations[index]] -=
+                                2 * instanceWeights[index]
+                                * kernelSimToTraining[i][index];
+                    }
+                }
+                min = Double.MAX_VALUE;
+                for (int cIndex = 0; cIndex < clustDists.length; cIndex++) {
+                    if (clusterHubIndexes[cIndex] < 0) {
+                        dist = clustDists[cIndex];
+                    } else {
+                        dist = selfKernels[i]
+                                + kmat[clusterHubIndexes[cIndex]][0]
+                                - 2 * kernelSimToTraining[i][
+                                clusterHubIndexes[cIndex]];
+                    }
+                    if (dist < min) {
+                        associations[i] = cIndex;
+                        min = dist;
+                    }
+                }
+            }
+            return associations;
+        }
+    }
+
+    @Override
+    public void setKernelMatrix(float[][] kmat) {
+        this.kmat = kmat;
+    }
+
+    @Override
+    public float[][] getKernelMatrix() {
+        return kmat;
+    }
+
+    /**
+     * @return Probability of a deterministic iteration.
+     */
+    private float getProbFromSchedule() {
+        int iteration = getIterationIndex();
+        if (iteration < probabilisticIterations) {
+            return (float) ((float) iteration /
+                    (float) probabilisticIterations);
+        } else {
+            return 1f;
+        }
+    }
+
+    /**
+     * Binary search over cumulative squared neighbor occurrence frequencies.
+     *
+     * @param searchValue Query value.
+     * @param first First index.
+     * @param second Second index.
+     * @return Match index.
+     */
+    public int findIndex(double searchValue, int first, int second) {
+        if (second - first <= 1) {
+            return second;
+        }
+        int middle = (first + second) / 2;
+        if (cumulativeProbabilities[middle] < searchValue) {
+            return findIndex(searchValue, middle, second);
+        } else {
+            return findIndex(searchValue, first, middle);
+        }
+    }
+
+    @Override
+    public int[] assignPointsToModelClusters(DataSet dsetTest,
+            NeighborSetFinder nsfTest) {
+        if (dsetTest == null || dsetTest.isEmpty()) {
+            return null;
+        } else {
+            int[] clusterAssociations = new int[dsetTest.size()];
+            if (endCentroids == null) {
+                return clusterAssociations;
+            }
+            float minDist;
+            float dist;
+            CombinedMetric cmet = getCombinedMetric();
+            cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+            for (int i = 0; i < dsetTest.size(); i++) {
+                minDist = Float.MAX_VALUE;
+                for (int cIndex = 0; cIndex < endCentroids.length; cIndex++) {
+                    dist = Float.MAX_VALUE;
+                    try {
+                        dist = cmet.dist(
+                                endCentroids[cIndex], dsetTest.getInstance(i));
+                    } catch (Exception e) {
+                    }
+                    if (dist < minDist) {
+                        clusterAssociations[i] = cIndex;
+                        minDist = dist;
+                    }
+                }
+            }
+            return clusterAssociations;
+        }
+    }
+
+    /**
+     * @param hubnessArray Integer array of neighbor occurrence frequencies.
+     */
+    public void setHubness(int[] hubnessArray) {
+        this.hubnessArray = hubnessArray;
+    }
+
+    /**
+     * 
