@@ -560,4 +560,84 @@ public class KernelGHPKM extends ClusteringAlg implements
     }
 
     /**
-     * 
+     * @param k Neighborhood size.
+     * @param cmet CombinedMetric object.
+     * @throws Exception
+     */
+    public void calculateHubness(int k, CombinedMetric cmet) throws Exception {
+        if (nsf == null) {
+            if (cmet == null) {
+                cmet = CombinedMetric.EUCLIDEAN;
+            }
+            nsf = new NeighborSetFinder(getDataSet(), cmet);
+            nsf.calculateDistances();
+            nsf.calculateNeighborSets(k);
+            if (unsupervisedHubness) {
+                hubnessArray = nsf.getNeighborFrequencies();
+            } else {
+                float[] weights =
+                        nsf.getSimhubAlternateWeightsGoodnessProportional(k);
+                int[] ghArray = nsf.getGoodFrequencies();
+                int[] bhArray = nsf.getBadFrequencies();
+                float[] sArray = new float[ghArray.length];
+                for (int i = 0; i < sArray.length; i++) {
+                    sArray[i] = (ghArray[i] + bhArray[i]) * weights[i];
+                }
+                // If the data has much more bad than good hubness, one has to
+                // be careful - since hubnessArray is an int array, things would
+                // get truncated to zero easily. Hence, some lightweight
+                // re-scaling to fix the issue if it exists. Re-scaling doesn't
+                // affect the algorithm anyway, but it has to be done since
+                // hubnessArray is not float.
+                float mean = ArrayUtil.findMean(sArray);
+                float max = ArrayUtil.max(sArray);
+                float fact = 1;
+                if (mean <= 1 || max < 50) {
+                    fact = Math.max(100, 1 / mean);
+                }
+                hubnessArray = new int[sArray.length];
+                for (int i = 0; i < sArray.length; i++) {
+                    hubnessArray[i] = (int) (sArray[i] * fact);
+                }
+            }
+        } else {
+            // If the nsf is provided, the hubness scores only need to be
+            // recalculated for a smaller k - in case a larger one is given
+            // in the nsf.
+            if (nsf.getCurrK() > k) {
+                nsf = nsf.getSubNSF(k);
+            }
+            if (unsupervisedHubness) {
+                hubnessArray = nsf.getNeighborFrequencies();
+            } else {
+                float[] weights =
+                        nsf.getSimhubAlternateWeightsGoodnessProportional(k);
+                int[] ghArray = nsf.getGoodFrequencies();
+                int[] bhArray = nsf.getBadFrequencies();
+                float[] sArray = new float[ghArray.length];
+                for (int i = 0; i < sArray.length; i++) {
+                    sArray[i] = (ghArray[i] + bhArray[i]) * weights[i];
+                }
+                // If the data has much more bad than good hubness, one has to
+                // be careful - since hubnessArray is an int array, things would
+                // get truncated to zero easily. Hence, some lightweight
+                // re-scaling to fix the issue if it exists. Re-scaling doesn't
+                // affect the algorithm anyway, but it has to be done since
+                // hubnessArray is not float.
+                float mean = ArrayUtil.findMean(sArray);
+                float max = ArrayUtil.max(sArray);
+                float fact = 1;
+                if (mean <= 1 || max < 50) {
+                    fact = Math.max(100, 1 / mean);
+                }
+                hubnessArray = new int[sArray.length];
+                for (int i = 0; i < sArray.length; i++) {
+                    hubnessArray[i] = (int) (sArray[i] * fact);
+                }
+            }
+        }
+    }
+
+    /**
+     * @return Distances from the NeighborSetFinder object.
+   
