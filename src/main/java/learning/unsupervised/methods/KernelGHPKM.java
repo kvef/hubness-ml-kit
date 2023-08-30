@@ -640,4 +640,113 @@ public class KernelGHPKM extends ClusteringAlg implements
 
     /**
      * @return Distances from the NeighborSetFinder object.
-   
+     */
+    public float[][] getNSFDistances() {
+        return nsf.getDistances();
+    }
+
+    /**
+     * @param k Neighborhood size.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    @Override
+    public void setDistMatrix(float[][] distances) {
+        this.distances = distances;
+    }
+
+    @Override
+    public float[][] getDistMatrix() {
+        return distances;
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    @Override
+    public void noRecalcs() {
+    } // A dummy method.
+
+    @Override
+    public void setMinIterations(int numIter) {
+        probabilisticIterations = numIter;
+    }
+
+    /**
+     * Sets whether to use supervised or unsupervised hubness.
+     *
+     * @param mode Hubness mode.
+     */
+    public void setHubnessMode(int mode) {
+        if (mode % 2 == UNSUPERVISED) {
+            unsupervisedHubness = true;
+        } else {
+            unsupervisedHubness = false;
+        }
+    }
+
+    /**
+     * @return Integer array of neighbor occurrence frequencies.
+     */
+    public int[] getHubnessArray() {
+        return hubnessArray;
+    }
+
+    /**
+     * @param history Boolean variable determining whether to keep track of all
+     * hub selections.
+     */
+    public void keepHistory(boolean history) {
+        this.history = history;
+    }
+
+    /**
+     * @return An ArrayList of int arrays containing hub selections per
+     * clustering iterations.
+     */
+    public ArrayList<int[]> getHubIndexHistory() {
+        return historyIndexArrayList;
+    }
+
+    /**
+     * @return An ArrayList of DataInstance arrays containing selected cluster
+     * center prototypes over clustering iterations.
+     */
+    public ArrayList<DataInstance[]> getHubDIHistory() {
+        return historyDIArrayList;
+    }
+
+    /**
+     * @return Error-minimizing cluster associations.
+     */
+    public int[] getMinimizingAssociations() {
+        return bestAssociations;
+    }
+
+    @Override
+    public Cluster[] getMinimizingClusters() {
+        int numClusters = getNumClusters();
+        Cluster[] clusters = new Cluster[numClusters];
+        int[] clusterAssociations = getMinimizingAssociations();
+        DataSet dset = getDataSet();
+        for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+            int initSize = Math.max(dset.size() / numClusters, 100);
+            clusters[cIndex] = new Cluster(dset, initSize);
+        }
+        if ((dset != null) && (clusterAssociations != null)) {
+            for (int i = 0; i < dset.size(); i++) {
+                clusters[clusterAssociations[i]].addInstance(i);
+            }
+        }
+        return clusters;
+    }
+}
