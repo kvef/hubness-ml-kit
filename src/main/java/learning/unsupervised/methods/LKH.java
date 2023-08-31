@@ -99,4 +99,89 @@ public class LKH extends ClusteringAlg implements
      * @param k
      */
     public LKH(DataSet dset, int numClusters, int k) {
-        setNumClusters(numCl
+        setNumClusters(numClusters);
+        setCombinedMetric(CombinedMetric.EUCLIDEAN);
+        setDataSet(dset);
+        this.k = k;
+    }
+
+    @Override
+    public void cluster() throws Exception {
+        performBasicChecks();
+        flagAsActive();
+        DataSet dset = getDataSet();
+        CombinedMetric cmet = getCombinedMetric();
+        int numClusters = getNumClusters();
+        cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+        boolean trivial = checkIfTrivial();
+        if (trivial) {
+            return;
+        } // Nothing needs to be done in this case.
+        int[] clusterAssociations = new int[dset.size()];
+        Arrays.fill(clusterAssociations, 0, dset.size(), -1);
+        setClusterAssociations(clusterAssociations);
+        distances = new float[dset.size()][];
+        for (int i = 0; i < distances.length; i++) {
+            distances[i] = new float[distances.length - i - 1];
+            for (int j = 0; j < distances[i].length; j++) {
+                distances[i][j] = -1;
+                // Indicating that this distance hasn't been calculated yet.
+                // It's a speed up trick so that not all n^2 / 2 distances need
+                // to be calculated in order to find hubs.
+            }
+        }
+        DataInstance[] clusterHubs = new DataInstance[numClusters];
+        PlusPlusSeeder seeder = new PlusPlusSeeder(numClusters, dset.data,
+                cmet);
+        int[] clusterHubIndexes = seeder.getCentroidIndexes();
+        for (int i = 0; i < numClusters; i++) {
+            clusterAssociations[clusterHubIndexes[i]] = i;
+            clusterHubs[i] = (dset.data.get(clusterHubIndexes[i]));
+        }
+        Cluster[] clusters;
+        double errorPrevious;
+        double errorCurrent = Double.MAX_VALUE;
+        setIterationIndex(0);
+        boolean noReassignments;
+        boolean errorDifferenceSignificant = true;
+        int fi, se;
+        int closestHub;
+        float smallestDistance;
+        float currentDistance;
+        // It's best if the first assignment is done before and if the
+        // assignments are done at the end of the do-while loop, therefore
+        // allowing for better calculateIterationError estimates.
+        for (int i = 0; i < clusterAssociations.length; i++) {
+            closestHub = -1;
+            smallestDistance = Float.MAX_VALUE;
+            for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                if (clusterHubIndexes[cIndex] > 0) {
+                    if (clusterHubIndexes[cIndex] != i) {
+                        fi = Math.min(i, clusterHubIndexes[cIndex]);
+                        se = Math.max(i, clusterHubIndexes[cIndex]);
+                        if (distances[fi][se - fi - 1] <= 0) {
+                            distances[fi][se - fi - 1] =
+                                    cmet.dist(dset.data.get(fi),
+                                    dset.data.get(se));
+                        }
+                        currentDistance = distances[fi][se - fi - 1];
+                    } else {
+                        closestHub = cIndex;
+                        break;
+                    }
+                } else {
+                    currentDistance = cmet.dist(dset.data.get(i),
+                            clusterHubs[cIndex]);
+                }
+                if (currentDistance < smallestDistance) {
+                    smallestDistance = currentDistance;
+                    closestHub = cIndex;
+                }
+            }
+            clusterAssociations[i] = closestHub;
+        }
+        do {
+            nextIteration();
+            noReassignments = true;
+            clusters = getClusters();
+           
