@@ -253,4 +253,70 @@ public class LKH extends ClusteringAlg implements
                                         if (temp > 0) {
                                             kdistances[j][temp] =
                                                     kdistances[j][temp - 1];
-                           
+                                            kneighbors[j][temp] =
+                                                    kneighbors[j][temp - 1];
+                                        }
+                                        temp--;
+                                    }
+                                    kdistances[j][temp] = currDistance;
+                                    kneighbors[j][temp] = l;
+                                    kcurrLen[j]++;
+                                } else {
+                                    kdistances[j][kcurrLen[j]] = currDistance;
+                                    kneighbors[j][kcurrLen[j]] = l;
+                                    kcurrLen[j]++;
+                                }
+                            }
+                        } else {
+                            kdistances[j][0] = currDistance;
+                            kneighbors[j][0] = l;
+                            kcurrLen[j] = 1;
+                        }
+                        if (kcurrLen[l] > 0) {
+                            if (kcurrLen[l] == k) {
+                                if (currDistance < kdistances[l][k - 1]) {
+                                    temp = k - 1;
+                                    while ((temp >= 0)
+                                            && currDistance <
+                                            kdistances[l][temp]) {
+                                        if (temp > 0) {
+                                            kdistances[l][temp] =
+                                                    kdistances[l][temp - 1];
+                                            kneighbors[l][temp] =
+                                                    kneighbors[l][temp - 1];
+                                        }
+                                        temp--;
+                                    }
+                                    kdistances[l][temp + 1] = currDistance;
+                                    kneighbors[l][temp + 1] = j;
+                                }
+                            } else {
+                                if (currDistance
+                                        < kdistances[l][kcurrLen[l] - 1]) {
+                                    temp = kcurrLen[l] - 1;
+                                    kdistances[l][kcurrLen[l]] =
+                                            kdistances[l][kcurrLen[l] - 1];
+                                    kneighbors[l][kcurrLen[l]] =
+                                            kneighbors[l][kcurrLen[l] - 1];
+                                    while ((temp >= 0)
+                                            && currDistance
+                                            < kdistances[l][temp - 1]) {
+                                        if (temp > 0) {
+                                            kdistances[l][temp] =
+                                                    kdistances[l][temp - 1];
+                                            kneighbors[l][temp] =
+                                                    kneighbors[l][temp - 1];
+                                        }
+                                        temp--;
+                                    }
+                                    kdistances[l][temp] = currDistance;
+                                    kneighbors[l][temp] = j;
+                                    kcurrLen[l]++;
+                                } else {
+                                    kdistances[l][kcurrLen[l]] = currDistance;
+                                    kneighbors[l][kcurrLen[l]] = j;
+                                    kcurrLen[l]++;
+
+                                }
+                            }
+    
