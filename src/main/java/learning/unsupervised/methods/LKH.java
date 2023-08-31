@@ -184,4 +184,73 @@ public class LKH extends ClusteringAlg implements
             nextIteration();
             noReassignments = true;
             clusters = getClusters();
-           
+            int first, second;
+            int[][] kneighbors;
+            float[][] kdistances;
+            int[] kcurrLen;
+            int[] kneighborFrequencies;
+            int maxFrequency;
+            int maxIndex;
+            int maxActualIndex;
+            int currSize;
+            for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                currSize = clusters[cIndex].indexes.size();
+                if (currSize == 1) {
+                    clusterHubs[cIndex] = clusters[cIndex].getInstance(0);
+                    clusterHubIndexes[cIndex] = clusters[cIndex].indexes.get(0);
+                    continue;
+                }
+                if (currSize < k + 2) {
+                    clusterHubs[cIndex] = clusters[cIndex].getCentroid();
+                    clusterHubIndexes[cIndex] = -1;
+                    continue;
+                }
+                kneighbors = new int[currSize][k];
+                kdistances = new float[currSize][k];
+                kcurrLen = new int[currSize];
+                int temp;
+                float currDistance;
+                for (int j = 0; j < currSize; j++) {
+                    for (int l = j + 1; l < currSize; l++) {
+                        first = clusters[cIndex].indexes.get(j);
+                        second = clusters[cIndex].indexes.get(l);
+                        if (distances[first][second - first - 1] < 0) {
+                            distances[first][second - first - 1] =
+                                    cmet.dist(dset.data.get(first),
+                                    dset.data.get(second));
+                        }
+                        currDistance = distances[first][second - first - 1];
+                        if (kcurrLen[j] > 0) {
+                            if (kcurrLen[j] == k) {
+                                if (currDistance < kdistances[j][k - 1]) {
+                                    temp = k - 1;
+                                    while ((temp >= 0)
+                                            && currDistance <
+                                            kdistances[j][temp]) {
+                                        if (temp > 0) {
+                                            kdistances[j][temp] =
+                                                    kdistances[j][temp - 1];
+                                            kneighbors[j][temp] =
+                                                    kneighbors[j][temp - 1];
+                                        }
+                                        temp--;
+                                    }
+                                    kdistances[j][temp + 1] = currDistance;
+                                    kneighbors[j][temp + 1] = l;
+                                }
+                            } else {
+                                if (currDistance
+                                        < kdistances[j][kcurrLen[j] - 1]) {
+                                    // Search for an insertion place.
+                                    temp = kcurrLen[j] - 1;
+                                    kdistances[j][kcurrLen[j]] =
+                                            kdistances[j][kcurrLen[j] - 1];
+                                    kneighbors[j][kcurrLen[j]] =
+                                            kneighbors[j][kcurrLen[j] - 1];
+                                    while ((temp >= 0)
+                                            && currDistance
+                                            < kdistances[j][temp - 1]) {
+                                        if (temp > 0) {
+                                            kdistances[j][temp] =
+                                                    kdistances[j][temp - 1];
+                           
