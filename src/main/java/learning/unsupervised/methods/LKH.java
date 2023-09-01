@@ -400,4 +400,91 @@ public class LKH extends ClusteringAlg implements
 
     /**
      * @param clusterHubs An array of cluster hubs.
-     * @param cluste
+     * @param clusterHubIndexes An array of indexes of cluster hubs.
+     * @return The current iteration squared error.
+     * @throws Exception
+     */
+    private double calculateIterationError(DataInstance[] clusterHubs,
+            int[] clusterHubIndexes) throws Exception {
+        int[] clusterAssociations = getClusterAssociations();
+        double error = 0;
+        int first;
+        int second;
+        CombinedMetric cmet = getCombinedMetric();
+        DataSet dset = getDataSet();
+        for (int i = 0; i < clusterAssociations.length; i++) {
+            if (clusterHubIndexes[clusterAssociations[i]] != -1) {
+                if (clusterHubIndexes[clusterAssociations[i]] != i) {
+                    first = Math.min(i,
+                            clusterHubIndexes[clusterAssociations[i]]);
+                    second = Math.max(i,
+                            clusterHubIndexes[clusterAssociations[i]]);
+                    if (distances[first][second - first - 1] > 0) {
+                        error += distances[first][second - first - 1]
+                                * distances[first][second - first - 1];
+                    } else {
+                        error += Math.pow(cmet.dist(
+                                clusterHubs[clusterAssociations[i]],
+                                dset.data.get(i)), 2);
+                    }
+                }
+            } else {
+                error += Math.pow(cmet.dist(
+                        clusterHubs[clusterAssociations[i]],
+                        dset.data.get(i)), 2);
+            }
+        }
+        System.out.println(error);
+        return error;
+    }
+
+    @Override
+    public int[] assignPointsToModelClusters(DataSet dsetTest,
+            NeighborSetFinder nsfTest) {
+        if (dsetTest == null || dsetTest.isEmpty()) {
+            return null;
+        } else {
+            int[] clusterAssociations = new int[dsetTest.size()];
+            if (endCentroids == null) {
+                return clusterAssociations;
+            }
+            float minDist;
+            float dist;
+            CombinedMetric cmet = getCombinedMetric();
+            cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+            for (int i = 0; i < dsetTest.size(); i++) {
+                minDist = Float.MAX_VALUE;
+                for (int cIndex = 0; cIndex < endCentroids.length; cIndex++) {
+                    dist = Float.MAX_VALUE;
+                    try {
+                        dist = cmet.dist(
+                                endCentroids[cIndex], dsetTest.getInstance(i));
+                    } catch (Exception e) {
+                    }
+                    if (dist < minDist) {
+                        clusterAssociations[i] = cIndex;
+                        minDist = dist;
+                    }
+                }
+            }
+            return clusterAssociations;
+        }
+    }
+
+    /**
+     * @param k Neighborhood size.
+     */
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    @Override
+    public void setDistMatrix(float[][] distances) {
+        this.distances = distances;
+    }
+
+    @Override
+    public float[][] getDistMatrix() {
+        return distances;
+    }
+}
