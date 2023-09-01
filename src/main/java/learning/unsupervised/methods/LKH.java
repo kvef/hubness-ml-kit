@@ -319,4 +319,85 @@ public class LKH extends ClusteringAlg implements
 
                                 }
                             }
-    
+                        } else {
+                            distances[l][0] = currDistance;
+                            kneighbors[l][0] = j;
+                            kcurrLen[l] = 1;
+                        }
+                    }
+                }
+                // Now calculate the locally restricted neighbor occurrence
+                // frequencies.
+                kneighborFrequencies = new int[kneighbors.length];
+                for (int j = 0; j < kneighbors.length; j++) {
+                    for (int l = 0; l < k; l++) {
+                        kneighborFrequencies[kneighbors[j][l]]++;
+                    }
+                }
+                maxFrequency = 0;
+                maxIndex = 0;
+                for (int j = 0; j < kneighborFrequencies.length; j++) {
+                    if (kneighborFrequencies[j] > maxFrequency) {
+                        maxIndex = j;
+                    }
+                }
+                maxActualIndex = clusters[cIndex].indexes.get(maxIndex);
+                clusterHubIndexes[cIndex] = maxActualIndex;
+                clusterHubs[cIndex] = dset.data.get(maxActualIndex);
+            }
+            for (int i = 0; i < clusterAssociations.length; i++) {
+                closestHub = -1;
+                smallestDistance = Float.MAX_VALUE;
+                for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                    if (clusterHubIndexes[cIndex] > 0) {
+                        if (clusterHubIndexes[cIndex] != i) {
+                            first = Math.min(i, clusterHubIndexes[cIndex]);
+                            second = Math.max(i, clusterHubIndexes[cIndex]);
+                            if (distances[first][second - first - 1] <= 0) {
+                                distances[first][second - first - 1] =
+                                        cmet.dist(dset.data.get(first),
+                                        dset.data.get(second));
+                            }
+                            currentDistance =
+                                    distances[first][second - first - 1];
+                        } else {
+                            closestHub = cIndex;
+                            break;
+                        }
+                    } else {
+                        currentDistance =
+                                cmet.dist(dset.data.get(i), clusterHubs[cIndex]);
+                    }
+                    if (currentDistance < smallestDistance) {
+                        smallestDistance = currentDistance;
+                        closestHub = cIndex;
+                    }
+                }
+                if (closestHub != clusterAssociations[i]) {
+                    noReassignments = false;
+                }
+                clusterAssociations[i] = closestHub;
+            }
+            errorPrevious = errorCurrent;
+            errorCurrent = calculateIterationError(clusterHubs,
+                    clusterHubIndexes);
+            if (getIterationIndex() >= MIN_ITERATIONS) {
+                if (DataMineConstants.isAcceptableDouble(errorPrevious)
+                        && DataMineConstants.isAcceptableDouble(errorCurrent)
+                        && (Math.abs(errorCurrent / errorPrevious) - 1f)
+                        < ERROR_THRESHOLD) {
+                    errorDifferenceSignificant = false;
+                } else {
+                    errorDifferenceSignificant = true;
+                }
+            }
+        } while (errorDifferenceSignificant && !noReassignments
+                && getIterationIndex() < MAX_ITER);
+        endCentroids = clusterHubs;
+        setClusterAssociations(bestAssociations);
+        flagAsInactive();
+    }
+
+    /**
+     * @param clusterHubs An array of cluster hubs.
+     * @param cluste
