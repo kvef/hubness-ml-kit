@@ -91,4 +91,112 @@ public class MTFastKMeansPlusPlus extends ClusteringAlg {
      * Increases the count of elements in the cluster.
      *
      * @param cIndex Integer that is the cluster index.
-     * @param size Integer tha
+     * @param size Integer that is the additional size.
+     */
+    private void increaseNumEl(int cIndex, int size) {
+        synchronized (elLock[cIndex]) {
+            clusterNumberOfElements[cIndex] += size;
+        }
+    }
+
+    /**
+     * Increases the square sums in the cluster.
+     *
+     * @param cIndex Integer that is the cluster index.
+     * @param increment Float value that is the increment.
+     */
+    private void increaseSquareSums(int cIndex, float increment) {
+        synchronized (sqLock[cIndex]) {
+            clusterSquareSums[cIndex] += increment;
+        }
+    }
+
+    /**
+     * Increases the linear float sums in the cluster.
+     *
+     * @param cIndex Integer that is the cluster index.
+     * @param attIndex Integer that is the index of the target feature.
+     * @param increment Float value that is the increment.
+     */
+    private void increaseLinFloatSums(int cIndex, int attIndex,
+            float increment) {
+        synchronized (linfloatLock[cIndex]) {
+            clusterLinearFloatSums[cIndex][attIndex] += increment;
+        }
+    }
+
+    /**
+     * Increases the linear integer sums in the cluster.
+     *
+     * @param cIndex Integer that is the cluster index.
+     * @param attIndex Integer that is the index of the target feature.
+     * @param increment Float value that is the increment.
+     */
+    private void increaseLinIntSums(int cIndex, int attIndex,
+            float increment) {
+        synchronized (linintLock[cIndex]) {
+            clusterLinearIntSums[cIndex][attIndex] += increment;
+        }
+    }
+
+    /**
+     * Adds an instance to a cluster.
+     *
+     * @param cIndex Integer that is the cluster index.
+     * @param index Integer that is the index of the instance to insert.
+     */
+    private void addInstanceToCluster(int cIndex, int index) {
+        synchronized (instanceAddLock[cIndex]) {
+            clusters[cIndex].addInstance(index);
+        }
+    }
+
+    /**
+     * @param dset DataSet object.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClusters A pre-defined number of clusters.
+     */
+    public MTFastKMeansPlusPlus(DataSet dset, CombinedMetric cmet,
+            int numClusters) {
+        setNumClusters(numClusters);
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+    }
+
+    /**
+     * @param dset DataSet object.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClusters A pre-defined number of clusters.
+     * @param numThreads Integer that is the number of threads to use.
+     */
+    public MTFastKMeansPlusPlus(DataSet dset, CombinedMetric cmet,
+            int numClusters, int numThreads) {
+        setNumClusters(numClusters);
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+        this.numThreads = numThreads;
+    }
+
+    /**
+     * @param dset DataSet object.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClusters A pre-defined number of clusters.
+     * @param numThreads Integer that is the number of threads to use.
+     * @param printOutIteration Boolean flag indicating whether to print out an
+     * indicator of each completed iteration to the output stream, which can be
+     * used for tracking very long clustering runs.
+     */
+    public MTFastKMeansPlusPlus(DataSet dset, CombinedMetric cmet,
+            int numClusters, int numThreads, boolean printOutIteration) {
+        setNumClusters(numClusters);
+        setCombinedMetric(cmet);
+        setDataSet(dset);
+        this.numThreads = numThreads;
+        this.printOutIteration = printOutIteration;
+    }
+
+    /**
+     * @param dset DataSet object.
+     * @param numClusters A pre-defined number of clusters.
+     */
+    public MTFastKMeansPlusPlus(DataSet dset, int numClu
