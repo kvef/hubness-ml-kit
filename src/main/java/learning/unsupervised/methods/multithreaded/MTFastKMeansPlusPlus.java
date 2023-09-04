@@ -199,4 +199,98 @@ public class MTFastKMeansPlusPlus extends ClusteringAlg {
      * @param dset DataSet object.
      * @param numClusters A pre-defined number of clusters.
      */
-    public MTFastKMeansPlusPlus(DataSet dset, int numClu
+    public MTFastKMeansPlusPlus(DataSet dset, int numClusters) {
+        setNumClusters(numClusters);
+        setCombinedMetric(CombinedMetric.EUCLIDEAN);
+        setDataSet(dset);
+    }
+
+    /**
+     * Increases the current thread count.
+     */
+    private synchronized void increaseThreadCount() {
+        threadCount++;
+    }
+
+    /**
+     * Decreases the current thread count.
+     */
+    private synchronized void decreaseThreadCount() {
+        threadCount--;
+    }
+
+    @Override
+    public void cluster() throws Exception {
+        performBasicChecks();
+        flagAsActive();
+        DataSet dset = getDataSet();
+        CombinedMetric cmet = getCombinedMetric();
+        int numClusters = getNumClusters();
+        elLock = new Object[numClusters];
+        sqLock = new Object[numClusters];
+        linintLock = new Object[numClusters];
+        linfloatLock = new Object[numClusters];
+        instanceAddLock = new Object[numClusters];
+        for (int i = 0; i < numClusters; i++) {
+            elLock[i] = new Object();
+            sqLock[i] = new Object();
+            linintLock[i] = new Object();
+            linfloatLock[i] = new Object();
+            instanceAddLock[i] = new Object();
+        }
+        cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+        this.setMinIterations(5);
+        boolean trivial = checkIfTrivial();
+        if (trivial) {
+            return;
+        } // Nothing needs to be done in this case.
+        int[] clusterAssociations = new int[dset.size()];
+        Arrays.fill(clusterAssociations, 0, dset.size(), -1);
+        setClusterAssociations(clusterAssociations);
+        DataInstance[] centroids = new DataInstance[numClusters];
+        // This list is used for pruning purposes.
+        ArrayList<DataInstance> centroidCandidateList;
+        String[] clustAttribute = new String[1];
+        clustAttribute[0] = "Cluster index";
+        DataSet clusterIDDSet = new DataSet(clustAttribute, null, null,
+                numClusters);
+        int centroidIndex;
+        int numAttempts = 0;
+        boolean valid;
+        do {
+            numAttempts++;
+            valid = true;
+            try {
+                PlusPlusSeeder seeder =
+                        new PlusPlusSeeder(centroids.length, dset.data, cmet);
+                int[] centroidIndexes = seeder.getCentroidIndexes();
+                for (int cIndex = 0; cIndex < centroids.length; cIndex++) {
+                    centroidIndex = centroidIndexes[cIndex];
+                    DataInstance ithID = new DataInstance(clusterIDDSet);
+                    ithID.iAttr[0] = cIndex;
+                    clusterAssociations[centroidIndex] = cIndex;
+                    centroids[cIndex] =
+                            dset.getInstance(centroidIndex).copyContent();
+                    centroids[cIndex].setIdentifier(ithID);
+                }
+                KDTree dataTree = new KDTree();
+                dataTree.createDataTree(dset);
+                double errorPrevious;
+                double errorCurrent = Double.MAX_VALUE;
+                // This is initialized to true for the first iteration to go
+                // through.
+                boolean errorDifferenceSignificant = true;
+                setIterationIndex(0);
+                do {
+                    nextIteration();
+                    if (printOutIteration) {
+                        System.out.print("|");
+                    }
+                    clusters = new Cluster[numClusters];
+                    for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                        clusters[cIndex] = new Cluster(dset,
+                                (int) Math.max(dset.data.size()
+                                / numClusters, 2));
+                    }
+                    clusterSquareSums = new float[numClusters];
+                    clusterNumberOfEl
