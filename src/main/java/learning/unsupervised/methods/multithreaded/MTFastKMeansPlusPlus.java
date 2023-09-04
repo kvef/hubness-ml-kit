@@ -293,4 +293,82 @@ public class MTFastKMeansPlusPlus extends ClusteringAlg {
                                 / numClusters, 2));
                     }
                     clusterSquareSums = new float[numClusters];
-                    clusterNumberOfEl
+                    clusterNumberOfElements = new int[numClusters];
+                    clusterLinearIntSums =
+                            new float[numClusters][dset.getNumIntAttr()];
+                    clusterLinearFloatSums =
+                            new float[numClusters][dset.getNumFloatAttr()];
+                    centroidCandidateList = new ArrayList<>(numClusters);
+                    for (DataInstance centroid : centroids) {
+                        centroidCandidateList.add(centroid);
+                    }
+                    Thread t = new Thread(new NodeWorker(
+                            dataTree.getRoot(),
+                            centroidCandidateList));
+                    t.start();
+                    try {
+                        t.join();
+                    } catch (Throwable thr) {
+                    }
+                    for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                        for (int j = 0; j
+                                < clusterLinearIntSums[cIndex].length; j++) {
+                            centroids[cIndex].iAttr[j] = (int) (
+                                    clusterLinearIntSums[cIndex][j]
+                                    / clusterNumberOfElements[cIndex]);
+                        }
+                        for (int j = 0; j
+                                < clusterLinearFloatSums[cIndex].length; j++) {
+                            centroids[cIndex].fAttr[j] =
+                                    (clusterLinearFloatSums[cIndex][j]
+                                    / clusterNumberOfElements[cIndex]);
+                        }
+                    }
+                    errorPrevious = errorCurrent;
+                    errorCurrent = calculateIterationError(
+                            centroids,
+                            clusterSquareSums,
+                            clusterNumberOfElements,
+                            clusterLinearIntSums,
+                            clusterLinearFloatSums);
+                    if (getIterationIndex() >= MIN_ITERATIONS) {
+                        if (DataMineConstants.isAcceptableDouble(
+                                errorPrevious)
+                                && DataMineConstants.isAcceptableDouble(
+                                errorCurrent)
+                                && (Math.abs(errorCurrent / errorPrevious) - 1f)
+                                < ERROR_THRESHOLD) {
+                            errorDifferenceSignificant = false;
+                        } else {
+                            errorDifferenceSignificant = true;
+                        }
+                    }
+                } while (errorDifferenceSignificant);
+            } catch (ClusteringError ce) {
+                if (ce.getErrorCause() == ClusteringError.EMPTY_CLUSTER) {
+                    System.out.println("Empty cluster generated, reclustering");
+                } else if (ce.getErrorCause()
+                        == ClusteringError.UNKNOWN_PROBLEM) {
+                    System.out.println("Unknown error, reclustering");
+                }
+                valid = false;
+                if (numAttempts > ClusteringAlg.MAX_RETRIES) {
+                    throw new ClusteringError(ClusteringError.UNABLE_TO_FINISH);
+                }
+            } catch (Exception e) {
+                if (numAttempts > ClusteringAlg.MAX_RETRIES) {
+                    throw new ClusteringError(ClusteringError.UNABLE_TO_FINISH);
+                }
+            }
+        } while (!valid);
+        endCentroids = centroids;
+        flagAsInactive();
+    }
+
+    class NodeWorker implements Runnable {
+
+        KDDataNode currentNode;
+        ArrayList<DataInstance> centroidCandidateList;
+
+        public NodeWorker(KDDataNode currentNode,
+ 
