@@ -371,4 +371,84 @@ public class MTFastKMeansPlusPlus extends ClusteringAlg {
         ArrayList<DataInstance> centroidCandidateList;
 
         public NodeWorker(KDDataNode currentNode,
- 
+                ArrayList<DataInstance> centroidCandidateList) {
+            this.currentNode = currentNode;
+            this.centroidCandidateList = centroidCandidateList;
+        }
+
+        @Override
+        public void run() {
+            increaseThreadCount();
+            try {
+                kdTreeTraverse(currentNode, centroidCandidateList);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            decreaseThreadCount();
+        }
+    }
+
+    /**
+     * Traverses the KD tree and prunes the centroid candidate lists.
+     *
+     * @param currentNode KDDataNode that is the current node in the tree.
+     * @param centroidCandidateList ArrayList of DataInstance objects that are
+     * the current centroid candidates.
+     * @throws Exception
+     */
+    private void kdTreeTraverse(KDDataNode currentNode,
+            ArrayList<DataInstance> centroidCandidateList) throws Exception {
+        DataSet dset = getDataSet();
+        CombinedMetric cmet = getCombinedMetric();
+        int[] clusterAssociations = getClusterAssociations();
+        if (currentNode != null) {
+            ArrayList<DataInstance> potentialCentroidsPruned =
+                    currentNode.prune(centroidCandidateList, cmet);
+            if (potentialCentroidsPruned == null) {
+                throw new Exception("Empty cluster list caused an error.");
+            }
+            // First check if there is one candidate or more.
+            if (potentialCentroidsPruned.size() == 1) {
+                ArrayList<Integer> nodeDataIndexes =
+                        currentNode.instanceIndexes;
+                int winner = potentialCentroidsPruned.get(0).
+                        getIdentifier().iAttr[0];
+                increaseNumEl(winner, currentNode.size());
+                increaseSquareSums(winner, currentNode.squareSum);
+                for (int i = 0; i < dset.getNumIntAttr(); i++) {
+                    increaseLinIntSums(winner, i, currentNode.linearISum[i]);
+                }
+                for (int i = 0; i < dset.getNumFloatAttr(); i++) {
+                    increaseLinFloatSums(winner, i, currentNode.linearFSum[i]);
+                }
+                for (int index : nodeDataIndexes) {
+                    addInstanceToCluster(winner, index);
+                    clusterAssociations[index] = winner;
+                }
+            } else {
+                if (currentNode.isLeaf()) {
+                    ArrayList<Integer> nodeDataIndexes =
+                            currentNode.instanceIndexes;
+                    DataInstance closestCentroid;
+                    float minDist;
+                    float currDist;
+                    int winner;
+                    for (int index : nodeDataIndexes) {
+                        minDist = Float.MAX_VALUE;
+                        closestCentroid = potentialCentroidsPruned.get(0);
+                        for (DataInstance centroid : potentialCentroidsPruned) {
+                            currDist = cmet.dist(dset.getInstance(index),
+                                    centroid);
+                            if (currDist < minDist) {
+                                minDist = currDist;
+                                closestCentroid = centroid;
+                            }
+                        }
+                        winner = closestCentroid.getIdentifier().iAttr[0];
+                        addInstanceToCluster(winner, index);
+                        clusterAssociations[index] = winner;
+                        increaseNumEl(winner, 1);
+                        for (int i = 0; i < dset.getNumIntAttr(); i++) {
+                            if (!DataMineConstants.isAcceptableInt(
+                                    dset.getInstance(index).iAttr[i])) {
+                 
