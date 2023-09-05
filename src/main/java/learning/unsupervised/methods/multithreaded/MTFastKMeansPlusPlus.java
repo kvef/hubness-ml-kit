@@ -451,4 +451,84 @@ public class MTFastKMeansPlusPlus extends ClusteringAlg {
                         for (int i = 0; i < dset.getNumIntAttr(); i++) {
                             if (!DataMineConstants.isAcceptableInt(
                                     dset.getInstance(index).iAttr[i])) {
-                 
+                                continue;
+                            }
+                            increaseSquareSums(winner, (float) Math.pow(
+                                    dset.getInstance(index).iAttr[i], 2));
+                            increaseLinIntSums(winner, i,
+                                    dset.getInstance(index).iAttr[i]);
+                        }
+                        for (int i = 0; i < dset.getNumFloatAttr(); i++) {
+                            if (!DataMineConstants.isAcceptableFloat(
+                                    dset.getInstance(index).fAttr[i])) {
+                                continue;
+                            }
+                            increaseSquareSums(winner, (float) Math.pow(
+                                    dset.getInstance(index).fAttr[i], 2));
+                            increaseLinFloatSums(winner, i,
+                                    dset.getInstance(index).fAttr[i]);
+                        }
+                    }
+                } else {
+                    if (this.threadCount < numThreads) {
+                        Thread tLeft = new Thread(new NodeWorker(
+                                currentNode.left,
+                                potentialCentroidsPruned));
+                        Thread tRight = new Thread(new NodeWorker(
+                                currentNode.right,
+                                potentialCentroidsPruned));
+                        tLeft.start();
+                        tRight.start();
+                        try {
+                            tLeft.join();
+                            tRight.join();
+                        } catch (Throwable thr) {
+                        }
+                    } else {
+                        kdTreeTraverse(currentNode.left,
+                                potentialCentroidsPruned);
+                        kdTreeTraverse(currentNode.right,
+                                potentialCentroidsPruned);
+                    }
+                }
+            }
+            setClusterAssociations(clusterAssociations);
+        }
+    }
+
+    /**
+     * @param centroids Centroids.
+     * @param clusterSquareSums Square feature value sums per cluster.
+     * @param clusterNumberOfElements Number of elements per cluster.
+     * @param clusterLinearIntSums Linear integer feature value sums per
+     * cluster.
+     * @param clusterLinearFloatSums Linear float feature value sums per
+     * cluster.
+     * @return Iteration error.
+     * @throws Exception
+     */
+    private double calculateIterationError(
+            DataInstance[] centroids,
+            float[] clusterSquareSums,
+            int[] clusterNumberOfElements,
+            float[][] clusterLinearIntSums,
+            float[][] clusterLinearFloatSums) throws Exception {
+        double errorTotal = 0;
+        for (int cIndex = 0; cIndex < centroids.length; cIndex++) {
+            if (centroids[cIndex] != null) {
+                errorTotal += clusterSquareSums[cIndex];
+                if (clusterLinearIntSums != null) {
+                    double fact = 0;
+                    for (int j = 0; j < clusterLinearIntSums[cIndex].length;
+                            j++) {
+                        fact += Math.pow(centroids[cIndex].iAttr[j], 2);
+                        errorTotal -= (2 * centroids[cIndex].iAttr[j]
+                                * clusterLinearIntSums[cIndex][j]);
+                    }
+                    errorTotal += (fact * clusterNumberOfElements[cIndex]);
+                }
+                if (clusterLinearFloatSums != null) {
+                    double fact = 0;
+                    for (int j = 0; j < clusterLinearFloatSums[cIndex].length;
+                            j++) {
+                        fact +=
