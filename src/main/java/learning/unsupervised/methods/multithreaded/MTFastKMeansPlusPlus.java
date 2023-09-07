@@ -531,4 +531,56 @@ public class MTFastKMeansPlusPlus extends ClusteringAlg {
                     double fact = 0;
                     for (int j = 0; j < clusterLinearFloatSums[cIndex].length;
                             j++) {
-                        fact +=
+                        fact += Math.pow(centroids[cIndex].fAttr[j], 2);
+                        errorTotal -= (2 * centroids[cIndex].fAttr[j]
+                                * clusterLinearFloatSums[cIndex][j]);
+                    }
+                    errorTotal += (fact * clusterNumberOfElements[cIndex]);
+                }
+            }
+        }
+        errorTotal = Math.abs(errorTotal);
+        if (!DataMineConstants.isAcceptableDouble(errorTotal)) {
+            throw new ClusteringError(ClusteringError.UNKNOWN_PROBLEM);
+        }
+        return errorTotal;
+    }
+
+    @Override
+    public int[] assignPointsToModelClusters(DataSet dsetTest,
+            NeighborSetFinder nsfTest) {
+        if (dsetTest == null || dsetTest.isEmpty()) {
+            return null;
+        } else {
+            int[] clusterAssociations = new int[dsetTest.size()];
+            if (endCentroids == null) {
+                return clusterAssociations;
+            }
+            float minDist;
+            float dist;
+            CombinedMetric cmet = getCombinedMetric();
+            cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+            for (int i = 0; i < dsetTest.size(); i++) {
+                minDist = Float.MAX_VALUE;
+                for (int cIndex = 0; cIndex < endCentroids.length; cIndex++) {
+                    dist = Float.MAX_VALUE;
+                    try {
+                        dist = cmet.dist(
+                                endCentroids[cIndex], dsetTest.getInstance(i));
+                    } catch (Exception e) {
+                    }
+                    if (dist < minDist) {
+                        clusterAssociations[i] = cIndex;
+                        minDist = dist;
+                    }
+                }
+            }
+            return clusterAssociations;
+        }
+    }
+
+    @Override
+    public Cluster[] getClusters() {
+        return clusters;
+    }
+}
