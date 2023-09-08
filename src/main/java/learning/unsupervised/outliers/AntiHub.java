@@ -152,4 +152,115 @@ public class AntiHub extends OutlierDetector implements NSFUserInterface {
             float outlierRatio) {
         setDataSet(dset);
         this.k = k;
-        if 
+        if (nsf != null) {
+            this.cmet = nsf.getCombinedMetric();
+            this.nsf = nsf;
+        }
+        this.outlierRatio = outlierRatio;
+    }
+    
+    /**
+     * @param outlierRatio Float value that it the outlier ratio to use, the
+     * proportion of points to select as outliers.
+     */
+    public void setOutlierRatio(float outlierRatio) {
+        this.outlierRatio = outlierRatio;
+    }
+    
+    /**
+     * @param alphaStep Float value that is the step to use in parameter search. 
+     */
+    public void setAlphaStep(float alphaStep) {
+        this.alphaStep = alphaStep;
+    }
+    
+    /**
+     * @return Float value that is the employed alpha parameter for combining
+     * neighbor occurrence frequency with the neighbors' neighbor occurrence
+     * frequencies when reaching the final AntiHub outlier score.
+     */
+    public float getAlpha() {
+        return alpha;
+    }
+    
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        if (nsf != null) {
+            this.k = nsf.getCurrK();
+        }
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    @Override
+    public void noRecalcs() {
+    }
+    
+    @Override
+    public int getNeighborhoodSize() {
+        return k;
+    }
+    
+    @Override
+    public void detectOutliers() throws Exception {
+        DataSet dset = getDataSet();
+        if (dset == null || dset.isEmpty()) {
+            return;
+        }
+        if (nsf == null) {
+            // If the kNN sets have not been provided, calculate them here.
+            if (dMat == null) {
+                dMat = dset.calculateDistMatrix(cmet);
+            }
+            nsf = new NeighborSetFinder(dset, dMat, cmet);
+            nsf.calculateNeighborSets(k);
+        }
+        if (nsf.getCurrK() < k) {
+            // Re-calculate the kNN sets, since they are incompatible with the
+            // specified neighborhood size.
+            if (dMat == null) {
+                dMat = nsf.getDistances();
+            }
+            if (cmet == null) {
+                cmet = nsf.getCombinedMetric();
+            }
+            NeighborSetFinder nsfLargerK = new NeighborSetFinder(dset, dMat,
+                    cmet);
+            nsfLargerK.calculateNeighborSets(k);
+            nsf = nsfLargerK;
+        } else if (nsf.getCurrK() > k) {
+            // Sub-sample the kNN sets, since they are incompatible with the
+            // specified neighborhood size.
+            nsf = nsf.getSubNSF(k);
+        }
+        int size = dset.size();
+        // Get the kNN sets and the neighbor occurrence frequencies.
+        float[] occFreqs = nsf.getFloatOccFreqs();
+        int[][] kNeighbors = nsf.getKNeighbors();
+        // Calculate the neighbor occurrence frequency sums across all 
+        // neighborhoods.
+        float[] neighborhoodOccSums = new float[size];
+        for (int i = 0; i < size; i++) {
+            for (int kInd = 0; kInd < k; kInd++) {
+                neighborhoodOccSums[i] += occFreqs[kNeighbors[i][kInd]];
+            }
+        }
+        float[] currAlphaAHScores;
+        float[] bestAlphaAHScores = null;
+        float bestAlpha = 0;
+        int bestNumDistinct = 0;
+        int numDistinct;
+        float outlierThreshold;
+        float bestOutlierThreshold = 0;
+        HashMap<Float, Integer> scoreMap;
+        // Search through various possible alpha values for making a convex
+        // combination of the point-wise neighbor occurrence frequencies and
+        // the total neighborhood occurrence frequency sums.
+        for (alpha = 0f; alpha <= 1f; alpha += alphaStep) {
+            // The hash map is used for tracking distinct values, as this is a
+            // quality criterion.
+            scoreMap =
