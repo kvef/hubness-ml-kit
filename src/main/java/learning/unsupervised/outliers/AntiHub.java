@@ -263,4 +263,66 @@ public class AntiHub extends OutlierDetector implements NSFUserInterface {
         for (alpha = 0f; alpha <= 1f; alpha += alphaStep) {
             // The hash map is used for tracking distinct values, as this is a
             // quality criterion.
-            scoreMap =
+            scoreMap = new HashMap<>(size);
+            currAlphaAHScores = Arrays.copyOf(occFreqs, size);
+            // Calculate the scores according to the current alpha value.
+            for (int i = 0; i < size; i++) {
+                currAlphaAHScores[i] = (1 - alpha) * currAlphaAHScores[i] +
+                        alpha * neighborhoodOccSums[i];
+            }
+            // Find the limit value based on the current outlierRatio.
+            float[] scoresCopy = Arrays.copyOf(currAlphaAHScores, size);
+            Arrays.sort(scoresCopy);
+            int outlierLimitIndex = (int)(Math.min(
+                    Math.ceil(outlierRatio * size), size)) - 1;
+            outlierThreshold = scoresCopy[outlierLimitIndex];
+            // Calculate the number of distinct values among the outliers.
+            for (int i = 0; i < size; i++) {
+                if (currAlphaAHScores[i] <= outlierThreshold) {
+                    if (!scoreMap.containsKey(currAlphaAHScores[i])) {
+                        scoreMap.put(currAlphaAHScores[i], 1);
+                    } else {
+                        scoreMap.put(currAlphaAHScores[i],
+                                scoreMap.get(currAlphaAHScores[i]) + 1);
+                    }
+                }
+            }
+            numDistinct = scoreMap.keySet().size();
+            // If it exceeds the current best, update the best parameter values.
+            if (numDistinct > bestNumDistinct) {
+                bestNumDistinct = numDistinct;
+                bestAlpha = alpha;
+                bestAlphaAHScores = currAlphaAHScores;
+                bestOutlierThreshold = outlierThreshold;
+            }
+        }
+        alpha = bestAlpha;
+        ArrayList<Float> outlierScores = new ArrayList<>(size);
+        ArrayList<Integer> outlierIndexes = new ArrayList<>(size);
+        float maxOutlierScore = 0;
+        float minOutlierScore = Float.MAX_VALUE;
+        // Form an outlier list and a list of the associated outlier scores.
+        for (int i = 0; i < size; i++) {
+            if (bestAlphaAHScores[i] <= bestOutlierThreshold) {
+                outlierIndexes.add(i);
+                outlierScores.add(bestAlphaAHScores[i]);
+                if (bestAlphaAHScores[i] > maxOutlierScore) {
+                    maxOutlierScore = bestAlphaAHScores[i];
+                }
+                if (bestAlphaAHScores[i] < minOutlierScore) {
+                    minOutlierScore = bestAlphaAHScores[i];
+                }
+            }
+        }
+        // Normalize. Also, transform the scores so that now the higher scores
+        // correspond to more likely outliers.
+        if (maxOutlierScore > 0) {
+            for (int j = 0; j < outlierScores.size(); j++) {
+                outlierScores.set(j, 1 - ((outlierScores.get(j) -
+                        minOutlierScore) / (maxOutlierScore -
+                        minOutlierScore)));
+            }
+        }
+        setOutlierIndexes(outlierIndexes, outlierScores);
+    } 
+}
