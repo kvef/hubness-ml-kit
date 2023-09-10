@@ -95,4 +95,32 @@ public class IterativeClusteringOutlierDetection extends OutlierDetector {
                     }
                 }
             }
-            clustering =
+            clustering = clusterer.getClusters();
+            ArrayList<Cluster> smallClusters = new ArrayList<>(
+                    clustering.length);
+            for (Cluster c : clustering) {
+                if (c != null && c.size() < clusterSizeThreshold) {
+                    smallClusters.add(c);
+                }
+            }
+            for (Cluster c : smallClusters) {
+                for (int index : c.indexes) {
+                    outlierScores[index]++;
+                }
+            }
+        }
+        int numOutliers = (int) (dataset.size() * outlierPercentage);
+        // This can be improved by automatically detecting the outlier number.
+        for (int i = 0; i < outlierScores.length; i++) {
+            outlierScores[i] /= (float) numRuns;
+        }
+        int[] reArrIndexes = AuxSort.sortIndexedValue(outlierScores, true);
+        ArrayList<Integer> outliers = new ArrayList<>(numOutliers);
+        ArrayList<Float> outScoresFinal = new ArrayList<>(numOutliers);
+        for (int i = 0; i < numOutliers; i++) {
+            outliers.add(reArrIndexes[i]);
+            outScoresFinal.add(outlierScores[reArrIndexes[i]]);
+        }
+        setOutlierIndexes(outliers, outScoresFinal);
+    }
+}
