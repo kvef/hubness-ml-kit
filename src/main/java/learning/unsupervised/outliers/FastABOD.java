@@ -131,4 +131,73 @@ public class FastABOD extends OutlierDetector implements NSFUserInterface {
             normalizedAngles = new double[(k * (k - 1)) / 2];
             int counter = -1;
             // Loop over all pairs of neighbor points.
-   
+            for (int kIndFirst = 0; kIndFirst < k; kIndFirst++) {
+                DataInstance first = dset.getInstance(kNeighbors[i][kIndFirst]);
+                DataInstance diffFirst = DataInstance.subtract(first, instance);
+                float normFirst = euc.norm(first);
+                for (int kIndSecond = kIndFirst + 1; kIndSecond < k;
+                        kIndSecond++) {
+                    counter++;
+                    DataInstance second = dset.getInstance(kNeighbors[i][
+                            kIndSecond]);
+                    DataInstance diffSecond = DataInstance.subtract(second,
+                            instance);
+                    dotProduct = 0;
+                    for (int d = 0; d < numFloats; d++) {
+                        if (DataMineConstants.isAcceptableFloat(
+                                diffFirst.fAttr[d]) && DataMineConstants.
+                                isAcceptableFloat(diffSecond.fAttr[d])) {
+                            dotProduct += diffFirst.fAttr[d] *
+                                    diffSecond.fAttr[d];
+                        }
+                    }
+                    for (int d = 0; d < numInts; d++) {
+                        if (DataMineConstants.isAcceptableInt(
+                                diffFirst.iAttr[d]) && DataMineConstants.
+                                isAcceptableInt(diffSecond.iAttr[d])) {
+                            dotProduct += diffFirst.iAttr[d] *
+                                    diffSecond.iAttr[d];
+                        }
+                    }
+                    float normSecond = euc.norm(second);
+                    if (DataMineConstants.isAcceptableFloat(normFirst) &&
+                            DataMineConstants.isAcceptableFloat(normSecond)) {
+                        normalizedAngles[counter] = dotProduct / (normFirst *
+                                normFirst * normSecond * normSecond);
+                    }
+                }
+                double meanVal = ArrayUtil.findMean(normalizedAngles);
+                double stDev = ArrayUtil.findStdev(normalizedAngles, meanVal);
+                abofScores[i] = (float) (stDev * stDev);
+            }
+        }
+        // Ascending sort.
+        int[] reArr = AuxSort.sortIndexedValue(abofScores, false);
+        int numOutliers = (int)(Math.min(Math.ceil(outlierRatio * size), size));
+        ArrayList<Float> outlierScores = new ArrayList<>(numOutliers);
+        ArrayList<Integer> outlierIndexes = new ArrayList<>(numOutliers);
+        double maxOutlierScore = 0;
+        double minOutlierScore = Double.MAX_VALUE;
+        for (int i = 0; i < numOutliers; i++) {
+            outlierIndexes.add(reArr[i]);
+            outlierScores.add((float) abofScores[i]);
+            if (abofScores[i] > maxOutlierScore) {
+                maxOutlierScore = abofScores[i];
+            }
+            if (abofScores[i] < minOutlierScore) {
+                minOutlierScore = abofScores[i];
+            }
+        }
+        // Normalize. Also, transform the scores so that now the higher scores
+        // correspond to more likely outliers.
+        if (maxOutlierScore > 0) {
+            for (int j = 0; j < outlierScores.size(); j++) {
+                outlierScores.set(j, 1 - (float) ((outlierScores.get(j) -
+                        minOutlierScore) / (maxOutlierScore -
+                        minOutlierScore)));
+            }
+        }
+        setOutlierIndexes(outlierIndexes, outlierScores);
+    }
+    
+}
