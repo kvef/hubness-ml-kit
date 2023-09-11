@@ -113,4 +113,61 @@ public class LocalOutlierFactor extends OutlierDetector {
     @Override
     public void detectOutliers() throws Exception {
         DataSet dset = getDataSet();
-    
+        if (dset == null || dset.isEmpty()) {
+            throw new OutlierDetectionException("Empty DataSet provided.");
+        }
+        ArrayList<Float> outlierScores = new ArrayList<>(dset.size());
+        ArrayList<Integer> outlierIndexes =
+                new ArrayList<>(dset.size());
+        localReachabilityDensity = new float[dset.size()];
+        localOutlierFactor = new float[dset.size()];
+        if (nsf == null || nsf.getKNeighbors() == null) {
+            nsf = new NeighborSetFinder(dset, cmet);
+            nsf.calculateDistances();
+            nsf.calculateNeighborSetsMultiThr(k, 6);
+        }
+        int[][] kneighbors = nsf.getKNeighbors();
+        float sum;
+        for (int i = 0; i < dset.size(); i++) {
+            sum = 0;
+            for (int j = 0; j < k; j++) {
+                sum += getReachabilityDistance(i, kneighbors[i][j]);
+            }
+            localReachabilityDensity[i] = k / sum;
+        }
+        float maxOutlierScore = 0;
+        int count;
+        for (int i = 0; i < dset.size(); i++) {
+            sum = 0;
+            count = 0;
+            for (int j = 0; j < k; j++) {
+                if (DataMineConstants.isAcceptableFloat(
+                        localReachabilityDensity[kneighbors[i][j]])) {
+                    count++;
+                    sum += localReachabilityDensity[kneighbors[i][j]];
+                }
+            }
+            if (DataMineConstants.isAcceptableFloat(sum)
+                    && DataMineConstants.isAcceptableFloat(
+                    localReachabilityDensity[i])
+                    && localReachabilityDensity[i] != 0) {
+                localOutlierFactor[i] =
+                        sum / (localReachabilityDensity[i] * count);
+                // Here we test if the point is an outlier.
+                if (localOutlierFactor[i] > cutoffThreshold) {
+                    outlierIndexes.add(i);
+                    outlierScores.add(localOutlierFactor[i]);
+                    if (localOutlierFactor[i] > maxOutlierScore) {
+                        maxOutlierScore = localOutlierFactor[i];
+                    }
+                }
+            }
+        }
+        if (maxOutlierScore > 0) {
+            for (int j = 0; j < outlierScores.size(); j++) {
+                outlierScores.set(j, outlierScores.get(j) / maxOutlierScore);
+            }
+        }
+        setOutlierIndexes(outlierIndexes, outlierScores);
+    }
+}
