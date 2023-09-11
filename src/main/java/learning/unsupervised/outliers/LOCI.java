@@ -56,4 +56,78 @@ public class LOCI extends OutlierDetector {
      * @param dataset Dataset to be analyzed.
      * @param cmet The metric object.
      * @param minNeighbors Minimal number of neighbors for a neighborhood.
-     * @param alpha The part of the neighbo
+     * @param alpha The part of the neighborhood to count.
+     * @param ksigma The number of deviations that define outliers.
+     */
+    public LOCI(DataSet dataset, CombinedMetric cmet, int minNeighbors,
+            float alpha, float ksigma) {
+        setDataSet(dataset);
+        this.cmet = cmet;
+        this.minNeighbors = minNeighbors;
+        this.alpha = alpha;
+        this.ksigma = ksigma;
+    }
+
+    @Override
+    public void detectOutliers() throws Exception {
+        DataSet dataset = getDataSet();
+        if (dataset == null || dataset.isEmpty()) {
+            throw new OutlierDetectionException("Empty DataSet provided.");
+        }
+        ArrayList<Float> outlierScores = new ArrayList<>(dataset.size());
+        ArrayList<Integer> outlierIndexes =
+                new ArrayList<>(dataset.size());
+        NeighborSetFinder nsf = new NeighborSetFinder(dataset, cmet);
+        nsf.calculateDistances();
+        nsf.calculateNeighborSetsMultiThr(minNeighbors, 6);
+        float[] alphaRadius = new float[dataset.size()];
+        float[] numNeighborsInAlphaRadius = new float[dataset.size()];
+        float[] avgNeighborsAlphaNeighbors = new float[dataset.size()];
+        float[] mdef = new float[dataset.size()];
+        float[] stDevmdef = new float[dataset.size()];
+        float[][] kDistances = nsf.getKDistances();
+        int[][] kneighbors = nsf.getKNeighbors();
+        for (int i = 0; i < dataset.size(); i++) {
+            alphaRadius[i] = kDistances[i][minNeighbors - 1] * alpha;
+            int k = minNeighbors - 2;
+            while (k >= 0 && kDistances[i][k] > alphaRadius[i]) {
+                k--;
+            }
+            numNeighborsInAlphaRadius[i] = k + 1;
+        }
+        float sum;
+        float maxOutlierScore = 0;
+        for (int i = 0; i < dataset.size(); i++) {
+            sum = 0;
+            float[] localAlphaCounts = new float[minNeighbors + 1];
+            for (int j = 0; j < minNeighbors; j++) {
+                sum += (numNeighborsInAlphaRadius[kneighbors[i][j]] + 1);
+                localAlphaCounts[j] =
+                        numNeighborsInAlphaRadius[kneighbors[i][j]] + 1;
+            }
+            localAlphaCounts[minNeighbors] = numNeighborsInAlphaRadius[i] + 1;
+            sum += (numNeighborsInAlphaRadius[i] + 1);
+            avgNeighborsAlphaNeighbors[i] = sum
+                    / (numNeighborsInAlphaRadius[i] + 1);
+            mdef[i] = 1 - (numNeighborsInAlphaRadius[i]
+                    / avgNeighborsAlphaNeighbors[i]);
+            stDevmdef[i] = HigherMoments.calculateArrayStDev(
+                    avgNeighborsAlphaNeighbors[i], localAlphaCounts)
+                    / avgNeighborsAlphaNeighbors[i];
+            if (mdef[i] > ksigma * stDevmdef[i]) {
+                // Mark this point as outlier.
+                outlierIndexes.add(i);
+                outlierScores.add(mdef[i]);
+                if (mdef[i] > maxOutlierScore) {
+                    maxOutlierScore = mdef[i];
+                }
+            }
+        }
+        if (maxOutlierScore > 0) {
+            for (int j = 0; j < outlierScores.size(); j++) {
+                outlierScores.set(j, outlierScores.get(j) / maxOutlierScore);
+            }
+        }
+        setOutlierIndexes(outlierIndexes, outlierScores);
+    }
+}
