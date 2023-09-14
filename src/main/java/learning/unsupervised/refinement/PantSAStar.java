@@ -48,3 +48,95 @@ public class PantSAStar {
      * @param clusterAssociations Array that contains cluster associations for
      * data points.
      * @param silhouetteArray Array containing Silhouette index values for data
+     * points.
+     * @param dset DataSet object.
+     * @param cmet CombinedMetric object.
+     */
+    public PantSAStar(int numClusters, int[] clusterAssociations,
+            float[] silhouetteArray, DataSet dset, CombinedMetric cmet) {
+        this.numClusters = numClusters;
+        this.clusterAssociations = clusterAssociations;
+        this.silhouetteArray = silhouetteArray;
+        this.dset = dset;
+        this.cmet = cmet;
+    }
+
+    /**
+     * @param numClusters Number of clusters.
+     * @param clusterAssociations Array that contains cluster associations for
+     * data points.
+     * @param dset DataSet object.
+     * @param cmet CombinedMetric object.
+     */
+    public PantSAStar(int numClusters, int[] clusterAssociations, DataSet dset,
+            CombinedMetric cmet) {
+        this.numClusters = numClusters;
+        this.clusterAssociations = clusterAssociations;
+        this.dset = dset;
+        this.cmet = cmet;
+    }
+
+    /**
+     * In case the Silhouette index value array hasn't already been provided.
+     */
+    public void calculateSilhouetteArray() throws Exception {
+        QIndexSilhouette dsi =
+                new QIndexSilhouette(numClusters, clusterAssociations, dset,
+                cmet);
+        try {
+            dsi.validity();
+        } catch (Exception e) {
+            throw e;
+        }
+        silhouetteArray = dsi.getInstanceSilhouetteArray();
+    }
+
+    /**
+     * Necessary to perform before the refinement, which doesn't support empty
+     * clusters.
+     */
+    private void removeEmptyClusters() {
+        ClusterConfigurationCleaner ccc =
+                new ClusterConfigurationCleaner(dset, clusterAssociations,
+                numClusters);
+        ccc.removeEmptyClusters();
+        numClusters = ccc.getNewNumberOfClusters();
+        clusterAssociations = ccc.getNewAssociationArray();
+    }
+
+    /**
+     * Performs cluster configuration refinement according to the PantSAStar
+     * algorithm.
+     *
+     * @return An integer array containing the refined cluster associations.
+     * @throws Exception
+     */
+    public int[] refine() throws Exception {
+        removeEmptyClusters();
+        rearrangement = AuxSort.sortIndexedValue(silhouetteArray, true);
+        clusterElements = new int[numClusters];
+        // Calculate how many elements there are in each original cluster.
+        for (int i = 0; i < clusterAssociations.length; i++) {
+            clusterElements[clusterAssociations[i]]++;
+        }
+        int[][] silhouetteSortedPerCluster = new int[numClusters][];
+        Cluster[] refinedClusters = new Cluster[numClusters];
+        // Determine the max number of elements in any original cluster.
+        int maxClusterSize = 0;
+        for (int c = 0; c < numClusters; c++) {
+            silhouetteSortedPerCluster[c] = new int[clusterElements[c]];
+            refinedClusters[c] = new Cluster(dset);
+            refinedClusters[c].indexes =
+                    new ArrayList<>(clusterElements[c]);
+            if (clusterElements[c] > maxClusterSize) {
+                maxClusterSize = clusterElements[c];
+            }
+        }
+        // Counters for each cluster that are incremented when new values are
+        // added to cluster-specific Silhouette subarrays.
+        int[] currAnticipatingIndexes = new int[numClusters];
+        // Now we create ordered subArrays of the silhouette ordered array for
+        // each cluster separately
+        for (int i = 0; i < silhouetteArray.length; i++) {
+            silhouetteSortedPerCluster[clusterAssociations[rearrangement[i]]][
+                   
