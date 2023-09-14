@@ -139,4 +139,70 @@ public class PantSAStar {
         // each cluster separately
         for (int i = 0; i < silhouetteArray.length; i++) {
             silhouetteSortedPerCluster[clusterAssociations[rearrangement[i]]][
-                   
+                    currAnticipatingIndexes[clusterAssociations[
+                        rearrangement[i]]]++] = i;
+        }
+        // Here we get initial new cluster seeds and we initialize the number of
+        // elements in each cluster.
+        for (int c = 0; c < numClusters; c++) {
+            refinedClusters[c].indexes.add(new Integer(
+                    rearrangement[silhouetteSortedPerCluster[c][0]]));
+        }
+        // Now circle through the ordered lists and insert new elements based on
+        // the attraction criterion.
+        int currIndex;
+        float[] avgDists = new float[numClusters];
+        float currClosest;
+        int currChoice;
+        for (int i = 1; i < maxClusterSize; i++) {
+            // Starting with 1 since the first elements had already been added.
+            for (int c = 0; c < numClusters; c++) {
+                if (i < clusterElements[c]) {
+                    currIndex = rearrangement[silhouetteSortedPerCluster[c][i]];
+                    currClosest = Float.MAX_VALUE;
+                    currChoice = -1;
+                    for (int k = 0; k < numClusters; k++) {
+                        avgDists[k] = 0;
+                        for (int l = 0; l < refinedClusters[k].size(); l++) {
+                            avgDists[k] += cmet.dist(
+                                    dset.data.get(currIndex),
+                                    dset.data.get(
+                                    refinedClusters[k].getIndex(l)));
+                        }
+                        avgDists[k] /= refinedClusters[k].indexes.size();
+                        if (avgDists[k] < currClosest) {
+                            currClosest = avgDists[k];
+                            currChoice = k;
+                        }
+                    }
+                    refinedClusters[currChoice].indexes.add(currIndex);
+                    if (currChoice != clusterAssociations[currIndex]) {
+                        numChanges++;
+                    }
+                }
+            }
+        }
+        int[] newAssociations = new int[clusterAssociations.length];
+        for (int i = 0; i < numClusters; i++) {
+            for (int j = 0; j < refinedClusters[i].indexes.size(); j++) {
+                newAssociations[refinedClusters[i].indexes.get(j)] = i;
+            }
+        }
+        return newAssociations;
+    }
+
+    /**
+     * @return Integer that is the number of changes made by the refinement.
+     */
+    public int getNumChanges() {
+        return numChanges;
+    }
+
+    /**
+     * @return Double that is the relative proportion of changes to the original
+     * data size.
+     */
+    public double getProportionOfChanges() {
+        return (numChanges / clusterAssociations.length);
+    }
+}
