@@ -115,4 +115,62 @@ public abstract class OutlierDetector {
 
     /**
      * @return DataSet that is currently being analyzed.
-     
+     */
+    public DataSet getDataSet() {
+        return this.dataset;
+    }
+
+    /**
+     * Gets the actual outliers instead of just the indexes.
+     *
+     * @return A list of outlier objects.
+     */
+    public ArrayList<DataInstance> getOutliers() {
+        if (outlierIndexes == null) {
+            return new ArrayList<>();
+        }
+        ArrayList<DataInstance> outliers =
+                new ArrayList<>(outlierIndexes.size());
+        for (int index : outlierIndexes) {
+            outliers.add(dataset.getInstance(index));
+        }
+        return outliers;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public abstract void detectOutliers() throws Exception;
+
+    /**
+     * Here we first search for outliers and then remove them.
+     *
+     * @return DataSet cleaned of outliers, a new object.
+     * @throws Exception
+     */
+    public DataSet findAndRemoveOutliers() throws Exception {
+        detectOutliers();
+        return removeFoundOutliers();
+    }
+
+    /**
+     * Here we remove already detected outliers
+     *
+     * @return DataSet cleaned of outliers, a new object.
+     * @throws Exception
+     */
+    public DataSet removeFoundOutliers() throws Exception {
+        if (numberOfOutliersFound() == 0) {
+            return dataset;
+        }
+        DataSet cleanedData = dataset.cloneDefinition();
+        for (int i = 0; i < dataset.size(); i++) {
+            if (!isOutlier(i)) {
+                DataInstance instance = dataset.getInstance(i).copy();
+                instance.embedInDataset(cleanedData);
+                cleanedData.addDataInstance(instance);
+            }
+        }
+        return cleanedData;
+    }
+}
