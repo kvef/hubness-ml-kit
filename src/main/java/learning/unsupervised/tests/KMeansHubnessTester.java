@@ -297,4 +297,98 @@ public class KMeansHubnessTester extends ClusteringAlg {
                 if (DataMineConstants.isAcceptableDouble(errorPrevious)
                         && DataMineConstants.isAcceptableDouble(errorCurrent)
                         && (Math.abs(errorCurrent / errorPrevious) - 1f)
-                        < ERROR_TH
+                        < ERROR_THRESHOLD) {
+                    errorDifferenceSignificant = false;
+                } else {
+                    errorDifferenceSignificant = true;
+                }
+            }
+        } while (errorDifferenceSignificant && !noReassignments
+                && getIterationIndex() < MAX_ITER);
+        endCentroids = centroids;
+        setClusterAssociations(bestAssociations);
+        hcdWriter.close();
+        flagAsInactive();
+    }
+
+    /**
+     * Calculates the iteration calculateIterationError for convergence check.
+     *
+     * @param centroids An array of cluster centroid objects.
+     * @return A sum of squared distances from points to centroids.
+     * @throws Exception
+     */
+    private double calculateIterationError(DataInstance[] centroids)
+            throws Exception {
+        DataSet dset = getDataSet();
+        CombinedMetric cmet = getCombinedMetric();
+        int[] clusterAssociations = getClusterAssociations();
+        double iterationError = 0;
+        float centroidDistance;
+        for (int i = 0; i < dset.size(); i++) {
+            centroidDistance = cmet.dist(centroids[clusterAssociations[i]],
+                    dset.getInstance(i));
+            iterationError += centroidDistance * centroidDistance;
+        }
+        return iterationError;
+    }
+
+    /**
+     * Prints out the command line parameter specification.
+     */
+    public static void info() {
+        System.out.println("arg0: numberOfDimensions");
+        System.out.println("arg1: numberOfDatasets");
+        System.out.println("arg2: repetitions per dataset");
+        System.out.println("arg3: neighbor set size");
+        System.out.println("arg4: number of clusters");
+        System.out.println("arg5: outDirectory");
+    }
+
+    /**
+     * Runs the hub tracking in K-means experiment.
+     *
+     * @param args Command line arguments.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length != 6) {
+            info();
+            return;
+        }
+        int dataSize = 10000;
+        boolean isPairedGaussian = true;
+        int numClusters = Integer.parseInt(args[4]);
+        int neighborSize = Integer.parseInt(args[3]);
+        int numTimesForDataSet = Integer.parseInt(args[2]);
+        int numDataSets = Integer.parseInt(args[1]);
+        int numDimensions = Integer.parseInt(args[0]);
+        File outDir = new File(args[5], "nDim" + args[0] + "nSS" + args[3]
+                + "k" + args[4]);
+        MultiGaussianMixForClusteringTesting genMix = null;
+        float[] AhcMinVect = new float[300];
+        float[] AhcMaxVect = new float[300];
+        float[] AhcAvgVect = new float[300];
+        float[] AmAvgVect = new float[300];
+        float[] AmMinVect = new float[300];
+        float[] AmMaxVect = new float[300];
+        float[] AhcMinCounts = new float[300];
+        float[] AhcMaxCounts = new float[300];
+        float[] AhcAvgCounts = new float[300];
+        float[] AmAvgCounts = new float[300];
+        float[] AmMinCounts = new float[300];
+        float[] AmMaxCounts = new float[300];
+        float avgDistMin = 0;
+        float avgDistMax = 0;
+        float avgDistAvg = 0;
+        float avgDistMinIC = 0;
+        float avgDistMaxIC = 0;
+        float avgDistAvgIC = 0;
+        for (int i = 0; i < numDataSets; i++) {
+            System.out.println("Starting dataset" + i);
+            genMix = new MultiGaussianMixForClusteringTesting(
+                    numClusters, numDimensions, dataSize, isPairedGaussian);
+            DataSet testData = genMix.generateRandomCollection();
+            CombinedMetric cmet = CombinedMetric.FLOAT_EUCLIDEAN;
+            NeighborSetFinder nsf = new NeighborSetFinder(testData, cmet);
+        
