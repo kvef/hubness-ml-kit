@@ -123,4 +123,97 @@ public class KMeansHubnessTester extends ClusteringAlg {
     }
 
     /**
-     
+     * @param dset DataSet object for clustering.
+     * @param cmet CombinedMetric object for distance calculations.
+     * @param numClusters A pre-defined number of clusters.
+     */
+    public KMeansHubnessTester(
+            DataSet dset,
+            CombinedMetric cmet,
+            int numClusters) {
+        setDataSet(dset);
+        setCombinedMetric(cmet);
+        setNumClusters(numClusters);
+    }
+
+    /**
+     * @param dset DataSet object for clustering.
+     * @param numClusters A pre-defined number of clusters.
+     */
+    public KMeansHubnessTester(DataSet dset, int numClusters) {
+        setDataSet(dset);
+        setCombinedMetric(CombinedMetric.EUCLIDEAN);
+        setNumClusters(numClusters);
+    }
+
+    @Override
+    public void cluster() throws Exception {
+        performBasicChecks();
+        flagAsActive();
+        DataSet dset = getDataSet();
+        CombinedMetric cmet = getCombinedMetric();
+        int numClusters = getNumClusters();
+        cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+        boolean trivial = checkIfTrivial();
+        if (trivial) {
+            return;
+        } // Nothing needs to be done in this case.
+        int[] clusterAssociations = new int[dset.size()];
+        Arrays.fill(clusterAssociations, 0, dset.size(), -1);
+        setClusterAssociations(clusterAssociations);
+        DataInstance[] centroids = new DataInstance[numClusters];
+        Cluster[] clusters;
+        PlusPlusSeeder seeder =
+                new PlusPlusSeeder(centroids.length, dset.data, cmet);
+        int[] centroidIndexes = seeder.getCentroidIndexes();
+        for (int cIndex = 0; cIndex < centroids.length; cIndex++) {
+            clusterAssociations[centroidIndexes[cIndex]] = cIndex;
+            centroids[cIndex] =
+                    dset.getInstance(centroidIndexes[cIndex]).copyContent();
+        }
+        setClusterAssociations(clusterAssociations);
+        DataInstance[] clusterHubs = new DataInstance[numClusters];
+        // When there are no reassignments, we can end the clustering.
+        boolean noReassignments;
+        double errorPrevious;
+        double errorCurrent = Double.MAX_VALUE;
+        // This is initialized to true for the first iteration to go through.
+        boolean errorDifferenceSignificant = true;
+        setIterationIndex(0);
+        float smallestDistance;
+        float currDistance;
+        float[] hubCentroidDists = new float[numClusters];
+        float hcdMax;
+        float hcdMin;
+        float hcdAvg;
+        // First iteration assignments.
+        for (int i = 0; i < clusterAssociations.length; i++) {
+            int closestCentroid = -1;
+            smallestDistance = Float.MAX_VALUE;
+            for (int j = 0; j < numClusters; j++) {
+                currDistance = cmet.dist(dset.data.get(i), centroids[j]);
+                if (currDistance < smallestDistance) {
+                    smallestDistance = currDistance;
+                    closestCentroid = j;
+                }
+            }
+            clusterAssociations[i] = closestCentroid;
+        }
+        do {
+            nextIteration();
+            clusters = getClusters();
+            int maxFrequency;
+            int maxIndex;
+            int currClusterSize;
+            hcdMax = -Float.MAX_VALUE;
+            hcdMin = Float.MAX_VALUE;
+            hcdAvg = 0;
+            float mAvg = 0;
+            float mMin = Float.MAX_VALUE;
+            float mMax = -Float.MAX_VALUE;
+            for (int cIndex = 0; cIndex < numClusters; cIndex++) {
+                float mDist = Float.MAX_VALUE;
+                float currDist;
+                currClusterSize = clusters[cIndex].size();
+                if (currClusterSize == 1) {
+ 
