@@ -216,4 +216,85 @@ public class KMeansHubnessTester extends ClusteringAlg {
                 float currDist;
                 currClusterSize = clusters[cIndex].size();
                 if (currClusterSize == 1) {
- 
+                    // The trivial case.
+                    clusterHubs[cIndex] = clusters[cIndex].getInstance(0);
+                    continue;
+                }
+                maxFrequency = 0;
+                maxIndex = 0;
+                for (int j = 0; j < currClusterSize; j++) {
+                    // Now look for the hubs.
+                    if (hubnessArray[clusters[cIndex].
+                            getWithinDataSetIndexOf(j)] > maxFrequency) {
+                        maxFrequency = hubnessArray[
+                                clusters[cIndex].getWithinDataSetIndexOf(j)];
+                        maxIndex = j;
+                    }
+                    currDist = cmet.dist(
+                            clusters[cIndex].getInstance(j), centroids[cIndex]);
+                    // The smallest distance to the centroid is the distance
+                    // from the medoid.
+                    if (currDist < mDist) {
+                        mDist = currDist;
+                    }
+                }
+                if (mDist < mMin) {
+                    mMin = mDist;
+                }
+                if (mDist > mMax) {
+                    mMax = mDist;
+                }
+                clusterHubs[cIndex] = clusters[cIndex].getInstance(maxIndex);
+                hubCentroidDists[cIndex] = cmet.dist(clusterHubs[cIndex],
+                        centroids[cIndex]);
+                if (hubCentroidDists[cIndex] > hcdMax) {
+                    hcdMax = hubCentroidDists[cIndex];
+                }
+                if (hubCentroidDists[cIndex] < hcdMin) {
+                    hcdMin = hubCentroidDists[cIndex];
+                }
+                hcdAvg += hubCentroidDists[cIndex];
+                mAvg += mDist;
+            }
+            hcdAvg /= (float) numClusters;
+            mAvg /= (float) numClusters;
+            hcMinVect.add(hcdMin);
+            hcMaxVect.add(hcdMax);
+            hcAvgVect.add(hcdAvg);
+            mAvgVect.add(mAvg);
+            mMinVect.add(mMin);
+            mMaxVect.add(mMax);
+            hcdWriter.println(getIterationIndex() + "," + hcdMin + "," + hcdMax
+                    + "," + hcdAvg + "," + mMin + "," + mMax + "," + mAvg);
+            noReassignments = true;
+            // Now actually assign points to closest centroids.
+            for (int i = 0; i < dset.size(); i++) {
+                int closestCentroidIndex = -1;
+                smallestDistance = Float.MAX_VALUE;
+                for (int j = 0; j < numClusters; j++) {
+                    currDistance = cmet.dist(dset.data.get(i), centroids[j]);
+                    if (currDistance < smallestDistance) {
+                        smallestDistance = currDistance;
+                        closestCentroidIndex = j;
+                    }
+                }
+                if (closestCentroidIndex != clusterAssociations[i]) {
+                    noReassignments = false;
+                }
+                clusterAssociations[i] = closestCentroidIndex;
+            }
+            clusters = getClusters();
+            // Calculate new centroids.
+            for (int i = 0; i < numClusters; i++) {
+                centroids[i] = clusters[i].getCentroid();
+            }
+            errorPrevious = errorCurrent;
+            errorCurrent = calculateIterationError(centroids);
+            if (errorCurrent < smallestError) {
+                bestAssociations = clusterAssociations;
+            }
+            if (getIterationIndex() >= MIN_ITERATIONS) {
+                if (DataMineConstants.isAcceptableDouble(errorPrevious)
+                        && DataMineConstants.isAcceptableDouble(errorCurrent)
+                        && (Math.abs(errorCurrent / errorPrevious) - 1f)
+                        < ERROR_TH
