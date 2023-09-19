@@ -391,4 +391,83 @@ public class KMeansHubnessTester extends ClusteringAlg {
             DataSet testData = genMix.generateRandomCollection();
             CombinedMetric cmet = CombinedMetric.FLOAT_EUCLIDEAN;
             NeighborSetFinder nsf = new NeighborSetFinder(testData, cmet);
-        
+            nsf.calculateDistances();
+            nsf.calculateNeighborSets(neighborSize);
+            float[][] distances = nsf.getDistances();
+            // Find the average, min and max distance between points.
+            float distMin = Float.MAX_VALUE;
+            float distMax = -Float.MAX_VALUE;
+            float distAvg = 0;
+            float dCounter = 0;
+            for (int j = 0; j < distances.length; j++) {
+                for (int l = 0; l < distances[j].length; l++) {
+                    dCounter++;
+                    distAvg += distances[j][l];
+                    if (distances[j][l] > distMax) {
+                        distMax = distances[j][l];
+                    }
+                    if (distances[j][l] < distMin) {
+                        distMin = distances[j][l];
+                    }
+                }
+            }
+            distAvg /= dCounter;
+            avgDistMin += distMin;
+            avgDistMax += distMax;
+            avgDistAvg += distAvg;
+            for (int j = 0; j < numTimesForDataSet; j++) {
+                KMeansHubnessTester kmht = new KMeansHubnessTester();
+                kmht.setDataSet(testData);
+                kmht.setHubness(nsf.getNeighborFrequencies());
+                kmht.setCombinedMetric(cmet);
+                kmht.setNumClusters(numClusters);
+                File wFile = new File(
+                        outDir,
+                        "distLog" + (i * numTimesForDataSet + j) + ".csv");
+                boolean noErrors = false;
+                while (!noErrors) {
+                    try {
+                        kmht.cluster();
+                        noErrors = true;
+                    } catch (Exception e) {
+                        FileUtil.createFile(wFile);
+                        PrintWriter hcdWriter =
+                                new PrintWriter(new FileWriter(wFile));
+                        kmht.hcdWriter = hcdWriter;
+                    }
+                }
+                Cluster[] config = kmht.getClusters();
+                for (int iter = 0; iter < config.length; iter++) {
+                    float distMinIC = Float.MAX_VALUE;
+                    float distMaxIC = -Float.MAX_VALUE;
+                    float distAvgIC = 0;
+                    float TD = 0;
+                    if (config[iter] == null || config[iter].isEmpty()
+                            || config[iter].size() == 1) {
+                        continue;
+                    }
+                    for (int elIndex1 = 0; elIndex1 < config[iter].size();
+                            elIndex1++) {
+                        for (int elIndex2 = elIndex1 + 1;
+                                elIndex2 < config[iter].size(); elIndex2++) {
+                            TD = distances[config[iter].
+                                    getWithinDataSetIndexOf(elIndex1)][
+                                    config[iter].getWithinDataSetIndexOf(
+                                    elIndex2) - config[iter].
+                                    getWithinDataSetIndexOf(elIndex1) - 1];
+                            if (TD > distMaxIC) {
+                                distMaxIC = TD;
+                            }
+                            if (TD < distMinIC) {
+                                distMinIC = TD;
+                            }
+                            distAvgIC += TD;
+                        }
+                    }
+                    distAvgIC /= 0.5f * (float) (config[iter].size()
+                            * (config[iter].size() - 1));
+                    avgDistMinIC += distMinIC;
+                    avgDistMaxIC += distMaxIC;
+                    avgDistAvgIC += distAvgIC;
+                }
+                for (int iter = 0; iter < kmht.hcMinVect.size(); iter++
