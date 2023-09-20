@@ -470,4 +470,97 @@ public class KMeansHubnessTester extends ClusteringAlg {
                     avgDistMaxIC += distMaxIC;
                     avgDistAvgIC += distAvgIC;
                 }
-                for (int iter = 0; iter < kmht.hcMinVect.size(); iter++
+                for (int iter = 0; iter < kmht.hcMinVect.size(); iter++) {
+                    AhcMinVect[iter] += kmht.hcMinVect.get(iter);
+                    AhcMinCounts[iter]++;
+                }
+                for (int iter = 0; iter < kmht.hcMaxVect.size(); iter++) {
+                    AhcMaxVect[iter] += kmht.hcMaxVect.get(iter);
+                    AhcMaxCounts[iter]++;
+                }
+                for (int iter = 0; iter < kmht.hcAvgVect.size(); iter++) {
+                    AhcAvgVect[iter] += kmht.hcAvgVect.get(iter);
+                    AhcAvgCounts[iter]++;
+                }
+                for (int iter = 0; iter < kmht.mMinVect.size(); iter++) {
+                    AmMinVect[iter] += kmht.mMinVect.get(iter);
+                    AmMinCounts[iter]++;
+                }
+                for (int iter = 0; iter < kmht.mMaxVect.size(); iter++) {
+                    AmMaxVect[iter] += kmht.mMaxVect.get(iter);
+                    AmMaxCounts[iter]++;
+                }
+                for (int iter = 0; iter < kmht.mAvgVect.size(); iter++) {
+                    AmAvgVect[iter] += kmht.mAvgVect.get(iter);
+                    AmAvgCounts[iter]++;
+                }
+            }
+            System.gc();
+        }
+        // Now average the totals.
+        avgDistMin /= (float) numDataSets;
+        avgDistMax /= (float) numDataSets;
+        avgDistAvg /= (float) numDataSets;
+        avgDistMinIC /= (float) (numDataSets * numTimesForDataSet *
+                numClusters);
+        avgDistMaxIC /= (float) (numDataSets * numTimesForDataSet *
+                numClusters);
+        avgDistAvgIC /= (float) (numDataSets * numTimesForDataSet *
+                numClusters);
+        for (int iter = 0; iter < 300; iter++) {
+            if (AhcMinCounts[iter] > 0) {
+                AhcMinVect[iter] /= AhcMinCounts[iter];
+            }
+            if (AhcMaxCounts[iter] > 0) {
+                AhcMaxVect[iter] /= AhcMaxCounts[iter];
+            }
+            if (AhcAvgCounts[iter] > 0) {
+                AhcAvgVect[iter] /= AhcAvgCounts[iter];
+            }
+            if (AmMinCounts[iter] > 0) {
+                AmMinVect[iter] /= AmMinCounts[iter];
+            }
+            if (AmMaxCounts[iter] > 0) {
+                AmMaxVect[iter] /= AmMaxCounts[iter];
+            }
+            if (AmAvgCounts[iter] > 0) {
+                AmAvgVect[iter] /= AmAvgCounts[iter];
+            }
+        }
+        File finalSummary = new File(outDir, "finalSummary.csv");
+        FileUtil.createFile(finalSummary);
+        PrintWriter pw = new PrintWriter(new FileWriter(finalSummary));
+        try {
+            pw.println("hMin,hMax,hAvg,mMin,mMax,mAvg");
+            for (int iter = 0; iter < 300; iter++) {
+                pw.println(AhcMinVect[iter] + "," + AhcMaxVect[iter] + ","
+                        + AhcAvgVect[iter] + "," + AmMinVect[iter] + ","
+                        + AmMaxVect[iter] + "," + AmAvgVect[iter]);
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            pw.close();
+        }
+        File finalDistanceSummary = new File(outDir,
+                "finalAvgDistancesInDataset.csv");
+        FileUtil.createFile(finalDistanceSummary);
+        pw = new PrintWriter(new FileWriter(finalDistanceSummary));
+        try {
+            pw.println("dMin,dMax,dAvg,dMinIC,dMaxIC,dAvgIC");
+            pw.println(avgDistMin + "," + avgDistMax + "," + avgDistAvg + ","
+                    + avgDistMinIC + "," + avgDistMaxIC + "," + avgDistAvgIC);
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            pw.close();
+        }
+    }
+
+    @Override
+    public int[] assignPointsToModelClusters(DataSet dsetTest,
+            NeighborSetFinder nsfTest) {
+        if (dsetTest == null || dsetTest.isEmpty()) {
+            return null;
+        } else {
+            int[] clus
