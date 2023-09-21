@@ -563,4 +563,30 @@ public class KMeansHubnessTester extends ClusteringAlg {
         if (dsetTest == null || dsetTest.isEmpty()) {
             return null;
         } else {
-            int[] clus
+            int[] clusterAssociations = new int[dsetTest.size()];
+            if (endCentroids == null) {
+                return clusterAssociations;
+            }
+            float minDist;
+            float dist;
+            CombinedMetric cmet = getCombinedMetric();
+            cmet = cmet != null ? cmet : CombinedMetric.EUCLIDEAN;
+            for (int i = 0; i < dsetTest.size(); i++) {
+                minDist = Float.MAX_VALUE;
+                for (int cIndex = 0; cIndex < endCentroids.length; cIndex++) {
+                    dist = Float.MAX_VALUE;
+                    try {
+                        dist = cmet.dist(
+                                endCentroids[cIndex], dsetTest.getInstance(i));
+                    } catch (Exception e) {
+                    }
+                    if (dist < minDist) {
+                        clusterAssociations[i] = cIndex;
+                        minDist = dist;
+                    }
+                }
+            }
+            return clusterAssociations;
+        }
+    }
+}
