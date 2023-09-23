@@ -46,4 +46,122 @@ public class LinSubspace {
      * @param maxSize Maximum dimensionality of the future linear subspace.
      */
     public LinSubspace(int maxSize) {
-        defSet
+        defSet = new float[maxSize][];
+        currDefSetSize = 0;
+    }
+
+    /**
+     * @return Integer that is the dimensionality of the linear subspace.
+     */
+    public int getDimensionality() {
+        if (basis == null) {
+            if (defSet == null) {
+                return 0;
+            } else {
+                basis = BasisOrthonormalization.orthonormalize(defSet);
+            }
+        }
+        return basis.length;
+    }
+
+    /**
+     * @param vect Add a vector to the definition set of vectors spanning the
+     * linear subspace.
+     */
+    public void addToDefSet(float[] vect) {
+        // For consistency, it should only be done if it is linearly independent
+        // of the current defSet.
+        defSet[currDefSetSize++] = vect;
+        orthonormalizeBasis();
+    }
+
+    /**
+     * Remove the specified vector from the definition set.
+     *
+     * @param index Index of the vector to remove from the definition set of the
+     * linear subspace.
+     */
+    public void removeFromDefSet(int index) {
+        if (index < currDefSetSize && index >= 0) {
+            for (int i = index + 1; i < currDefSetSize; i++) {
+                defSet[i - 1] = defSet[i];
+            }
+            defSet[currDefSetSize - 1] =
+                    new float[defSet[currDefSetSize - 1].length];
+            currDefSetSize--;
+        }
+        orthonormalizeBasis();
+    }
+
+    /**
+     * Remove a vector from the definition set that is closest to the provided
+     * vector.
+     *
+     * @param vect Vector that is used for comparisons - to determine which
+     * vector from the definition set is to be removed.
+     */
+    public void removeClosestToVector(float[] vect) {
+        // Definition set vectors are not normalized, so it is about the cosine
+        // of the angle between them.
+        int closestIndex = 0;
+        float closestSim = 0;
+        float currSim;
+        for (int i = 0; i < currDefSetSize; i++) {
+            currSim = LinBasic.angleCosine(vect, defSet[i]);
+            if (currSim > closestSim) {
+                closestSim = currSim;
+                closestIndex = i;
+            }
+        }
+        removeFromDefSet(closestIndex);
+    }
+
+    /**
+     * Orthonormalize the basis of the linear subspace.
+     */
+    public void orthonormalizeBasis() {
+        if (defSet != null) {
+            basis = BasisOrthonormalization.orthonormalize(defSet,
+                    currDefSetSize);
+        }
+    }
+
+    /**
+     * Calculates the distance between the linear subspace and a vector as a
+     * norm of the difference between the vector and its projection on the
+     * subspace.
+     *
+     * @param vect Vector, given as a float array.
+     * @return Distance between the vector and the linear subspace.
+     */
+    public float distanceTo(float[] vect) {
+        return LinBasic.modus(LinBasic.decr(vect, projection(vect)));
+    }
+
+    /**
+     * Projects the vector onto the linear subspace.
+     *
+     * @param vect Vector, given as a float array.
+     * @return Projection of the vector onto the linear subspace.
+     */
+    public float[] projection(float[] vect) {
+        float[] proj = new float[vect.length];
+        float factor;
+        if (basis == null) {
+            if (defSet != null) {
+                orthonormalizeBasis();
+            } else {
+                return null;
+            }
+        }
+        for (int i = 0; i < basis.length; i++) {
+            factor = LinBasic.dotProduct(vect, basis[i]);
+            // Since the basis is also normalized.
+            proj = LinBasic.add(proj,
+                    LinBasic.scalarMultiply(basis[i], factor));
+        }
+        return proj;
+    }
+
+    /**
+     * Find the closest subspace t
