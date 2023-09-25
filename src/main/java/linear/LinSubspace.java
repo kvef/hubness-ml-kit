@@ -164,4 +164,114 @@ public class LinSubspace {
     }
 
     /**
-     * Find the closest subspace t
+     * Find the closest subspace to a specified vector, among a set of specified
+     * linear subspaces.
+     *
+     * @param subspaces An array of linear subspaces.
+     * @param vect Vector, given as a float array.
+     * @return Index of the closest linear subspace.
+     */
+    public static int findClosestSubspace(LinSubspace[] subspaces,
+            float[] vect) {
+        int closestIndex = 0;
+        float closestSim = 0;
+        float currSim;
+        for (int i = 0; i < subspaces.length; i++) {
+            if (subspaces[i].getDimensionality() > 0) {
+                currSim = LinBasic.modus(subspaces[i].projection(vect));
+            } else {
+                currSim = -Float.MAX_VALUE;
+            }
+            if (currSim > closestSim) {
+                closestSim = currSim;
+                closestIndex = i;
+            }
+        }
+        return closestIndex;
+    }
+
+    /**
+     * Rotate the linear subspace.
+     *
+     * @param rMatrix Rotation matrix.
+     */
+    public void rotate(float[][] rMatrix) {
+        float[][] newDefSet = new float[defSet.length][rMatrix.length];
+        float[][] newBasis = new float[basis.length][rMatrix.length];
+        for (int i = 0; i < currDefSetSize; i++) {
+            for (int j = 0; j < rMatrix.length; j++) {
+                for (int k = 0; k < defSet[i].length; k++) {
+                    newDefSet[i][j] += rMatrix[j][k] * defSet[i][k];
+                }
+            }
+        }
+        for (int i = 0; i < basis.length; i++) {
+            for (int j = 0; j < rMatrix.length; j++) {
+                for (int k = 0; k < basis[i].length; k++) {
+                    newBasis[i][j] += rMatrix[j][k] * basis[i][k];
+                }
+            }
+        }
+        basis = newBasis;
+        defSet = newDefSet;
+    }
+
+    /**
+     * Applies a linear transformation to the subspace.
+     *
+     * @param rMatrix Transformation matrix.
+     */
+    public void applyTransform(float[][] rMatrix) {
+        // The method doesn't assume that lengths are preserved.
+        float[][] newDefSet = new float[defSet.length][rMatrix.length];
+        for (int i = 0; i < currDefSetSize; i++) {
+            for (int j = 0; j < rMatrix.length; j++) {
+                for (int k = 0; k < defSet[i].length; k++) {
+                    newDefSet[i][j] += rMatrix[j][k] * defSet[i][k];
+                }
+            }
+        }
+        defSet = newDefSet;
+        orthonormalizeBasis();
+    }
+
+    /**
+     * Rotates the linear subspace and outputs the rotated space.
+     *
+     * @param rMatrix Rotation matrix.
+     * @return Rotated subspace.
+     */
+    public LinSubspace getRotatedSpace(float[][] rMatrix) {
+        float[][] newDefSet = new float[defSet.length][rMatrix.length];
+        float[][] newBasis = new float[basis.length][rMatrix.length];
+        for (int i = 0; i < currDefSetSize; i++) {
+            for (int j = 0; j < rMatrix.length; j++) {
+                for (int k = 0; k < defSet[i].length; k++) {
+                    newDefSet[i][j] += rMatrix[j][k] * defSet[i][k];
+                }
+            }
+        }
+        for (int i = 0; i < basis.length; i++) {
+            for (int j = 0; j < rMatrix.length; j++) {
+                for (int k = 0; k < basis[i].length; k++) {
+                    newBasis[i][j] += rMatrix[j][k] * basis[i][k];
+                }
+            }
+        }
+        LinSubspace result = new LinSubspace();
+        result.basis = newBasis;
+        result.defSet = newDefSet;
+        result.currDefSetSize = currDefSetSize;
+        result.category = category;
+        return result;
+    }
+
+    /**
+     * Performs a transformation of the original linear subspace and outputs it
+     * as a new subspace.
+     *
+     * @param rMatrix Transformation matrix.
+     * @return Transformed linear subspace.
+     */
+    public LinSubspace getTransformedSpace(float[][] rMatrix) {
+      
