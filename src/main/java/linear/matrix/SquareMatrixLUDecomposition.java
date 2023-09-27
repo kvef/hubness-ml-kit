@@ -193,3 +193,63 @@ public class SquareMatrixLUDecomposition {
      */
     private int getFirstNonZeroRowIndex(int column) {
         int row = column;
+        while (row < LUmat.length
+                && DataMineConstants.isZero(LUmat[row][column])) {
+            row++;
+        }
+        if (row == LUmat.length) {
+            return -1;
+        } else {
+            return row;
+        }
+    }
+
+    /**
+     * Perform LU decomposition.
+     */
+    public void performLUdecomposition() {
+        int len = matrix.length;
+        float quotient;
+        float[] tempRow;
+        int nextNonz;
+        for (int i = 0; i < len - 1; i++) {
+            // len-1, since there is nothing below the main diagonal in the
+            // last column. Zero out everything below the main diagonal in the
+            // i-th column.
+            nextNonz = getFirstNonZeroRowIndex(i);
+            if (nextNonz == -1) {
+                // Nothing to do, zero diagonal element.
+                continue;
+            }
+            if (nextNonz != i) {
+                // Switch rows.
+                tempRow = LUmat[i];
+                LUmat[i] = LUmat[nextNonz];
+                LUmat[nextNonz] = tempRow;
+                perm[i] = nextNonz;
+                perm[nextNonz] = i;
+            }
+            for (int j = i + 1; j < len; j++) {
+                // j is the row index.
+                quotient = -LUmat[j][i] / LUmat[i][i];
+                for (int k = i + 1; k < len; k++) {
+                    LUmat[j][k] += quotient * LUmat[i][k];
+                }
+                // Now just fill the zeroed element with its L-matrix value,
+                // which turns out to be: -quotient
+                LUmat[j][i] = -quotient;
+            }
+        }
+        int numNonZeroRows = 0;
+        for (int i = 0; i < len; i++) {
+            for (int j = i; j < len; j++) {
+                if (DataMineConstants.isNonZero(LUmat[i][j])) {
+                    numNonZeroRows++;
+                    break;
+                }
+            }
+        }
+        rank = numNonZeroRows;
+        decompositionFinished = true;
+    }
+}
