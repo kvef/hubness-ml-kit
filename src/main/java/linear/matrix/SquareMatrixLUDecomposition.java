@@ -62,4 +62,134 @@ public class SquareMatrixLUDecomposition {
 
     /**
      * @return Matrix rank after the LU composition has been performed to
-     * det
+     * determine it.
+     */
+    public int getRank() {
+        return rank;
+    }
+
+    /**
+     * @return Matrix inverse.
+     */
+    public float[][] getMatrixInverse() {
+        if (decompositionFinished) {
+            double det = calculateDeterminant();
+            if (det == 0) {
+                // Maybe do something else here.
+                return null;
+            }
+            int len = matrix.length;
+            float[] z = new float[len];
+            float[] x = new float[len];
+            float sum;
+            float[][] inverse = new float[len][len];
+            for (int i = 0; i < len; i++) {
+                // Calculate the i-th column of the inverse in two steps.
+                Arrays.fill(z, 0);
+                Arrays.fill(x, 0);
+                for (int j = 0; j < len; j++) {
+                    // Lz = e Ux = z
+                    sum = 0;
+                    for (int k = 0; k < j; k++) {
+                        sum += LUmat[j][k] * z[k];
+                    }
+                    z[j] = (j == i) ? 1 - sum : 0 - sum;
+                }
+                for (int j = 0; j < len; j++) {// Lz = e Ux = z
+                    sum = 0;
+                    for (int k = j + 1; k < len; k++) {
+                        sum += LUmat[j][k] * x[k];
+                    }
+                    x[j] = (z[j] - sum) / LUmat[j][j];
+                }
+                for (int j = 0; j < len; j++) {
+                    inverse[j][i] = x[j];
+                }
+            }
+            // Now permute if necessary.
+            if (!Permutation.isIdentity(perm)) {
+                inverse = Permutation.permuteSquareMatrixColumns(inverse, perm);
+            }
+            return inverse;
+        } else {
+            performLUdecomposition();
+            return getMatrixInverse();
+        }
+    }
+
+    /**
+     * @return Value of the matrix determinant.
+     */
+    public double calculateDeterminant() {
+        if (decompositionFinished) {
+            double result = 1;
+            for (int i = 0; i < matrix.length; i++) {
+                result *= LUmat[i][i];
+            }
+            if (Permutation.isOddPermutation(perm)) {
+                result *= -1;
+            }
+            return result;
+        } else {
+            performLUdecomposition();
+            return calculateDeterminant();
+        }
+    }
+
+    /**
+     * @return Permutation.
+     */
+    public int[] getPerm() {
+        return perm;
+    }
+
+    /**
+     * @return The original matrix.
+     */
+    public float[][] getOriginalMatrix() {
+        return matrix;
+    }
+
+    /**
+     * @return The calculated LU matrix.
+     */
+    public float[][] getLUMatrix() {
+        return LUmat;
+    }
+
+    /**
+     * @return The calculated L matrix.
+     */
+    public float[][] getFullLMatrix() {
+        float[][] lMat = new float[matrix.length][matrix.length];
+        for (int i = 0; i < matrix.length; i++) {
+            lMat[i][i] = 1;
+            for (int j = i + 1; j < matrix.length; j++) {
+                lMat[j][i] = LUmat[j][i];
+            }
+        }
+        return lMat;
+    }
+
+    /**
+     * @return The calculated U matrix.
+     */
+    public float[][] getFullUMatrix() {
+        float[][] uMat = new float[matrix.length][matrix.length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = i; j < matrix.length; j++) {
+                uMat[i][j] = LUmat[i][j];
+            }
+        }
+        return uMat;
+    }
+
+    /**
+     * Returns the index of the first non-zero row, by looking below the
+     * diagonal, for a given column index.
+     *
+     * @param column Column index.
+     * @return
+     */
+    private int getFirstNonZeroRowIndex(int column) {
+        int row = column;
