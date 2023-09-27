@@ -274,4 +274,20 @@ public class LinSubspace {
      * @return Transformed linear subspace.
      */
     public LinSubspace getTransformedSpace(float[][] rMatrix) {
-      
+        // The method doesn't assume that lengths are preserved.
+        float[][] newDefSet = new float[defSet.length][rMatrix.length];
+        for (int i = 0; i < currDefSetSize; i++) {
+            for (int j = 0; j < rMatrix.length; j++) {
+                for (int k = 0; k < defSet[i].length; k++) {
+                    newDefSet[i][j] += rMatrix[j][k] * defSet[i][k];
+                }
+            }
+        }
+        LinSubspace result = new LinSubspace();
+        result.defSet = newDefSet;
+        result.currDefSetSize = currDefSetSize;
+        result.category = category;
+        result.orthonormalizeBasis();
+        return result;
+    }
+}
