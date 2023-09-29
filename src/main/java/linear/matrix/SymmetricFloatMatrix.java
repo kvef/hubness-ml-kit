@@ -348,4 +348,99 @@ public class SymmetricFloatMatrix implements DataMatrixInterface {
     @Override
     public DataMatrixInterface multiply(float scalar) {
         DataMatrixInterface result;
-        result = n
+        result = new SymmetricFloatMatrix(data.length);
+        for (int i = 0; i < data.length; i++) {
+            for (int j = i; j < data.length; j++) {
+                result.setElementAt(i, j, data[i][j] * scalar);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public DataMatrixInterface minus(DataMatrixInterface second)
+            throws Exception {
+        if (!(second.numberOfColumns() == data.length
+                && second.numberOfRows() == data.length)) {
+            throw new Exception("Cannot add matrices of different sizes.");
+        }
+        DataMatrixInterface result;
+        if (second.isSymmetricMatrixImplementation()) {
+            result = new SymmetricFloatMatrix(data.length);
+            for (int i = 0; i < data.length; i++) {
+                for (int j = i; j < data.length; j++) {
+                    result.setElementAt(i, j, data[i][j]
+                            - second.getElementAt(i, j));
+                }
+            }
+        } else {
+            result = new DataMatrix(data.length, data.length);
+            for (int i = 0; i < data.length; i++) {
+                for (int j = i; j < data.length; j++) {
+                    result.setElementAt(i, j, data[i][j]
+                            - second.getElementAt(i, j));
+                    result.setElementAt(j, i, data[i][j]
+                            - second.getElementAt(j, i));
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public float calculateDeterminant() {
+        int[] indexes = new int[data.length];
+        for (int i = 0; i < data.length; i++) {
+            indexes[i] = i;
+        }
+        return calculateDet(indexes, 0);
+    }
+
+    /**
+     * Calculate determinant by cofactor expansion.
+     *
+     * @param indexes Index array, ordered ASC.
+     * @param expansionIndex Index of the intersection element.
+     * @return
+     */
+    private float calculateDet(int[] indexes, int expansionIndex) {
+        // This implementation takes advantage of the fact that first row is
+        // always expanded upon. This means that when the size of the matrix is
+        // 2, it will be reaching the elements in the last two rows.
+        if (indexes.length == 1) {
+            return getElementAt(data.length - 1, indexes[0]);
+        } else if (indexes.length == 2) {
+            return (getElementAt(data.length - 2, indexes[0])
+                    * getElementAt(data.length - 1, indexes[1])
+                    - getElementAt(data.length - 2, indexes[1])
+                    * getElementAt(data.length - 1, indexes[0]));
+        } else {
+            float sum = 0;
+            int[] tempInt;
+            for (int i = 0; i < indexes.length; i++) {
+                //Take the first row, make cofactors and expand.
+                tempInt = new int[indexes.length - 1];
+                for (int j = 0; j < i; j++) {
+                    tempInt[j] = indexes[j];
+                }
+                for (int j = i + 1; j < indexes.length; j++) {
+                    tempInt[j - 1] = indexes[j];
+                }
+                if (i % 2 == 0) {
+                    if (getElementAt(expansionIndex, indexes[i]) != 0) {
+                        sum += getElementAt(expansionIndex, indexes[i])
+                                * calculateDet(tempInt, expansionIndex + 1);
+                    }
+                } else {
+                    if (getElementAt(expansionIndex, indexes[i]) != 0) {
+                        sum -= getElementAt(expansionIndex, indexes[i])
+                                * calculateDet(tempInt, expansionIndex + 1);
+                    }
+                }
+            }
+            return sum;
+        }
+    }
+
+    /**
+     * Prints the matrix to a file.
