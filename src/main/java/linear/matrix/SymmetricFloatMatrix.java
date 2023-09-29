@@ -444,3 +444,106 @@ public class SymmetricFloatMatrix implements DataMatrixInterface {
 
     /**
      * Prints the matrix to a file.
+     *
+     * @param dMatFile File to print the matrix to.
+     * @throws Exception
+     */
+    public void printDMatToFile(File dMatFile) throws Exception {
+        FileUtil.createFile(dMatFile);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(dMatFile));) {
+            pw.println(data.length);
+            for (int i = 0; i < data.length - 1; i++) {
+                pw.print(data[i][0]);
+                for (int j = 1; j < data[i].length; j++) {
+                    pw.print("," + data[i][j]);
+                }
+                pw.println();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    /**
+     * Load the matrix from a file.
+     *
+     * @param dMatFile File to load the matrix from.
+     * @throws Exception
+     */
+    public void loadDMatFromFile(File dMatFile) throws Exception {
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(dMatFile)));
+        float[][] dMatLoaded = null;
+        String s;
+        String[] lineParse;
+        try {
+            int size = Integer.parseInt(br.readLine());
+            dMatLoaded = new float[size][];
+            for (int i = 0; i < size - 1; i++) {
+                dMatLoaded[i] = new float[size - i - 1];
+                s = br.readLine();
+                lineParse = s.split(",");
+                for (int j = 0; j < lineParse.length; j++) {
+                    dMatLoaded[i][j] = Float.parseFloat(lineParse[j]);
+                }
+            }
+            dMatLoaded[size - 1] = new float[0];
+        } catch (IOException | NumberFormatException e) {
+            throw e;
+        } finally {
+            br.close();
+        }
+        data = dMatLoaded;
+    }
+
+    /**
+     * Print the matrix to a file without its diagonal elements.
+     *
+     * @param dMatFile File to print the matrix to.
+     * @throws Exception
+     */
+    public void printDMatToFileNoDiag(File dMatFile) throws Exception {
+        FileUtil.createFile(dMatFile);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(dMatFile));) {
+            pw.println(data.length);
+            for (int i = 0; i < data.length - 1; i++) {
+                pw.print(data[i][1]);
+                for (int j = 2; j < data[i].length; j++) {
+                    pw.print("," + data[i][j]);
+                }
+                pw.println();
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    /**
+     * Load the matrix from a file where its diagonal elements are not given
+     * (they are all equal to zero).
+     *
+     * @param dMatFile
+     * @throws Exception
+     * @return Two-dimensional array that is a symmetric float matrix without
+     * the diagonal, each row i contains only elements m(i,j) for j > i.
+     */
+    public float[][] loadDMatFromFileNoDiag(File dMatFile) throws Exception {
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(dMatFile)));
+        float[][] dMatLoaded = null;
+        String s;
+        String[] lineParse;
+        try {
+            int size = Integer.parseInt(br.readLine());
+            dMatLoaded = new float[size - 1][];
+            for (int i = 0; i < size - 1; i++) {
+                dMatLoaded[i] = new float[size - i - 1];
+                s = br.readLine();
+                lineParse = s.split(",");
+                for (int j = 0; j
+                        < Math.min(lineParse.length,
+                        dMatLoaded[i].length); j++) {
+                    dMatLoaded[i][j] = Float.parseFloat(lineParse[j]);
+                }
+            }
+        } catch (IOExcepti
