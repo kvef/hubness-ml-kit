@@ -259,4 +259,93 @@ public class SymmetricFloatMatrix implements DataMatrixInterface {
                         } else {
                             sum += getElementAt(expansionIndex, indexes[i])
                                     * calculateCofactor(tempIndexes,
- 
+                                    indexOfFirstCofactRow,
+                                    expansionIndex + 1);
+                        }
+                    }
+                } else {
+                    if (getElementAt(expansionIndex, indexes[i]) != 0) {
+                        if (expansionIndex + 1 == indexOfFirstCofactRow) {
+                            sum -= getElementAt(expansionIndex, indexes[i])
+                                    * calculateCofactor(tempIndexes,
+                                    indexOfFirstCofactRow,
+                                    expansionIndex + 2);
+                        } else {
+                            sum -= getElementAt(expansionIndex, indexes[i])
+                                    * calculateCofactor(tempIndexes,
+                                    indexOfFirstCofactRow,
+                                    expansionIndex + 1);
+                        }
+                    }
+                }
+            }
+            return sum;
+        }
+    }
+
+    @Override
+    public DataMatrixInterface multiply(DataMatrixInterface second)
+            throws Exception {
+        if (!(second.numberOfRows() == data.length)) {
+            throw new Exception("Cannot multiply matrices.");
+        }
+        DataMatrixInterface result;
+        if (second.isSymmetricMatrixImplementation()) {
+            //The product is not necessarily symmetric.
+            result = new DataMatrix(data.length, data.length);
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data.length; j++) {
+                    for (int k = 0; k < data.length; k++) {
+                        result.setElementAt(i, j, result.getElementAt(i, j)
+                                + data[i][k] * second.getElementAt(k, j));
+                    }
+                }
+            }
+
+        } else {
+            result = new DataMatrix(data.length, second.numberOfColumns());
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < second.numberOfColumns(); j++) {
+                    for (int k = 0; k < data.length; k++) {
+                        result.setElementAt(i, j, result.getElementAt(i, j)
+                                + data[i][k] * second.getElementAt(k, j));
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public DataMatrixInterface plus(DataMatrixInterface second) throws Exception {
+        if (!(second.numberOfColumns() == data.length
+                && second.numberOfRows() == data.length)) {
+            throw new Exception("Cannot add matrices of different sizes.");
+        }
+        DataMatrixInterface result;
+        if (second.isSymmetricMatrixImplementation()) {
+            result = new SymmetricFloatMatrix(data.length);
+            for (int i = 0; i < data.length; i++) {
+                for (int j = i; j < data.length; j++) {
+                    result.setElementAt(i, j, data[i][j]
+                            + second.getElementAt(i, j));
+                }
+            }
+        } else {
+            result = new DataMatrix(data.length, data.length);
+            for (int i = 0; i < data.length; i++) {
+                for (int j = i; j < data.length; j++) {
+                    result.setElementAt(i, j, data[i][j]
+                            + second.getElementAt(i, j));
+                    result.setElementAt(j, i, data[i][j]
+                            + second.getElementAt(j, i));
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public DataMatrixInterface multiply(float scalar) {
+        DataMatrixInterface result;
+        result = n
