@@ -177,4 +177,86 @@ public class SymmetricFloatMatrix implements DataMatrixInterface {
         // Now calculate determinant from first row minors.
         float detValue = 0;
         for (int i = 0; i < data.length; i++) {
-          
+            if (i % 2 == 0) {
+                detValue += data[0][i] * result.getElementAt(0, i);
+            } else {
+                detValue -= data[0][i] * result.getElementAt(0, i);
+            }
+        }
+        if (detValue == 0) {
+            return null;
+        }
+        // Now turn all minors into cofactors and divide by determinant value to
+        // get the final result.
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data.length; j++) {
+                if (i + j % 2 == 0) {
+                    result.setElementAt(i, j,
+                            result.getElementAt(i, j) / detValue);
+                } else {
+                    result.setElementAt(i, j,
+                            (-result.getElementAt(i, j)) / detValue);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Calculate cofactor within the matrix, recursively.
+     *
+     * @param indexes A sorted array of indexes.
+     * @param indexOfFirstCofactRow
+     * @param expansionIndex Index of the intersection element.
+     * @return
+     * @throws Exception
+     */
+    private float calculateCofactor(int[] indexes,
+            int indexOfFirstCofactRow, int expansionIndex) throws Exception {
+        if (indexes.length == 1) {
+            if (!(indexOfFirstCofactRow == data.length - 1)) {
+                return getElementAt(data.length - 1, indexes[0]);
+            } else {
+                return getElementAt(data.length - 2, indexes[0]);
+            }
+        } else if (indexes.length == 2) {
+            if (!(indexOfFirstCofactRow == data.length - 1
+                    || indexOfFirstCofactRow == data.length - 2)) {
+                return (getElementAt(data.length - 2, indexes[0])
+                        * getElementAt(data.length - 1, indexes[1])
+                        - getElementAt(data.length - 2, indexes[1])
+                        * getElementAt(data.length - 1, indexes[0]));
+            } else if (indexOfFirstCofactRow == data.length - 1) {
+                return (getElementAt(data.length - 3, indexes[0])
+                        * getElementAt(data.length - 2, indexes[1])
+                        - getElementAt(data.length - 3, indexes[1])
+                        * getElementAt(data.length - 2, indexes[0]));
+            } else {
+                return (getElementAt(data.length - 3, indexes[0])
+                        * getElementAt(data.length - 1, indexes[1])
+                        - getElementAt(data.length - 3, indexes[1])
+                        * getElementAt(data.length - 1, indexes[0]));
+            }
+        } else {
+            float sum = 0;
+            int[] tempIndexes;
+            for (int i = 0; i < indexes.length; i++) {
+                // Make cofactors and expand.
+                tempIndexes = new int[indexes.length - 1];
+                for (int j = 0; j < i; j++) {
+                    tempIndexes[j] = indexes[j];
+                }
+                for (int j = i + 1; j < indexes.length; j++) {
+                    tempIndexes[j - 1] = indexes[j];
+                }
+                if (i % 2 == 0) {
+                    if (getElementAt(expansionIndex, indexes[i]) != 0) {
+                        if (expansionIndex + 1 == indexOfFirstCofactRow) {
+                            sum += getElementAt(expansionIndex, indexes[i])
+                                    * calculateCofactor(tempIndexes,
+                                    indexOfFirstCofactRow,
+                                    expansionIndex + 2);
+                        } else {
+                            sum += getElementAt(expansionIndex, indexes[i])
+                                    * calculateCofactor(tempIndexes,
+ 
