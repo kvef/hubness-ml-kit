@@ -546,4 +546,11 @@ public class SymmetricFloatMatrix implements DataMatrixInterface {
                     dMatLoaded[i][j] = Float.parseFloat(lineParse[j]);
                 }
             }
-        } catch (IOExcepti
+        } catch (IOException | NumberFormatException e) {
+            throw e;
+        } finally {
+            br.close();
+        }
+        return dMatLoaded;
+    }
+}
