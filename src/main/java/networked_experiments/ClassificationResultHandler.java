@@ -91,4 +91,76 @@ public class ClassificationResultHandler {
     }
     
     /**
-     * This method prepa
+     * This method prepares and uploads the classification results to the
+     * OpenML servers.
+     * 
+     * @param task Task that is the OpenML task.
+     * @param classifier ValidateableInterface which is the classifier to upload
+     * the results for.
+     * @param classifierIndex Integer that is the index of the classifier to
+     * upload the results for.
+     * @param parameterStringValues HashMap<String, String> mapping the
+     * parameters of the classification algorithm to their values in the current
+     * experiment run.
+     * @param times Integer that is the number of repetitions in CV.
+     * @param folds Integer that is the number of folds in CV.
+     * @param foldTrainTestIndexes ArrayList<Integer>[][][] representing the
+     * train/test splits for all repetitions and folds, as produced by OpenML
+     * for the experiment.
+     * @param allLabelAssignments float[][][][] representing all probabilistic
+     * label assignments, for each algorithm, repetition and data point.
+     */
+    public void uploadClassificationResults(Task task,
+            ValidateableInterface classifier, int classifierIndex,
+            HashMap<String, String> parameterStringValues,
+            int times, int folds, ArrayList<Integer>[][][] foldTrainTestIndexes,
+            float[][][][] allLabelAssignments) throws Exception {
+        OpenmlExecutedTask executedTask =
+                new OpenmlExecutedTask(
+                task,
+                classifier,
+                classifierIndex,
+                parameterStringValues,
+                client,
+                times,
+                folds,
+                foldTrainTestIndexes,
+                allLabelAssignments,
+                classNames);
+        Conversion.log("INFO", "Upload Run", "Starting send run process... ");
+        if (useBenchmarker) {
+            // The benchmarker tests JVM performance on the local machine, in
+            // order to compare total execution times. It is a time-consuming
+            // thing, so this should only be done when time is not an issue.
+            executedTask.getRun().addOutputEvaluation("os_information",
+                    "openml.userdefined.os_information(1.0)", null, "[" +
+                    StringUtils.join(benchmarker.getOsInfo(), ", " ) + "]" );
+            executedTask.getRun().addOutputEvaluation("scimark_benchmark",
+                    "openml.userdefined.scimark_benchmark(1.0)",
+                    benchmarker.getResult(), "[" + StringUtils.join(
+                    benchmarker.getStringArray(), ", " ) + "]");
+        }
+        XStream xstream = XstreamXmlMapping.getInstance();
+        // Save the classification predictions to a temporary file for later
+        // upload.
+        IOARFF pers = new IOARFF();
+        String tmpPredictionsFileName = "classificationPredictions";
+        File tmpPredictionsFile = File.createTempFile(tmpPredictionsFileName,
+                ".arff");
+        try (PrintWriter writer = new PrintWriter(new FileWriter(
+                tmpPredictionsFile))) {
+            pers.saveUnlabeled(executedTask.preparedPredictions, writer);
+        }
+        Map<String, File> outputFiles = new HashMap<>();
+        outputFiles.put("predictions", tmpPredictionsFile);
+        // Meta-information file.
+        File tmpDescriptionFile = Conversion.stringToTempFile(xstream.toXML(
+                executedTask.getRun()), "hubminer_generated_run", "xml");
+        try {
+            UploadRun ur = client.openmlRunUpload(tmpDescriptionFile,
+                    outputFiles);
+            Conversion.log("INFO", "Upload Run", "Run was uploaded with rid "
+                    + ur.getRun_id() + ". Obtainable at " +
+                    client.getApiUrl() + "?f=openml.run.get&run_id=" + 
+                    ur.getRun_id());
+        
