@@ -316,4 +316,60 @@ public class ClassificationResultHandler {
             // Generate prediction instances.
             for (int t = 0; t < times; t++) {
                 for (int f = 0; f < folds; f++) {
-    
+                    for (int index: foldTrainTestIndexes[t][f][1]) {
+                        DataInstance predictionInstance =
+                                new DataInstance(preparedPredictions);
+                        predictionInstance.embedInDataset(preparedPredictions);
+                        for (DataFeature feature: attInfo) {
+                            int featureIndex = feature.getFeatureIndex();
+                            int featureType = feature.getFeatureType();
+                            String featureName = feature.getFeatureName();
+                            switch (featureType) {
+                                case DataMineConstants.FLOAT:
+                                {
+                                    if (featureName.equals("repeat")) {
+                                        predictionInstance.fAttr[
+                                                featureIndex] = t;
+                                    } else if (featureName.equals("fold")) {
+                                        predictionInstance.fAttr[
+                                                featureIndex] = f;
+                                    } else if (featureName.equals("row_id")) {
+                                        predictionInstance.fAttr[
+                                                featureIndex] = index;
+                                    } else if (featureName.startsWith(
+                                            "confidence.")) {
+                                        String className =
+                                                featureName.substring(
+                                                "confidence.".length());
+                                        int classIndex =
+                                                classNameToIndexMap.get(
+                                                className);
+                                        predictionInstance.fAttr[
+                                                featureIndex] =
+                                                allLabelAssignments[
+                                                classifierIndex][t][index][
+                                                classIndex];
+                                    }
+                                    break;
+                                }
+                                case DataMineConstants.NOMINAL:
+                                {
+                                    if (featureName.equals("prediction")) {
+                                        // This is the prediction feature.
+                                        float[] clPredictions =
+                                                allLabelAssignments[
+                                                classifierIndex][t][index];
+                                        int clDecision = ArrayUtil.indexOfMax(
+                                                clPredictions);
+                                        // Possible label permutations are taken
+                                        // into account.
+                                        predictionInstance.sAttr[featureIndex] =
+                                                classNames[classIndexPerm[
+                                                clDecision]];
+                                    } else if (featureName.equals("correct")) {
+                                        // Possible label permutations are taken
+                                        // into account.
+                                        predictionInstance.sAttr[featureIndex] =
+                                                classNames[
+                                                classIndexPerm[originalDset.
+                                  
