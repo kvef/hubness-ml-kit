@@ -239,4 +239,81 @@ public class ClassificationResultHandler {
             }
             // Generate an initial feature list.
             ArrayList<DataFeature> attInfo = new ArrayList<>();
-            // Counters to incrementally determine the feature indexes wit
+            // Counters to incrementally determine the feature indexes within
+            // their feature groups.
+            int fFeatureIndex = -1;
+            int sFeatureIndex = -1;
+            // Lists of numeric and nominal feature names.
+            ArrayList<String> fFeatNames = new ArrayList<>();
+            ArrayList<String> sFeatNames = new ArrayList<>();
+            // Start adding feature. First add the repetition / fold / instance
+            // index features, which are numeric.
+            DataFeature df = new DataFeature();
+            df.setFeatureName("repeat");
+            fFeatureIndex++;
+            fFeatNames.add(df.getFeatureName());
+            df.setFeatureIndex(fFeatureIndex);
+            df.setFeatureType(DataMineConstants.FLOAT);
+            attInfo.add(df);
+            df = new DataFeature();
+            df.setFeatureName("fold");
+            fFeatureIndex++;
+            fFeatNames.add(df.getFeatureName());
+            df.setFeatureIndex(fFeatureIndex);
+            df.setFeatureType(DataMineConstants.FLOAT);
+            attInfo.add(df);
+            df = new DataFeature();
+            df.setFeatureName("row_id");
+            fFeatureIndex++;
+            fFeatNames.add(df.getFeatureName());
+            df.setFeatureIndex(fFeatureIndex);
+            df.setFeatureType(DataMineConstants.FLOAT);
+            attInfo.add(df);
+            // Start with the prediction features.
+            for (Feature feat :
+                    TaskInformation.getPredictions(task).getFeatures()) {
+                switch (feat.getName()) {
+                    case "confidence.classname":
+                        for (String s : TaskInformation.getClassNames(
+                                client, task)) {
+                            df = new DataFeature();
+                            df.setFeatureName("confidence." + s);
+                            fFeatureIndex++;
+                            df.setFeatureIndex(fFeatureIndex);
+                            df.setFeatureType(DataMineConstants.FLOAT);
+                            fFeatNames.add(df.getFeatureName());
+                            attInfo.add(df);
+                        }
+                        break;
+                    case "prediction":
+                        sFeatureIndex++;
+                        df = new DataFeature();
+                        df.setFeatureName(feat.getName());
+                        df.setFeatureIndex(sFeatureIndex);
+                        df.setFeatureType(DataMineConstants.NOMINAL);
+                        sFeatNames.add(df.getFeatureName());
+                        attInfo.add(df);
+                        break;
+                }
+            }
+            // The feature for the correct data label.
+            sFeatureIndex++;
+            df = new DataFeature();
+            df.setFeatureName("correct");
+            df.setFeatureIndex(sFeatureIndex);
+            df.setFeatureType(DataMineConstants.NOMINAL);
+            sFeatNames.add(df.getFeatureName());
+            attInfo.add(df);
+            // Now prepare the results in the DataSet for upload.
+            String[] fFeatNameArr = new String[fFeatNames.size()];
+            fFeatNameArr = fFeatNames.toArray(fFeatNameArr);
+            String[] sFeatNameArr = new String[sFeatNames.size()];
+            sFeatNameArr = sFeatNames.toArray(sFeatNameArr);
+            preparedPredictions = new DataSet();
+            preparedPredictions.data = new ArrayList<>();
+            preparedPredictions.fAttrNames = fFeatNameArr;
+            preparedPredictions.sAttrNames = sFeatNameArr;
+            // Generate prediction instances.
+            for (int t = 0; t < times; t++) {
+                for (int f = 0; f < folds; f++) {
+    
