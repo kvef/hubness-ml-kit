@@ -163,4 +163,80 @@ public class ClassificationResultHandler {
                     + ur.getRun_id() + ". Obtainable at " +
                     client.getApiUrl() + "?f=openml.run.get&run_id=" + 
                     ur.getRun_id());
+        } catch(ApiException ae) {
+            System.err.println(ae.getMessage()); 
+            Conversion.log("ERROR", "Upload Run", "Failed to upload run: " +
+                    ae.getMessage());
+        }
+    }
+    
+    /**
+     * This class stores the information about the completed classification task
+     * under cross-validation and prepares the data for upload to OpenML
+     * servers.
+     */
+    private class OpenmlExecutedTask {
         
+        private String[] classNames;
+        private Run run;
+        private int implementationId;
+        private DataSet preparedPredictions;
+
+        /**
+         * Initialization.
+         * 
+         * @param task Task that is the OpenML task.
+         * @param classifier ValidateableInterface that is the classifier that
+         * was tested.
+         * @param classifierIndex Integer that is the index of the classifier
+         * that is being evaluated.
+         * @param parameterStringValues HashMap<String, String> that is a map of
+         * parameter names and their values, as were used in the experiment.
+         * @param client OpenmlConnector used for OpenML API calls.
+         * @param times Integer that is the number of repetitions in the CV
+         * framework.
+         * @param folds Integer that is the number of folds in the CV framework.
+         * @param foldTrainTestIndexes ArrayList<Integer>[][][] representing the
+         * train and test index lists that were used in the experiments
+         * @param allLabelAssignments float[][][][] representing all label
+         * assignments.
+         * @param classNames String[] Class names, as they are to appear in the
+         * upload.
+         * @throws Exception 
+         */
+        public OpenmlExecutedTask(Task task, ValidateableInterface classifier,
+                int classifierIndex,
+                HashMap<String, String> parameterStringValues,
+                OpenmlConnector client, int times, int folds,
+                ArrayList<Integer>[][][] foldTrainTestIndexes,
+                float[][][][] allLabelAssignments, String[] classNames)
+                throws Exception {
+            if (allLabelAssignments == null) {
+                throw new Exception("Label assignments not provided.");
+            }
+            if (foldTrainTestIndexes == null) {
+                throw new Exception("Fold information not provided.");
+            }
+            if (originalDset == null || originalDset.isEmpty()) {
+                throw new Exception("Experiment dataset not provided.");
+            }
+            // If it weren't for possible permutations, it would be possible to
+            // obtain the class names as follows:
+            // classNames = TaskInformation.getClassNames(client, task);
+            // However, we need to take into account this permutation in order
+            // to ensure that confidence predictions are correct.
+            String[] taskClassNames = TaskInformation.getClassNames(client,
+                    task);
+            HashMap<String, Integer> classNameToIndexMap = new HashMap<>();
+            for (int cIndex = 0; cIndex < classNames.length; cIndex++) {
+                classNameToIndexMap.put(classNames[cIndex], cIndex);
+            }
+            int[] classIndexPerm = new int[classNames.length];
+            for (int cIndex = 0; cIndex < classNames.length; cIndex++) {
+                int cIndexInternal =
+                        classNameToIndexMap.get(taskClassNames[cIndex]);
+                classIndexPerm[cIndexInternal] = cIndex;
+            }
+            // Generate an initial feature list.
+            ArrayList<DataFeature> attInfo = new ArrayList<>();
+            // Counters to incrementally determine the feature indexes wit
