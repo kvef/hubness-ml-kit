@@ -372,4 +372,54 @@ public class ClassificationResultHandler {
                                         predictionInstance.sAttr[featureIndex] =
                                                 classNames[
                                                 classIndexPerm[originalDset.
-                                  
+                                                getLabelOf(index)]];
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        preparedPredictions.addDataInstance(predictionInstance);
+                    }
+                }
+            }
+            // Register the implementation or obtain a registered implementation
+            // based on an existing implementation ID.
+            Implementation impAux = ClassifierRegistrationOpenML.create(
+                    classifier.getClass(), parameterStringValues);
+            implementationId = ClassifierRegistrationOpenML.getImplementationId(
+                    impAux, classifier.getClass(), sourceCodeDir, client);
+            Implementation impConfirmed = client.openmlImplementationGet(
+                    implementationId);
+            String setupString = classifier.getClass().getName();
+            Set<String> paramNames = parameterStringValues.keySet();
+            ArrayList<String> keyList = new ArrayList<>(paramNames.size());
+            for (String pName: paramNames) {
+                keyList.add(pName);
+            }
+            String[] keyArr = new String[keyList.size()];
+            for (int i = 0; i < keyList.size(); i++) {
+                keyArr[i] = keyList.get(i);
+            }
+            if(!parameterStringValues.isEmpty()) {
+                setupString += (" -- ");
+                for (String par: keyArr) {
+                    setupString += (par + " ");
+                }
+            }
+            // Generate the Run object.
+            List<Parameter_setting> list =
+                    ClassifierRegistrationOpenML.getParameterSettingFromStrVals(
+                    parameterStringValues, impConfirmed);
+            run = new Run(task.getTask_id(), null, impConfirmed.getId(),
+                    setupString, list.toArray(
+                    new Parameter_setting[list.size()]) );
+        }
+        
+        /**
+         * @return Run of the experiments to upload. 
+         */
+        public Run getRun() {
+            return run;
+        }
+    }
+}
