@@ -29,4 +29,11 @@ public class DataFromOpenML {
     
     // Currently public for simplicity, since there are many fields to consider.
     // This class is more like a record, it does not implement any
-    // f
+    // functionality.
+    public int numFolds;
+    public int numTimes;
+    public String[] classNames;
+    public DataSet filteredDSet;
+    public ArrayList<Integer>[][][] trainTestIndexes;
+    public String targetFeatureName;
+}
