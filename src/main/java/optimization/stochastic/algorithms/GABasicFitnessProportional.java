@@ -75,4 +75,89 @@ public class GABasicFitnessProportional
         this.mutator = mutator;
         this.numIter = numIter;
         this.fe = fe;
-        this.recombiner = reco
+        this.recombiner = recombiner;
+    }
+
+    @Override
+    public void optimize() throws Exception {
+        inversePopulationFitness = new float[population.length];
+        // First calculate the fitness of all the parents.
+        for (int i = 0; i < population.length; i++) {
+            inversePopulationFitness[i] = evaluate(population[i]);
+        }
+        rearrange = AuxSort.sortIndexedValue(inversePopulationFitness, false);
+        tempPopulation = new Object[population.length];
+        for (int i = 0; i < population.length; i++) {
+            tempPopulation[i] = population[rearrange[i]];
+        }
+        population = tempPopulation;
+        children = new Object[2 * population.length];
+        inverseOffspringFitness = new float[children.length];
+        cumulativeProbs = new double[population.length];
+        tempFitness = new float[population.length];
+        Random randa = new Random();
+        while (!stop && ++iteration <= numIter) {
+            // Perform mutations.
+            for (int i = 0; i < population.length; i++) {
+                if (!stop) {
+                    children[i] = mutator.mutateNew(population[i]);
+                    inverseOffspringFitness[i] = evaluate(children[i]);
+                } else {
+                    return;
+                }
+            }
+            // Perform recombinations.
+            totalProbs = 0;
+            cumulativeProbs[0] =
+                    Math.exp(-inversePopulationFitness[0]);
+            totalProbs += cumulativeProbs[0];
+            for (int i = 1; i < population.length; i++) {
+                cumulativeProbs[i] = cumulativeProbs[i - 1]
+                        + Math.exp(-inversePopulationFitness[i]);
+                totalProbs += cumulativeProbs[i];
+            }
+            if (totalProbs > 0) {
+                for (int i = 0; i < population.length; i++) {
+                    decision = randa.nextFloat() * totalProbs;
+                    first = findIndex(decision, 0, population.length - 1);
+                    second = first;
+                    int numTries = 0;
+                    while (second == first || numTries > 10) {
+                        decision = randa.nextFloat() * totalProbs;
+                        second = findIndex(decision, 0, population.length - 1);
+                        numTries++;
+                    }
+                    children[population.length + i] =
+                            recombiner.recombine(
+                            population[first],
+                            population[second]);
+                }
+            } else {
+                for (int i = 0; i < population.length; i++) {
+                    first = randa.nextInt(population.length);
+                    second = first;
+                    int numTries = 0;
+                    while (second == first || numTries > 10) {
+                        second = randa.nextInt(population.length);
+                        numTries++;
+                    }
+                    children[population.length + i] =
+                            recombiner.recombine(
+                            population[first],
+                            population[second]);
+                }
+            }
+            for (int i = 0; i < children.length; i++) {
+                if (!stop) {
+                    inverseOffspringFitness[i] = evaluate(children[i]);
+                } else {
+                    return;
+                }
+            }
+            rearrange =
+                    AuxSort.sortIndexedValue(inverseOffspringFitness, false);
+            tempChildren = new Object[children.length];
+            for (int i = 0; i < children.length; i++) {
+                tempChildren[i] = children[rearrange[i]];
+            }
+            ch
