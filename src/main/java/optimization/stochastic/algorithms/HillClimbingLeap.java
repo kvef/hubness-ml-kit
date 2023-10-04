@@ -17,31 +17,40 @@
 */
 package optimization.stochastic.algorithms;
 
-import optimization.stochastic.operators.MutationInterface;
 import optimization.stochastic.fitness.FitnessEvaluator;
+import optimization.stochastic.operators.TwoDevsMutationInterface;
 
 /**
- * This class implements a simple hill climbing optimization procedure.
+ * A class that implements a simple twist to the basic hill-climbing approach,
+ * by introducing a small probability of making larger changes, 'leaps' towards
+ * unexplored parts of the optimization landscape. This helps the optimization
+ * escape from local optima and possibly climb more than one hill, leading to a
+ * better result.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class HillClimbing implements OptimizationAlgorithmInterface {
+public class HillClimbingLeap implements OptimizationAlgorithmInterface {
 
-    private int numIter = 100;
-    private int iteration = 0;
-    private MutationInterface mutator;
-    private FitnessEvaluator fe;
-    private Object instance;
-    private Object previousInstance = null;
-    private float previousScore = Float.MAX_VALUE;
-    private Object bestInstance;
-    private Object worstInstance;
-    private int numEvaluatedInstances = 0;
-    private double totalScore = 0;
-    private float bestScore = Float.MAX_VALUE;
-    private float worstScore = -Float.MAX_VALUE;
-    private float score = Float.MAX_VALUE;
-    private boolean stop = false;
+    int numIter = 100;
+    int iteration = 0;
+    int iterationsNoImprovement = 0;
+    int noImprovementMax = 30;
+    // This must be carefully set to some meaningful number, depending on
+    // numIter and how long it takes to evaluate fitness.
+    TwoDevsMutationInterface mutator;
+    FitnessEvaluator fe;
+    Object instance;
+    Object previousInstance = null;
+    float previousScore = Float.MAX_VALUE;
+    Object bestInstance;
+    Object worstInstance;
+    int numEvaluatedInstances = 0;
+    double totalScore = 0;
+    float bestScore = Float.MAX_VALUE;
+    float worstScore = -Float.MAX_VALUE;
+    float score = Float.MAX_VALUE;
+    boolean stop = false;
+    float pSmall = 1;
 
     /**
      * @param instance Solution seed.
@@ -50,9 +59,9 @@ public class HillClimbing implements OptimizationAlgorithmInterface {
      * solutions.
      * @param numIter Number of iterations to run.
      */
-    public HillClimbing(
+    public HillClimbingLeap(
             Object instance,
-            MutationInterface mutator,
+            TwoDevsMutationInterface mutator,
             FitnessEvaluator fe,
             int numIter) {
         this.instance = instance;
@@ -67,10 +76,35 @@ public class HillClimbing implements OptimizationAlgorithmInterface {
         while (!stop && ++iteration <= numIter) {
             if (score < previousScore) {
                 replacePrevious();
+                iterationsNoImprovement = 0;
+            } else {
+                iterationsNoImprovement++;
             }
+            updateMutationProbabilities();
             instance = mutator.mutateNew(previousInstance);
             evaluate(instance);
         }
+    }
+
+    /**
+     * Update mutation probabilities.
+     */
+    private void updateMutationProbabilities() {
+        float pLarge = (float) iterationsNoImprovement /
+                (float) noImprovementMax;
+        pLarge = Math.min(pLarge, 1f);
+        pSmall = 1f - pLarge;
+        mutator.setPSmall(pSmall);
+    }
+
+    /**
+     * Sets the maximum number of iterations with no improvement. This number is
+     * also used to determine the probability of making leaps.
+     *
+     * @param noImprovementsMax Maximum number of iterations with no improvement
+     */
+    public void setNoImprovementMax(int noImprovementsMax) {
+        noImprovementMax = noImprovementsMax;
     }
 
     /**
@@ -80,7 +114,7 @@ public class HillClimbing implements OptimizationAlgorithmInterface {
      * @param instance
      * @return
      */
-    private void evaluate(Object instance) {
+    public void evaluate(Object instance) {
         score = fe.evaluate(instance);
         numEvaluatedInstances++;
         if (score < bestScore) {
@@ -97,7 +131,7 @@ public class HillClimbing implements OptimizationAlgorithmInterface {
     /**
      * Replace previous with current score.
      */
-    private void replacePrevious() {
+    public void replacePrevious() {
         previousScore = score;
         previousInstance = instance;
     }
