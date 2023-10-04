@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -23,13 +24,12 @@ import optimization.stochastic.operators.RecombinationInterface;
 import util.AuxSort;
 
 /**
- * This class implements the basic GA protocol where the selection probability
- * for the solutions is proportional to their fitness.
+ * This class implements a tournament selection based genetic algorithm for
+ * optimization.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class GABasicFitnessProportional
-        implements OptimizationAlgorithmInterface {
+public class GABasicTSel implements OptimizationAlgorithmInterface {
 
     private int numIter = 100;
     private int iteration = 0;
@@ -47,15 +47,12 @@ public class GABasicFitnessProportional
     private float score = Float.MAX_VALUE;
     private float[] inversePopulationFitness;
     private float[] inverseOffspringFitness;
-    private double[] cumulativeProbs;
     private float[] tempFitness;
-    private double totalProbs;
     private Object[] tempPopulation;
     private Object[] tempChildren;
     private int[] rearrange;
     private boolean stop = false;
-    private double decision;
-    private int first, second;
+    private int first, second, third;
 
     /**
      * @param population Population of solutions to be optimized.
@@ -65,7 +62,7 @@ public class GABasicFitnessProportional
      * solutions.
      * @param numIter Number of iterations to run.
      */
-    public GABasicFitnessProportional(
+    public GABasicTSel(
             Object[] population,
             MutationInterface mutator,
             RecombinationInterface recombiner,
@@ -81,7 +78,7 @@ public class GABasicFitnessProportional
     @Override
     public void optimize() throws Exception {
         inversePopulationFitness = new float[population.length];
-        // First calculate the fitness of all the parents.
+        // First calculate the fitness of all the parents..
         for (int i = 0; i < population.length; i++) {
             inversePopulationFitness[i] = evaluate(population[i]);
         }
@@ -93,7 +90,6 @@ public class GABasicFitnessProportional
         population = tempPopulation;
         children = new Object[2 * population.length];
         inverseOffspringFitness = new float[children.length];
-        cumulativeProbs = new double[population.length];
         tempFitness = new float[population.length];
         Random randa = new Random();
         while (!stop && ++iteration <= numIter) {
@@ -107,45 +103,30 @@ public class GABasicFitnessProportional
                 }
             }
             // Perform recombinations.
-            totalProbs = 0;
-            cumulativeProbs[0] =
-                    Math.exp(-inversePopulationFitness[0]);
-            totalProbs += cumulativeProbs[0];
-            for (int i = 1; i < population.length; i++) {
-                cumulativeProbs[i] = cumulativeProbs[i - 1]
-                        + Math.exp(-inversePopulationFitness[i]);
-                totalProbs += cumulativeProbs[i];
-            }
-            if (totalProbs > 0) {
-                for (int i = 0; i < population.length; i++) {
-                    decision = randa.nextFloat() * totalProbs;
-                    first = findIndex(decision, 0, population.length - 1);
-                    second = first;
-                    int numTries = 0;
-                    while (second == first || numTries > 10) {
-                        decision = randa.nextFloat() * totalProbs;
-                        second = findIndex(decision, 0, population.length - 1);
-                        numTries++;
-                    }
-                    children[population.length + i] =
-                            recombiner.recombine(
-                            population[first],
-                            population[second]);
+            for (int i = 0; i < population.length; i++) {
+                first = randa.nextInt(population.length);
+                second = first;
+                while (second == first) {
+                    second = randa.nextInt(population.length);
                 }
-            } else {
-                for (int i = 0; i < population.length; i++) {
-                    first = randa.nextInt(population.length);
-                    second = first;
-                    int numTries = 0;
-                    while (second == first || numTries > 10) {
-                        second = randa.nextInt(population.length);
-                        numTries++;
-                    }
-                    children[population.length + i] =
-                            recombiner.recombine(
-                            population[first],
-                            population[second]);
+                if (inversePopulationFitness[second]
+                        < inversePopulationFitness[first]) {
+                    first = second;
                 }
+                second = first;
+                third = second;
+                while (second == first || third == first
+                        || third == second) {
+                    second = randa.nextInt(population.length);
+                    third = randa.nextInt(population.length);
+                }
+                if (inversePopulationFitness[third]
+                        < inversePopulationFitness[second]) {
+                    second = third;
+                }
+                children[population.length + i] =
+                        recombiner.recombine(
+                        population[first], population[second]);
             }
             for (int i = 0; i < children.length; i++) {
                 if (!stop) {
@@ -161,7 +142,7 @@ public class GABasicFitnessProportional
                 tempChildren[i] = children[rearrange[i]];
             }
             children = tempChildren;
-            // Merge the results.
+            //now merge
             int index = -1;
             first = 0;
             second = 0;
@@ -177,27 +158,6 @@ public class GABasicFitnessProportional
                     second++;
                 }
             }
-        }
-    }
-
-    /**
-     * Binary search for the appropriate index in the cumulative probability
-     * array.
-     *
-     * @param searchValue Query value.
-     * @param first First index.
-     * @param second Second index.
-     * @return
-     */
-    private int findIndex(double searchValue, int first, int second) {
-        if (second - first <= 1) {
-            return second;
-        }
-        int middle = (first + second) / 2;
-        if (cumulativeProbs[middle] < searchValue) {
-            return findIndex(searchValue, middle, second);
-        } else {
-            return findIndex(searchValue, first, middle);
         }
     }
 
