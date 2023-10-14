@@ -107,4 +107,100 @@ public class PPPSO implements OptimizationAlgorithmInterface {
         }
         this.predatorInstance = predatorInstance;
         this.preyPopulation = preyPopulation;
-        this.populationContext = populationContext
+        this.populationContext = populationContext;
+        if (preyPopulation != null) {
+            populationSize = preyPopulation.size();
+        }
+    }
+    
+    /**
+     * Initialization.
+     * 
+     * @param lowerValueLimits float[] representing the lower value limits.
+     * @param upperValueLimits float[] representing the upper value limits.
+     * @param populationSize Integer that is the prey population size.
+     * @param fe FitnessEvaluator for solution fitness evaluation.
+     */
+    public PPPSO(float[] lowerValueLimits, float[] upperValueLimits,
+            int populationSize, FitnessEvaluator fe) {
+        this.lowerValueLimits = lowerValueLimits;
+        this.upperValueLimits = upperValueLimits;
+        if (lowerValueLimits != null) {
+            numDim = lowerValueLimits.length;
+        } else if (upperValueLimits != null) {
+            numDim = upperValueLimits.length;
+        }
+        this.populationSize = populationSize;
+        this.fe = fe;
+    }
+    
+    /**
+     * Initialization.
+     * 
+     * @param lowerValueLimits float[] representing the lower value limits.
+     * @param upperValueLimits representing the upper value limits.
+     * @param preyPopulation ArrayList<DataInstance> that is the initial prey
+     * population.
+     * @param predatorInstance DataInstance that is the initial predator
+     * instance.
+     * @param populationContext DataSet representing the data context with
+     * feature definitions.
+     * @param fe FitnessEvaluator for solution fitness evaluation.
+     */
+    public PPPSO(float[] lowerValueLimits, float[] upperValueLimits,
+            ArrayList<DataInstance> preyPopulation,
+            DataInstance predatorInstance, DataSet populationContext,
+            FitnessEvaluator fe) {
+        this.lowerValueLimits = lowerValueLimits;
+        this.upperValueLimits = upperValueLimits;
+        if (lowerValueLimits != null) {
+            numDim = lowerValueLimits.length;
+        } else if (upperValueLimits != null) {
+            numDim = upperValueLimits.length;
+        }
+        this.predatorInstance = predatorInstance;
+        this.preyPopulation = preyPopulation;
+        this.populationContext = populationContext;
+        if (preyPopulation != null) {
+            populationSize = preyPopulation.size();
+        }
+        this.fe = fe;
+    }
+    
+    @Override
+    public void optimize() throws Exception {
+        assertValueLimits();
+        initializePopulation();
+        learnFearAmplitude();
+        initializeVelocities();
+        double[] dimPercs = new double[numDim];
+        double dimSpanTotal = 0;
+        for (int d = 0; d < numDim; d++) {
+             dimPercs[d] = upperValueLimits[d] - lowerValueLimits[d];
+             dimSpanTotal += dimPercs[d];
+        }
+        if (dimSpanTotal > 0) {
+            for (int d = 0; d < numDim; d++) {
+                dimPercs[d] /= dimSpanTotal;
+            }
+        }
+        // The 0th iteration was already implicitly performed in
+        // initializations.
+        for (iteration = 1; iteration < numIter; iteration++) {
+            // Check for the stop criterion.
+            if (stop) {
+                break;
+            }
+            float inertiaWeight = getInertia();
+            // First update the predator velocity.
+            predatorVelocity = new DataInstance(populationContext);
+            float chaseFactor = randa.nextFloat();
+            for (int d = 0; d < numDim; d++) {
+                predatorVelocity.fAttr[d] = chaseFactor * (
+                        preyPopulation.get(indexOfBestThisIteration).fAttr[d] -
+                        predatorInstance.fAttr[d]);
+            }
+            // Update prey velocities.
+            for (int i = 0; i < populationSize; i++) {
+                double predatorDistance = dist(preyPopulation.get(i),
+          
