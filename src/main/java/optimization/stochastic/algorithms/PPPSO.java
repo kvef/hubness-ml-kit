@@ -293,4 +293,114 @@ public class PPPSO implements OptimizationAlgorithmInterface {
         if (solution == null) {
             return null;
         } else {
-            DataInstance soluti
+            DataInstance solutionUpdate = solution.copy();
+            for (int d = 0; d < numDim; d++) {
+                solutionUpdate.fAttr[d] += velocity.fAttr[d];
+            }
+            ensureProperValues(solutionUpdate);
+            return solutionUpdate;
+        }
+    }
+    
+    /**
+     * This method calculates the distance between two solutions.
+     * 
+     * @param first DataInstance that is the first solution.
+     * @param second DataInstance that is the second solution.
+     * @return 
+     */
+    private double dist(DataInstance first, DataInstance second) {
+        double manhattanDist = 0;
+        for (int d = 0; d < numDim; d++) {
+            manhattanDist += Math.abs(first.fAttr[d] - second.fAttr[d]);
+        }
+        return manhattanDist;
+    }
+    
+    /**
+     * This method sets the maximum amplitude to the mean pairwise distance.
+     */
+    private void learnFearAmplitude() {
+        amplitude = 0;
+        for (int i = 0; i < populationSize; i++) {
+            for (int j = i + 1; j < populationSize; j++) {
+                amplitude += dist(preyPopulation.get(i), preyPopulation.get(j));
+            }
+        }
+        if (populationSize > 1) {
+            amplitude /= (populationSize * (populationSize - 1) / 2);
+        }
+    }
+    
+    /**
+     * This method calculates the repellant force based on the provided
+     * Manhattan distance.
+     * 
+     * @param distance Double representing the Manhattan distance between the
+     * points.
+     * 
+     * @return Double value that is the fear of the predator at the specified
+     * distance.
+     */
+    private double fear(double distance) {
+        return 0.5 * amplitude * Math.exp(- expParam * (distance / amplitude));
+    }
+    
+    /**
+     * This method ensures that all the values within the instance are within
+     * the specified range.
+     * 
+     * @param instance 
+     */
+    private void ensureProperValues(DataInstance instance) {
+        if (lowerValueLimits != null && upperValueLimits != null) {
+            for (int d = 0; d < numDim; d++) {
+                double compensator = upperValueLimits[d] - lowerValueLimits[d];
+                double iVal = instance.fAttr[d];
+                while (iVal > upperValueLimits[d]) {
+                    iVal -= compensator;
+                }
+                while (iVal < lowerValueLimits[d]) {
+                    iVal += compensator;
+                }
+                instance.fAttr[d] = (float)iVal;
+            }
+        }
+    }
+    
+    /**
+     * This method checks whether the lower limits are lower than the upper
+     * limits.
+     * 
+     * @throws Exception 
+     */
+    private void assertValueLimits() throws Exception {
+        if (lowerValueLimits != null && upperValueLimits != null) {
+            for (int d = 0; d < numDim; d++) {
+                if (lowerValueLimits[d] > upperValueLimits[d]) {
+                    throw new Exception("Incorrect value range specified, since"
+                            + lowerValueLimits[d] + " is greater than " +
+                            upperValueLimits[d] + " for dimension " + d + ".");
+                }
+            }
+        }
+    }
+    
+    /**
+     * Initializes the predator and prey population.
+     */
+    private void initializePopulation() {
+        if (populationContext == null) {
+            populationContext = new DataSet();
+            String[] fNames = new String[numDim];
+            for (int d = 0; d < numDim; d++) {
+                fNames[d] = "fAtt" + d;
+            }
+            populationContext.fAttrNames = fNames;
+        }
+        if (predatorInstance == null) {
+            predatorInstance = generateRandomInstance();
+        }
+        if (preyPopulation == null) {
+            preyPopulation = new ArrayList<>(populationSize);
+            for (int i = 0; i < populationSize; i++)
