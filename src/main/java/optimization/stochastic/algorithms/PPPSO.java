@@ -203,4 +203,94 @@ public class PPPSO implements OptimizationAlgorithmInterface {
             // Update prey velocities.
             for (int i = 0; i < populationSize; i++) {
                 double predatorDistance = dist(preyPopulation.get(i),
-          
+                        predatorInstance);
+                for (int d = 0; d < numDim; d++) {
+                    preyVelocities.get(i).fAttr[d] = (float)(Math.min((
+                            preyVelocities.get(i).fAttr[d] * inertiaWeight +
+                            factPast * (bestPreySolutions.get(i).fAttr[d] -
+                            preyPopulation.get(i).fAttr[d]) + factGlobal * (
+                            preyPopulation.get(indexOfBestThisIteration).
+                            fAttr[d] - preyPopulation.get(i).fAttr[d]) +
+                            factFear * dimPercs[d] * fear(predatorDistance)),
+                        upperValueLimits[d] * (0.8 + 0.2 * randa.nextFloat()))
+                    );
+                }
+            }
+            // Update predator instance.
+            predatorInstance =
+                    applyVelocity(predatorInstance, predatorVelocity);
+            // Update best predator instance.
+            score = evaluate(predatorInstance);
+            if (score > bestPredatorScore) {
+                bestPredatorScore = score;
+                bestPredatorSolution = predatorInstance;
+            }
+            // Update prey instances.
+            float bestIterScore = -Float.MAX_VALUE;
+            for (int i = 0; i < populationSize; i++) {
+                DataInstance newSolution = applyVelocity(preyPopulation.get(i),
+                        preyVelocities.get(i));
+                ensureProperValues(newSolution);
+                preyPopulation.set(i, newSolution);
+                score = evaluate(predatorInstance);
+                if (score > bestIterScore) {
+                    bestIterScore = score;
+                    indexOfBestThisIteration = i;
+                }
+                if (score > bestPreyScores.get(i)) {
+                    bestPreyScores.set(i, score);
+                    bestPreySolutions.set(i, newSolution);
+                }
+            }
+        }
+    }
+    
+    /**
+     * This method calculates the inertia weight.
+     * 
+     * @return Float value that is the inertia weight. 
+     */
+    private float getInertia() {
+        return ((float)getNumIter() - (float)getIteration()) /
+                ((float)getNumIter());
+    }
+    
+    /**
+     * This method initializes the point velocities.
+     */
+    private void initializeVelocities() {
+        double[] dimSpan = new double[numDim];
+        for (int d = 0; d < numDim; d++) {
+            dimSpan[d] = upperValueLimits[d] - lowerValueLimits[d];
+        }
+        preyVelocities = new ArrayList<>(populationSize);
+        predatorVelocity = new DataInstance(populationContext);
+        for (int d = 0; d < numDim; d++) {
+            predatorVelocity.fAttr[d] = (float)(0.3 * dimSpan[d] *
+                    randa.nextFloat());
+        }
+        for (int i = 0; i < populationSize; i++) {
+            DataInstance preyVelocity = new DataInstance(populationContext);
+            for (int d = 0; d < numDim; d++) {
+                preyVelocity.fAttr[d] = (float)(0.3 * dimSpan[d] *
+                        randa.nextFloat());
+            }
+            preyVelocities.add(preyVelocity);
+        }
+    }
+    
+    /**
+     * This method applies the velocity to a DataInstance solution and returns
+     * the updated solution. The original solution object is not modified.
+     * 
+     * @param solution DataInstance object that is the current solution.
+     * @param velocity DataInstance representing the velocity.
+     * @return DataInstance that is the updated solution.
+     * @throws Exception 
+     */
+    private DataInstance applyVelocity(DataInstance solution,
+            DataInstance velocity) throws Exception {
+        if (solution == null) {
+            return null;
+        } else {
+            DataInstance soluti
