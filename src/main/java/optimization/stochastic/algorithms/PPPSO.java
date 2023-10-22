@@ -403,4 +403,127 @@ public class PPPSO implements OptimizationAlgorithmInterface {
         }
         if (preyPopulation == null) {
             preyPopulation = new ArrayList<>(populationSize);
-            for (int i = 0; i < populationSize; i++)
+            for (int i = 0; i < populationSize; i++) {
+                preyPopulation.add(generateRandomInstance());
+            }
+        }
+        bestPreySolutions = new ArrayList<>(populationSize);
+        bestPreyScores = new ArrayList<>(populationSize);
+        float currBestScore = -Float.MAX_VALUE;
+        for (int i = 0; i < populationSize; i++) {
+            bestPreySolutions.add(preyPopulation.get(i));
+            bestPreyScores.add(evaluate(preyPopulation.get(i)));
+            if (bestPreyScores.get(i) > currBestScore) {
+                currBestScore = bestPreyScores.get(i);
+                indexOfBestThisIteration = i;
+            }
+        }
+        bestPredatorSolution = predatorInstance;
+        bestPredatorScore = evaluate(predatorInstance);
+    }
+    
+    /**
+     * This method generates a random instance in the range.
+     * 
+     * @return DataInstance placed randomly in the search space. 
+     */
+    private DataInstance generateRandomInstance() {
+        if (populationContext == null || lowerValueLimits == null ||
+                upperValueLimits == null) {
+            return null;
+        } else {
+            DataInstance instance = new DataInstance(populationContext);
+            for (int d = 0; d < numDim; d++) {
+                // Here we use double to avoid landing out of range if maximal
+                // values for float are specified as limits.
+                double rVal = lowerValueLimits[d] + (
+                        upperValueLimits[d] - lowerValueLimits[d]) *
+                        randa.nextFloat();
+                instance.fAttr[d] = (float)rVal;
+            }
+            return instance;
+        }
+    }
+    
+    /**
+     * Evaluates the fitness of the current solution and updates the best/worst
+     * solution fitness stats.
+     *
+     * @param instance
+     * @return
+     */
+    private float evaluate(DataInstance instance) {
+        score = fe.evaluate(instance);
+        numEvaluatedInstances++;
+        if (score < bestScore) {
+            bestScore = score;
+            bestInstance = instance;
+        }
+        if (score > worstScore) {
+            worstScore = score;
+            worstInstance = instance;
+        }
+        totalScore += score;
+        return score;
+    }
+    
+    @Override
+    public void setNumIter(int numIter) {
+        this.numIter = numIter;
+    }
+
+    @Override
+    public int getIteration() {
+        return iteration;
+    }
+
+    @Override
+    public int getNumIter() {
+        return numIter;
+    }
+
+    @Override
+    public Object getBestInstance() {
+        return bestInstance;
+    }
+
+    @Override
+    public float getBestFitness() {
+        return bestScore;
+    }
+
+    @Override
+    public Object getWorstInstance() {
+        return worstInstance;
+    }
+
+    @Override
+    public float getWorstFitness() {
+        return worstScore;
+    }
+
+    @Override
+    public float getAverageFitness() {
+        if (numEvaluatedInstances > 0) {
+            return (float) (totalScore / (double) numEvaluatedInstances);
+        } else {
+            return worstScore;
+        }
+    }
+
+    @Override
+    public FitnessEvaluator getFitnessEvaluator() {
+        return fe;
+    }
+
+    @Override
+    public void setFitnessEvaluator(FitnessEvaluator fe) {
+        this.fe = fe;
+    }
+
+    @Override
+    public void stop() {
+        stop = true;
+    }
+    
+}
