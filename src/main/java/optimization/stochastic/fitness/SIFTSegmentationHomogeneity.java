@@ -90,4 +90,104 @@ public class SIFTSegmentationHomogeneity implements FitnessEvaluator {
     /**
      * @param inImagesDir Directory containing the target images.
      * @param inSIFTDir Directory containing the extracted SIFT descriptors.
-     * @param inSegmentDir Directory contain
+     * @param inSegmentDir Directory containing the segmentations.
+     * @param nameList List of image names.
+     * @param useRank Whether to use rank or distances directly.
+     * @return An instance of the SIFTSegmentationHomogeneity.
+     * @throws Exception
+     */
+    public static SIFTSegmentationHomogeneity newInstance(
+            File inImagesDir,
+            File inSIFTDir,
+            File inSegmentDir,
+            String[] nameList,
+            boolean useRank) throws Exception {
+        SIFTSegmentationHomogeneity fe =
+                new SIFTSegmentationHomogeneity(inImagesDir, inSIFTDir,
+                inSegmentDir, nameList, useRank);
+        fe.populate();
+        return fe;
+    }
+
+    /**
+     *
+     * @param inImagesDir Directory containing the target images.
+     * @param inSIFTDir Directory containing the extracted SIFT descriptors.
+     * @param inSegmentDir Directory containing the segmentations.
+     * @param nameList List of image names.
+     * @param minClusters Minimal number of clusters to try.
+     * @param maxClusters Maximal number of clusters to try.
+     * @param useRank Whether to use rank or distances directly.
+     */
+    public SIFTSegmentationHomogeneity(
+            File inImagesDir,
+            File inSIFTDir,
+            File inSegmentDir,
+            String[] nameList,
+            int minClusters,
+            int maxClusters,
+            boolean useRank) {
+        this.inImagesDir = inImagesDir;
+        this.inSIFTDir = inSIFTDir;
+        this.inSegmentDir = inSegmentDir;
+        this.nameList = nameList;
+        this.minClusters = minClusters;
+        this.maxClusters = maxClusters;
+        this.useRank = useRank;
+    }
+
+    /**
+     * @param inImagesDir Directory containing the target images.
+     * @param inSIFTDir Directory containing the extracted SIFT descriptors.
+     * @param inSegmentDir Directory containing the segmentations.
+     * @param nameList List of image names.
+     * @param useRank Whether to use rank or distances directly.
+     */
+    public SIFTSegmentationHomogeneity(
+            File inImagesDir,
+            File inSIFTDir,
+            File inSegmentDir,
+            String[] nameList,
+            boolean useRank) {
+        this.inImagesDir = inImagesDir;
+        this.inSIFTDir = inSIFTDir;
+        this.inSegmentDir = inSegmentDir;
+        this.nameList = nameList;
+        this.minClusters = -1;
+        this.maxClusters = -1;
+        this.useRank = useRank;
+    }
+
+    /**
+     * Get the data from the specified input directories.
+     *
+     * @throws Exception
+     */
+    private void populate() throws Exception {
+        int length = nameList.length;
+        File currImageFile;
+        File currSIFTFile;
+        File currSegmentFile;
+        images = new BufferedImage[length];
+        siftReps = new LFeatRepresentation[length];
+        segmentations = new int[length][][];
+        numSegments = new int[length];
+        for (int i = 0; i < length; i++) {
+            currImageFile = new File(inImagesDir, nameList[i] + ".jpg");
+            currSIFTFile = new File(inSIFTDir, nameList[i] + ".key");
+            currSegmentFile = new File(inSegmentDir, nameList[i] + ".txt");
+            images[i] = ImageIO.read(currImageFile);
+            siftReps[i] = SiftUtil.importFeaturesFromSift(currSIFTFile);
+            SegmentationIO segIO = new SegmentationIO();
+            segIO.read(currSegmentFile);
+            segmentations[i] = segIO.getSegmentation();
+            numSegments[i] = segIO.getNumSegments();
+        }
+    }
+
+    @Override
+    public float evaluate(Object o) {
+        DataInstance original = (DataInstance) o;
+        ClusteringAlg clusterer;
+        float alpha = original.fAttr[0];
+        float be
