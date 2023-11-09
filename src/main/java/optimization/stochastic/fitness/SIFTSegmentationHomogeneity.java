@@ -190,4 +190,80 @@ public class SIFTSegmentationHomogeneity implements FitnessEvaluator {
         DataInstance original = (DataInstance) o;
         ClusteringAlg clusterer;
         float alpha = original.fAttr[0];
-        float be
+        float beta = original.fAttr[1];
+        float gamma = original.fAttr[2];
+        int x, y;
+        int segmentIndex;
+        avgTotalEnt = 0;
+        if (minClusters != -1 && maxClusters != -1) {
+            for (int numClust = minClusters; numClust <= maxClusters;
+                    numClust++) {
+                for (int i = 0; i < images.length; i++) {
+                    System.out.println(avgImgEnt);
+                    avgImgEnt = 0;
+                    segmentTotals = new int[numSegments[i]];
+                    if (useRank) {
+                        clusterer = new IntraImageKMeansAdaptedScale(
+                                images[i],
+                                siftReps[i],
+                                numClust,
+                                alpha,
+                                beta,
+                                gamma);
+                    } else {
+                        clusterer = new IntraImageKMeansWeighted(
+                                images[i],
+                                siftReps[i],
+                                numClust,
+                                alpha,
+                                beta);
+                    }
+                    Cluster[] clusters = null;
+                    boolean ok = false;
+                    while (!ok) {
+                        try {
+                            clusterer.cluster();
+                            clusters = clusterer.getClusters();
+                            ok = true;
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (clusters == null) {
+                        return 0;
+                    }
+                    segmentClassDistr =
+                            new float[numSegments[i]][clusters.length];
+                    for (int j = 0; j < clusters.length; j++) {
+                        if (clusters[j] != null && !clusters[j].isEmpty()) {
+                            for (int k = 0; k < clusters[j].size(); k++) {
+                                x = (int) ((LFeatVector)
+                                        (clusters[j].getInstance(k))).getX();
+                                y = (int) ((LFeatVector)
+                                        (clusters[j].getInstance(k))).getY();
+                                y = Math.min(segmentations[i].length - 1, y);
+                                x = Math.min(segmentations[i][0].length - 1, x);
+                                y = Math.max(0, y);
+                                x = Math.max(0, x);
+                                segmentIndex = segmentations[i][y][x];
+                                segmentTotals[segmentIndex]++;
+                                segmentClassDistr[segmentIndex][j]++;
+                            }
+                        }
+                    }
+                    numNonEmptySegs = 0;
+                    for (int j = 0; j < numSegments[i]; j++) {
+                        if (segmentTotals[j] > 0) {
+                            numNonEmptySegs++;
+                            for (int k = 0; k < segmentClassDistr[j].length;
+                                    k++) {
+                                segmentClassDistr[j][k] /=
+                                        (float) segmentTotals[j];
+                                if (segmentClassDistr[j][k] > 0) {
+                                    avgImgEnt -= segmentClassDistr[j][k]
+                                            * (float) BasicMathUtil.log2(
+                                            segmentClassDistr[j][k]);
+                                }
+                            }
+                        }
+                    }
+                    // Now divide and get the ave
