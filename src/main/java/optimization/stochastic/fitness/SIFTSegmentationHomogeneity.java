@@ -346,4 +346,19 @@ public class SIFTSegmentationHomogeneity implements FitnessEvaluator {
                         avgImgEnt += currEnt * segmentTotals[j];
                     }
                 }
-                System.out.println(avgIm
+                System.out.println(avgImgEnt);
+                int imageTotal = 0;
+                for (int j = 0; j < numSegments[i]; j++) {
+                    imageTotal += segmentTotals[j];
+                }
+                // Now divide and get the average within-segment entropy
+                // for this image.
+                avgImgEnt /= (float) imageTotal;
+                avgTotalEnt += avgImgEnt;
+            }
+            avgTotalEnt /= ((float) (maxClusters - minClusters + 1)
+                    * (float) images.length);
+            return avgTotalEnt;
+        }
+    }
+}
