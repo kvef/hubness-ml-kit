@@ -98,4 +98,97 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
     public HeterogenousFloatMutator(
             float[] stDev,
             float[] lowerBounds,
-            float[] upperBound
+            float[] upperBounds,
+            int beginIndex,
+            int endIndex,
+            float pMutation) {
+        this.stDev = stDev;
+        this.lowerBounds = lowerBounds;
+        this.upperBounds = upperBounds;
+        this.beginIndex = beginIndex;
+        this.endIndex = endIndex;
+        this.pMutation = pMutation;
+    }
+
+    @Override
+    public void setStDevs(float[] stDev) {
+        this.stDev = stDev;
+    }
+
+    @Override
+    public float[] getStDevs() {
+        return stDev;
+    }
+
+    @Override
+    public void mutate(Object instance) throws Exception {
+        DataInstance original = (DataInstance) instance;
+        Random randa = new Random();
+        float decision;
+        if (original.fAttr != null && original.fAttr.length > 0) {
+            if (beginIndex < 0) {
+                beginIndex = 0;
+            }
+            if (endIndex < 0) {
+                endIndex = original.fAttr.length - 1;
+            }
+            for (int i = beginIndex; i <= endIndex; i++) {
+                if (DataMineConstants.isAcceptableFloat(original.fAttr[i])) {
+                    if (pMutation < 1) {
+                        decision = randa.nextFloat();
+                        if (decision < pMutation) {
+                            decision = randa.nextFloat();
+                            if (decision < 0.5f) {
+                                original.fAttr[i] +=
+                                        randa.nextGaussian() * stDev[i];
+                            } else {
+                                original.fAttr[i] -=
+                                        randa.nextGaussian() * stDev[i];
+                            }
+                            // Validate the values.
+                            original.fAttr[i] =
+                                    Math.max(original.fAttr[i], lowerBounds[i]);
+                            original.fAttr[i] =
+                                    Math.min(original.fAttr[i], upperBounds[i]);
+                        }
+                    } else {
+                        decision = randa.nextFloat();
+                        if (decision < 0.5f) {
+                            original.fAttr[i] +=
+                                    randa.nextGaussian() * stDev[i];
+                        } else {
+                            original.fAttr[i] -=
+                                    randa.nextGaussian() * stDev[i];
+                        }
+                        // Validate the values.
+                        original.fAttr[i] =
+                                Math.max(original.fAttr[i], lowerBounds[i]);
+                        original.fAttr[i] =
+                                Math.min(original.fAttr[i], upperBounds[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public Object mutateNew(Object instance) throws Exception {
+        DataInstance original = (DataInstance) instance;
+        DataInstance copy = original.copy();
+        copy.setCategory(original.getCategory());
+        Random randa = new Random();
+        float decision;
+        if (original.fAttr != null && original.fAttr.length > 0) {
+            if (beginIndex < 0) {
+                beginIndex = 0;
+            }
+            if (endIndex < 0) {
+                endIndex = original.fAttr.length - 1;
+            }
+            for (int i = beginIndex; i <= endIndex; i++) {
+                if (DataMineConstants.isAcceptableFloat(original.fAttr[i])) {
+                    if (pMutation < 1) {
+                        decision = randa.nextFloat();
+                        if (decision < pMutation) {
+                            decision = randa.nextFloat();
+                            if
