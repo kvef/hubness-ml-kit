@@ -1,3 +1,4 @@
+
 /**
 * Hub Miner: a hubness-aware machine learning experimentation library.
 * Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
@@ -16,33 +17,50 @@
 */
 package optimization.stochastic.operators.onFloats;
 
+import optimization.stochastic.operators.MutationInterface;
 import data.representation.DataInstance;
 import data.representation.util.DataMineConstants;
 import java.util.Random;
-import optimization.stochastic.operators.HeterogenousMutationInterface;
 
 /**
- * Heterogenous float mutator, mutating float features in such a way that
- * different features have different mutations rates.
+ * Homogenous float mutator that mutates the values of float features in data
+ * points.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
+public class HomogenousFloatMutator implements MutationInterface {
 
     private float pMutation = 1;
-    private float[] stDev;
+    private float stDev;
     private float[] lowerBounds;
     private float[] upperBounds;
     private int beginIndex = -1;
     private int endIndex = -1;
 
     /**
-     * @param stDev Array of mutation standard deviations.
+     * @param stDev Standard deviation of mutations.
+     * @param lowerBounds Lower value bounds.
+     * @param upperBounds Upper value bounds.
+     * @param pMutation Probability of mutating a feature.
+     */
+    public HomogenousFloatMutator(
+            float stDev,
+            float[] lowerBounds,
+            float[] upperBounds,
+            float pMutation) {
+        this.stDev = stDev;
+        this.lowerBounds = lowerBounds;
+        this.upperBounds = upperBounds;
+        this.pMutation = pMutation;
+    }
+
+    /**
+     * @param stDev Standard deviation of mutations.
      * @param lowerBounds Lower value bounds.
      * @param upperBounds Upper value bounds.
      */
-    public HeterogenousFloatMutator(
-            float[] stDev,
+    public HomogenousFloatMutator(
+            float stDev,
             float[] lowerBounds,
             float[] upperBounds) {
         this.stDev = stDev;
@@ -51,14 +69,14 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
     }
 
     /**
-     * @param stDev Array of mutation standard deviations.
+     * @param stDev Standard deviation of mutations.
      * @param lowerBounds Lower value bounds.
      * @param upperBounds Upper value bounds.
-     * @param beginIndex The index of the first feature to mutate.
-     * @param endIndex The index of the last feature to mutate.
+     * @param beginIndex Index of the first feature to mutate.
+     * @param endIndex Index of the last feature to mutate.
      */
-    public HeterogenousFloatMutator(
-            float[] stDev,
+    public HomogenousFloatMutator(
+            float stDev,
             float[] lowerBounds,
             float[] upperBounds,
             int beginIndex,
@@ -71,32 +89,15 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
     }
 
     /**
-     * @param stDev Array of mutation standard deviations.
+     * @param stDev Standard deviation of mutations.
      * @param lowerBounds Lower value bounds.
      * @param upperBounds Upper value bounds.
-     * @param pMutation Probability of whether to mutate a feature.
+     * @param beginIndex Index of the first feature to consider mutating.
+     * @param endIndex Index of the last feature to consider mutating.
+     * @param pMutation Probability of mutating a feature.
      */
-    public HeterogenousFloatMutator(
-            float[] stDev,
-            float[] lowerBounds,
-            float[] upperBounds,
-            float pMutation) {
-        this.stDev = stDev;
-        this.lowerBounds = lowerBounds;
-        this.upperBounds = upperBounds;
-        this.pMutation = pMutation;
-    }
-
-    /**
-     * @param stDev Array of mutation standard deviations.
-     * @param lowerBounds Lower value bounds.
-     * @param upperBounds Upper value bounds.
-     * @param beginIndex The index of the first feature to mutate.
-     * @param endIndex The index of the last feature to mutate.
-     * @param pMutation Probability of whether to mutate a feature.
-     */
-    public HeterogenousFloatMutator(
-            float[] stDev,
+    public HomogenousFloatMutator(
+            float stDev,
             float[] lowerBounds,
             float[] upperBounds,
             int beginIndex,
@@ -108,16 +109,6 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
         this.beginIndex = beginIndex;
         this.endIndex = endIndex;
         this.pMutation = pMutation;
-    }
-
-    @Override
-    public void setStDevs(float[] stDev) {
-        this.stDev = stDev;
-    }
-
-    @Override
-    public float[] getStDevs() {
-        return stDev;
     }
 
     @Override
@@ -140,10 +131,10 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
                             decision = randa.nextFloat();
                             if (decision < 0.5f) {
                                 original.fAttr[i] +=
-                                        randa.nextGaussian() * stDev[i];
+                                        randa.nextGaussian() * stDev;
                             } else {
                                 original.fAttr[i] -=
-                                        randa.nextGaussian() * stDev[i];
+                                        randa.nextGaussian() * stDev;
                             }
                             // Validate the values.
                             original.fAttr[i] =
@@ -154,11 +145,9 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
                     } else {
                         decision = randa.nextFloat();
                         if (decision < 0.5f) {
-                            original.fAttr[i] +=
-                                    randa.nextGaussian() * stDev[i];
+                            original.fAttr[i] += randa.nextGaussian() * stDev;
                         } else {
-                            original.fAttr[i] -=
-                                    randa.nextGaussian() * stDev[i];
+                            original.fAttr[i] -= randa.nextGaussian() * stDev;
                         }
                         // Validate the values.
                         original.fAttr[i] =
@@ -192,11 +181,9 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
                         if (decision < pMutation) {
                             decision = randa.nextFloat();
                             if (decision < 0.5f) {
-                                copy.fAttr[i] +=
-                                        randa.nextGaussian() * stDev[i];
+                                copy.fAttr[i] += randa.nextGaussian() * stDev;
                             } else {
-                                copy.fAttr[i] -=
-                                        randa.nextGaussian() * stDev[i];
+                                copy.fAttr[i] -= randa.nextGaussian() * stDev;
                             }
                             // Validate the values.
                             copy.fAttr[i] =
@@ -207,9 +194,9 @@ public class HeterogenousFloatMutator implements HeterogenousMutationInterface {
                     } else {
                         decision = randa.nextFloat();
                         if (decision < 0.5f) {
-                            copy.fAttr[i] += randa.nextGaussian() * stDev[i];
+                            copy.fAttr[i] += randa.nextGaussian() * stDev;
                         } else {
-                            copy.fAttr[i] -= randa.nextGaussian() * stDev[i];
+                            copy.fAttr[i] -= randa.nextGaussian() * stDev;
                         }
                         // Validate the values.
                         copy.fAttr[i] = Math.max(copy.fAttr[i], lowerBounds[i]);
