@@ -29,4 +29,107 @@ import optimization.stochastic.operators.TwoDevsMutationInterface;
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class HomogenousTwoDevsFloatMutator implements TwoDevsMutat
+public class HomogenousTwoDevsFloatMutator implements TwoDevsMutationInterface {
+
+    private float pMutation = 1;
+    private float stDevSmall;
+    private float stDevBig;
+    private float pSmall;
+    private float[] lowerBounds;
+    private float[] upperBounds;
+    private int beginIndex = -1;
+    private int endIndex = -1;
+
+    /**
+     * @param stDevSmall Standard deviation of small mutations.
+     * @param stDevBig Standard deviation of large mutations.
+     * @param pSmall Probability of making small mutations.
+     * @param lowerBounds Lower value bounds.
+     * @param upperBounds Upper value bounds.
+     */
+    public HomogenousTwoDevsFloatMutator(
+            float stDevSmall,
+            float stDevBig,
+            float pSmall,
+            float[] lowerBounds,
+            float[] upperBounds) {
+        this.stDevSmall = stDevSmall;
+        this.stDevBig = stDevBig;
+        this.pSmall = pSmall;
+        this.lowerBounds = lowerBounds;
+        this.upperBounds = upperBounds;
+    }
+
+    /**
+     * @param stDevSmall Standard deviation of small mutations.
+     * @param stDevBig Standard deviation of large mutations.
+     * @param pSmall Probability of making small mutations.
+     * @param lowerBounds Lower value bounds.
+     * @param upperBounds Upper value bounds.
+     * @param beginIndex The index of the first feature to mutate.
+     * @param endIndex The index of the last feature to mutate.
+     */
+    public HomogenousTwoDevsFloatMutator(
+            float stDevSmall,
+            float stDevBig,
+            float pSmall,
+            float[] lowerBounds,
+            float[] upperBounds,
+            int beginIndex,
+            int endIndex) {
+        this.stDevSmall = stDevSmall;
+        this.stDevBig = stDevBig;
+        this.pSmall = pSmall;
+        this.lowerBounds = lowerBounds;
+        this.upperBounds = upperBounds;
+        this.beginIndex = beginIndex;
+        this.endIndex = endIndex;
+    }
+
+    /**
+     * @param stDevSmall Standard deviation of small mutations.
+     * @param stDevBig Standard deviation of large mutations.
+     * @param pSmall Probability of making small mutations.
+     * @param lowerBounds Lower value bounds.
+     * @param upperBounds Upper value bounds.
+     * @param pMutation Probability of whether to mutate a feature.
+     */
+    public HomogenousTwoDevsFloatMutator(
+            float stDevSmall,
+            float stDevBig,
+            float pSmall,
+            float[] lowerBounds,
+            float[] upperBounds,
+            float pMutation) {
+        this.stDevSmall = stDevSmall;
+        this.stDevBig = stDevBig;
+        this.pSmall = pSmall;
+        this.lowerBounds = lowerBounds;
+        this.upperBounds = upperBounds;
+        this.pMutation = pMutation;
+    }
+
+    /**
+     * @param stDevSmall Standard deviation of small mutations.
+     * @param stDevBig Standard deviation of large mutations.
+     * @param pSmall Probability of making small mutations.
+     * @param lowerBounds Lower value bounds.
+     * @param upperBounds Upper value bounds.
+     * @param beginIndex The index of the first feature to mutate.
+     * @param endIndex The index of the last feature to mutate.
+     * @param pMutation Probability of whether to mutate a feature.
+     */
+    public HomogenousTwoDevsFloatMutator(
+            float stDevSmall,
+            float stDevBig,
+            float pSmall,
+            float[] lowerBounds,
+            float[] upperBounds,
+            int beginIndex,
+            int endIndex,
+            float pMutation) {
+        this.stDevSmall = stDevSmall;
+        this.stDevBig = stDevBig;
+        this.pSmall = pSmall;
+        this.lowerBounds = lowerBounds;
+        thi
