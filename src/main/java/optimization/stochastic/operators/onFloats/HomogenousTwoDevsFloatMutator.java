@@ -132,4 +132,114 @@ public class HomogenousTwoDevsFloatMutator implements TwoDevsMutationInterface {
         this.stDevBig = stDevBig;
         this.pSmall = pSmall;
         this.lowerBounds = lowerBounds;
-        thi
+        this.upperBounds = upperBounds;
+        this.beginIndex = beginIndex;
+        this.endIndex = endIndex;
+        this.pMutation = pMutation;
+    }
+
+    @Override
+    public void setPSmall(float pSmall) {
+        this.pSmall = pSmall;
+    }
+
+    @Override
+    public float getPSmall() {
+        return pSmall;
+    }
+
+    @Override
+    public void setDevSmall(float stDevSmall) {
+        this.stDevSmall = stDevSmall;
+    }
+
+    @Override
+    public float getDevSmall() {
+        return stDevSmall;
+    }
+
+    @Override
+    public void setDevBig(float stDevBig) {
+        this.stDevBig = stDevBig;
+    }
+
+    @Override
+    public float getDevBig() {
+        return stDevBig;
+    }
+
+    @Override
+    public void setDevsSmall(float[] stDevSmall) {
+        this.stDevSmall = stDevSmall[0];
+    }
+
+    @Override
+    public float[] getDevsSmall() {
+        float[] result = new float[1];
+        result[0] = stDevSmall;
+        return result;
+    }
+
+    @Override
+    public void setDevsBig(float[] stDevBig) {
+        this.stDevBig = stDevBig[0];
+    }
+
+    @Override
+    public float[] getDevsBig() {
+        float[] result = new float[1];
+        result[0] = stDevBig;
+        return result;
+    }
+
+    @Override
+    public void mutate(Object instance) throws Exception {
+        DataInstance original = (DataInstance) instance;
+        Random randa = new Random();
+        float decision;
+        if (original.fAttr != null && original.fAttr.length > 0) {
+            if (beginIndex < 0) {
+                beginIndex = 0;
+            }
+            if (endIndex < 0) {
+                endIndex = original.fAttr.length - 1;
+            }
+            for (int i = beginIndex; i <= endIndex; i++) {
+                if (DataMineConstants.isAcceptableFloat(original.fAttr[i])) {
+                    if (pMutation < 1) {
+                        decision = randa.nextFloat();
+                        if (decision < pMutation) {
+                            decision = randa.nextFloat();
+                            if (decision < 0.5f) {
+                                decision = randa.nextFloat();
+                                if (decision < pSmall) {
+                                    original.fAttr[i] +=
+                                            randa.nextGaussian() * stDevSmall;
+                                } else {
+                                    original.fAttr[i] +=
+                                            randa.nextGaussian() * stDevBig;
+                                }
+                            } else {
+                                decision = randa.nextFloat();
+                                if (decision < pSmall) {
+                                    original.fAttr[i] -=
+                                            randa.nextGaussian() * stDevSmall;
+                                } else {
+                                    original.fAttr[i] -=
+                                            randa.nextGaussian() * stDevBig;
+                                }
+                            }
+                            // Validate the changes.
+                            original.fAttr[i] = Math.max(original.fAttr[i],
+                                    lowerBounds[i]);
+                            original.fAttr[i] = Math.min(original.fAttr[i],
+                                    upperBounds[i]);
+                        }
+                    } else {
+                        decision = randa.nextFloat();
+                        if (decision < 0.5f) {
+                            decision = randa.nextFloat();
+                            if (decision < pSmall) {
+                                original.fAttr[i] += randa.nextGaussian()
+                                        * stDevSmall;
+                   
