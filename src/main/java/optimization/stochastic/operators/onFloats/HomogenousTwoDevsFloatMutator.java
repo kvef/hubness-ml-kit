@@ -318,4 +318,44 @@ public class HomogenousTwoDevsFloatMutator implements TwoDevsMutationInterface {
                             decision = randa.nextFloat();
                             if (decision < pSmall) {
                                 copy.fAttr[i] +=
-                                        randa.nextGaussian() * stDe
+                                        randa.nextGaussian() * stDevSmall;
+                            } else {
+                                copy.fAttr[i] +=
+                                        randa.nextGaussian() * stDevBig;
+                            }
+                        } else {
+                            decision = randa.nextFloat();
+                            if (decision < pSmall) {
+                                copy.fAttr[i] -=
+                                        randa.nextGaussian() * stDevSmall;
+                            } else {
+                                copy.fAttr[i] -=
+                                        randa.nextGaussian() * stDevBig;
+                            }
+                        }
+                        // Validate the changes.
+                        copy.fAttr[i] = Math.max(copy.fAttr[i], lowerBounds[i]);
+                        copy.fAttr[i] = Math.min(copy.fAttr[i], upperBounds[i]);
+                    }
+                }
+            }
+        }
+        return copy;
+    }
+
+    @Override
+    public Object[] mutateNew(Object[] instances) throws Exception {
+        Object[] output = new Object[instances.length];
+        for (int i = 0; i < instances.length; i++) {
+            output[i] = mutateNew(instances[i]);
+        }
+        return output;
+    }
+
+    @Override
+    public void mutate(Object[] instances) throws Exception {
+        for (int i = 0; i < instances.length; i++) {
+            mutate(instances[i]);
+        }
+    }
+}
