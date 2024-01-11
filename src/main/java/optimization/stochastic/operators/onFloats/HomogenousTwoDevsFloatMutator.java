@@ -242,4 +242,80 @@ public class HomogenousTwoDevsFloatMutator implements TwoDevsMutationInterface {
                             if (decision < pSmall) {
                                 original.fAttr[i] += randa.nextGaussian()
                                         * stDevSmall;
-                   
+                            } else {
+                                original.fAttr[i] += randa.nextGaussian()
+                                        * stDevBig;
+                            }
+                        } else {
+                            decision = randa.nextFloat();
+                            if (decision < pSmall) {
+                                original.fAttr[i] -=
+                                        randa.nextGaussian() * stDevSmall;
+                            } else {
+                                original.fAttr[i] -=
+                                        randa.nextGaussian() * stDevBig;
+                            }
+                        }
+                        // Validate the changes.
+                        original.fAttr[i] =
+                                Math.max(original.fAttr[i], lowerBounds[i]);
+                        original.fAttr[i] =
+                                Math.min(original.fAttr[i], upperBounds[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public Object mutateNew(Object instance) throws Exception {
+        DataInstance original = (DataInstance) instance;
+        DataInstance copy = original.copy();
+        copy.setCategory(original.getCategory());
+        Random randa = new Random();
+        float decision;
+        if (original.fAttr != null && original.fAttr.length > 0) {
+            if (beginIndex < 0) {
+                beginIndex = 0;
+            }
+            if (endIndex < 0) {
+                endIndex = original.fAttr.length - 1;
+            }
+            for (int i = beginIndex; i <= endIndex; i++) {
+                if (DataMineConstants.isAcceptableFloat(original.fAttr[i])) {
+                    if (pMutation < 1) {
+                        decision = randa.nextFloat();
+                        if (decision < pMutation) {
+                            decision = randa.nextFloat();
+                            if (decision < 0.5f) {
+                                decision = randa.nextFloat();
+                                if (decision < pSmall) {
+                                    copy.fAttr[i] +=
+                                            randa.nextGaussian() * stDevSmall;
+                                } else {
+                                    copy.fAttr[i] +=
+                                            randa.nextGaussian() * stDevBig;
+                                }
+                            } else {
+                                decision = randa.nextFloat();
+                                if (decision < pSmall) {
+                                    copy.fAttr[i] -=
+                                            randa.nextGaussian() * stDevSmall;
+                                } else {
+                                    copy.fAttr[i] -=
+                                            randa.nextGaussian() * stDevBig;
+                                }
+                            }
+                            // Validate the changes.
+                            copy.fAttr[i] = Math.max(copy.fAttr[i],
+                                    lowerBounds[i]);
+                            copy.fAttr[i] = Math.min(copy.fAttr[i],
+                                    upperBounds[i]);
+                        }
+                    } else {
+                        decision = randa.nextFloat();
+                        if (decision < 0.5f) {
+                            decision = randa.nextFloat();
+                            if (decision < pSmall) {
+                                copy.fAttr[i] +=
+                                        randa.nextGaussian() * stDe
