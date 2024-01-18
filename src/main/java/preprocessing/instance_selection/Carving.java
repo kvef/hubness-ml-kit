@@ -217,4 +217,75 @@ public class Carving extends InstanceSelector implements NSFUserInterface {
         hmNetworks.add(superHMNetwork);
         // List that will contain the selected prototype indexes.
         ArrayList<Integer> protoIndexes = new ArrayList<>(datasize / 4);
-        ArrayList<Integer> currNetwork
+        ArrayList<Integer> currNetworkIndexes, currAddedIndexes,
+                newNetworkIndexes;
+        // Now get the initial subsample seed based on the carving criterion.
+        float[] missFreqs = superHMNetwork.getMissNeighbOccFreqs();
+        currAddedIndexes = new ArrayList<>(datasize / 4);
+        currNetworkIndexes = new ArrayList<>(datasize / 4);
+        HashMap<Integer, Integer> backwardIndexMap =
+                new HashMap<>(datasize / 4);
+        for (int i = 0; i < missFreqs.length; i++) {
+            if (missFreqs[i] > 0) {
+                currAddedIndexes.add(superProtoIndexes.get(i));
+            } else {
+                backwardIndexMap.put(currNetworkIndexes.size(), i);
+                currNetworkIndexes.add(superProtoIndexes.get(i));
+            }
+        }
+        if (currAddedIndexes.isEmpty()) {
+            // The approach can not be applied, so we return the HMScore results
+            // instead.
+            setPrototypeIndexes(superProtoIndexes);
+            sortSelectedIndexes();
+            return;
+        }
+        // Calculate the error of the core.
+        // Make the initial NSF object for leave-one-out evaluations.
+        boolean[] isInitialPrototype = new boolean[datasize];
+        for (int i = 0; i < currAddedIndexes.size(); i++) {
+            isInitialPrototype[currAddedIndexes.get(i)] = true;
+        }
+        NeighborSetFinder protoNSF = new NeighborSetFinder(originalDataSet,
+                distMat);
+        // This is the relevant neighborhood size to use in the leave-one-out 
+        // estimates.
+        int k = nsf != null ? nsf.getCurrK() : kHM;
+        // The initial kNN sets will contain only the initial prototypes as 
+        // neighbors.
+        protoNSF.calculateNeighborSetsMultiThr(k, numThreads,
+                isInitialPrototype);
+        int numFalsePredictions = countFalsePredictions(originalDataSet,
+                numClasses, protoNSF);
+        protoIndexes.addAll(currAddedIndexes);
+        boolean iterate = true;
+        while (iterate) {
+            // Ok, so first we build a network and then subsample from it to
+            // find new indexes to add to the selected set.
+            DataSet currDSet = originalDataSet.getSubsample(currNetworkIndexes);
+            // Some classes will be lost in the subsample eventually, so it is 
+            // necessary to adjust the labels because of some hit-miss network 
+            // internals where there might be errors when the category indexes 
+            // go out of the range of the number of categories. When we make a 
+            // copy of the data and standardize the categories, this is avoided.
+            currDSet = currDSet.copy();
+            currDSet.standardizeCategories();
+            float[][] currDistMat = new float[currDSet.size()][];
+            for (int i = 0; i < currDistMat.length; i++) {
+                currDistMat[i] = new float[currDistMat.length - i - 1];
+                for (int j = 0; j < currDistMat[i].length; j++) {
+                    minIndex = Math.min(currNetworkIndexes.get(i),
+                            currNetworkIndexes.get(i + j + 1));
+                    maxIndex = Math.max(currNetworkIndexes.get(i),
+                            currNetworkIndexes.get(i + j + 1));
+                    currDistMat[i][j] = distMat[minIndex][
+                            maxIndex - minIndex - 1];
+                }
+            }
+            if (currDSet.countCategories() < 2) {
+                break;
+            }
+            // Generate the current hit-miss network for analysis.
+            HitMissNetwork currHMNetwork = new HitMissNetwork(currDSet,
+                    currDistMat, Math.max(
+                  
