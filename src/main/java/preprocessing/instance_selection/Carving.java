@@ -129,4 +129,92 @@ public class Carving extends InstanceSelector implements NSFUserInterface {
         pub.setTitle("Class Conditional Nearest Neighbor and Large Margin "
                 + "Instance Selection");
         pub.addAuthor(new Author("E.", "Marchiori"));
-        
+        pub.setJournalName("IEEE Transactions on Pattern Analysis and Machine"
+                + " Intelligence");
+        pub.setYear(2010);
+        pub.setVolume(32);
+        pub.setIssue(2);
+        pub.setStartPage(364);
+        pub.setEndPage(370);
+        pub.setDoi("10.1109/TPAMI.2009.164");
+        pub.setPublisher(Publisher.IEEE);
+        return pub;
+    }
+    
+    /**
+     * Calculate the number of false predictions according to the current kNN
+     * sets.
+     *
+     * @param dset DataSet to calculate the predictions for.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param finder NeighborSetFinder object holding the kNN sets.
+     * @return Integer value that is the count of false predictions.
+     * @throws Exception
+     */
+    private int countFalsePredictions(DataSet dset, int numClasses,
+            NeighborSetFinder finder) throws Exception {
+        int numFalsePredictions = 0;
+        KNN classifier = new KNN(dset, numClasses,
+                finder.getCombinedMetric(), finder.getCurrK());
+        for (int i = 0; i < dset.size(); i++) {
+            int queryLabel = dset.getLabelOf(i);
+            int predictedLabel = classifier.classify(
+                    dset.getInstance(i), null,
+                    finder.getKNeighbors()[i]);
+            if (queryLabel != predictedLabel) {
+                numFalsePredictions++;
+            }
+        }
+        return numFalsePredictions;
+    }
+    
+    @Override
+    public void reduceDataSet() throws Exception {
+        DataSet originalDataSet = getOriginalDataSet();
+        int datasize = originalDataSet.size();
+        // Initialization.
+        int numClasses = getNumClasses();
+        // First obtain the superset by performing HMScore selection.
+        if (nsf != null) {
+            internalReducer = new HMScore(nsf, kHM);
+        } else {
+            internalReducer = new HMScore(originalDataSet, distMat, kHM);
+        }
+        internalReducer.setInclusionPermissions(permitNoChangeInclusions);
+        internalReducer.reduceDataSet();
+        ArrayList<Integer> superProtoIndexes =
+                internalReducer.getPrototypeIndexes();
+        DataSet superSet = originalDataSet.getSubsample(superProtoIndexes);
+        if (superSet.countCategories() < 2) {
+            // The approach can not be applied, so we return the HMScore results
+            // instead.
+            setPrototypeIndexes(superProtoIndexes);
+            sortSelectedIndexes();
+            return;
+        }
+        // Make the labels conform to a range if a category is missing.
+        superSet = superSet.copy();
+        superSet.standardizeCategories();
+        // Generate the distance matrix for the initial super-set.
+        float[][] superDistMat = new float[superSet.size()][];
+        int minIndex, maxIndex;
+        for (int i = 0; i < superDistMat.length; i++) {
+            superDistMat[i] = new float[superDistMat.length - i - 1];
+            for (int j = 0; j < superDistMat[i].length; j++) {
+                minIndex = Math.min(superProtoIndexes.get(i),
+                        superProtoIndexes.get(i + j + 1));
+                maxIndex = Math.max(superProtoIndexes.get(i),
+                        superProtoIndexes.get(i + j + 1));
+                superDistMat[i][j] = distMat[minIndex][maxIndex - minIndex - 1];
+            }
+        }
+        hmNetworks = new ArrayList<>(10);
+        // Generate the initial hit-miss network.
+        HitMissNetwork superHMNetwork = new HitMissNetwork(superSet,
+                superDistMat,
+                Math.max(1, Math.min(kHM, superSet.getMinClassSize())));
+        superHMNetwork.generateNetwork();
+        hmNetworks.add(superHMNetwork);
+        // List that will contain the selected prototype indexes.
+        ArrayList<Integer> protoIndexes = new ArrayList<>(datasize / 4);
+        ArrayList<Integer> currNetwork
