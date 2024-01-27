@@ -288,4 +288,77 @@ public class Carving extends InstanceSelector implements NSFUserInterface {
             // Generate the current hit-miss network for analysis.
             HitMissNetwork currHMNetwork = new HitMissNetwork(currDSet,
                     currDistMat, Math.max(
-                  
+                    1, Math.min(kHM, currDSet.getMinClassSize())));
+            currHMNetwork.generateNetwork();
+            float[] missFreqsCurr = currHMNetwork.getMissNeighbOccFreqs();
+            // Obtain the total freqs of the previous network.
+            float[] hitFreqsPrev = hmNetworks.get(hmNetworks.size() - 1).
+                    getHitNeighbOccFreqs();
+            float[] missFreqsPrev = hmNetworks.get(hmNetworks.size() - 1).
+                    getMissNeighbOccFreqs();
+            float[] totalFreqsPrev = new float[hitFreqsPrev.length];
+            for (int i = 0; i < totalFreqsPrev.length; i++) {
+                totalFreqsPrev[i] = missFreqsPrev[i] + hitFreqsPrev[i];
+            }
+            HashMap<Integer, Integer> newBackwardIndexMap =
+                    new HashMap<>(datasize / 4);
+            currAddedIndexes = new ArrayList<>(datasize / 4);
+            newNetworkIndexes = new ArrayList<>(datasize / 4);
+            for (int i = 0; i < missFreqsCurr.length; i++) {
+                if (missFreqsCurr[i] > 0 &&
+                        totalFreqsPrev[backwardIndexMap.get(i)] > 0) {
+                    currAddedIndexes.add(currNetworkIndexes.get(i));
+                } else {
+                    newBackwardIndexMap.put(newNetworkIndexes.size(), i);
+                    newNetworkIndexes.add(currNetworkIndexes.get(i));
+                }
+            }
+            hmNetworks.add(currHMNetwork);
+            if (currAddedIndexes.isEmpty()) {
+                break;
+            }
+            for (int i = 0; i < currAddedIndexes.size(); i++) {
+                protoNSF.considerNeighbor(currAddedIndexes.get(i), false);
+            }
+            int numFalsePredictionsNew = countFalsePredictions(originalDataSet,
+                    numClasses, protoNSF);
+            if (permitNoChangeInclusions &&
+                    numFalsePredictionsNew <= numFalsePredictions) {
+                numFalsePredictions = numFalsePredictionsNew;
+                protoIndexes.addAll(currAddedIndexes);
+                currNetworkIndexes = newNetworkIndexes;
+                backwardIndexMap = newBackwardIndexMap;
+            } else if (!permitNoChangeInclusions &&
+                    numFalsePredictionsNew < numFalsePredictions) {
+                numFalsePredictions = numFalsePredictionsNew;
+                protoIndexes.addAll(currAddedIndexes);
+                currNetworkIndexes = newNetworkIndexes;
+                backwardIndexMap = newBackwardIndexMap;
+            } else {
+                iterate = false;
+            }
+            if (currNetworkIndexes.size() < kHM) {
+                break;
+            }
+        }
+        // Check whether at least one instance of each class has been selected.
+        int[] protoClassCounts = new int[numClasses];
+        int numEmptyClasses = numClasses;
+        for (int i = 0; i < protoIndexes.size(); i++) {
+            int label = originalDataSet.getLabelOf(protoIndexes.get(i));
+            if (protoClassCounts[label] == 0) {
+                numEmptyClasses--;
+            }
+            protoClassCounts[label]++;
+        }
+        if (numEmptyClasses > 0) {
+            HashMap<Integer, Integer> tabuMap =
+                    new HashMap<>(protoIndexes.size() * 2);
+            for (int i = 0; i < protoIndexes.size(); i++) {
+                tabuMap.put(protoIndexes.get(i), i);
+            }
+            for (int i = 0; i < originalDataSet.size(); i++) {
+                int label = originalDataSet.getLabelOf(i);
+                if (!tabuMap.containsKey(i) && protoClassCounts[label] == 0) {
+                    protoIndexes.add(i);
+                    protoClass
