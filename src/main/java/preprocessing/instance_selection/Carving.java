@@ -517,4 +517,68 @@ public class Carving extends InstanceSelector implements NSFUserInterface {
                                                 < kdistances[i][
                                                         kcurrLen[i] - 1]) {
                                             //search to see where to insert
-                                            l = kcurrLen[i] - 
+                                            l = kcurrLen[i] - 1;
+                                            kdistances[i][kcurrLen[i]] =
+                                                    kdistances[i][
+                                                            kcurrLen[i] - 1];
+                                            kneighbors[i][kcurrLen[i]] =
+                                                    kneighbors[i][
+                                                            kcurrLen[i] - 1];
+                                            while ((l >= 1)
+                                                    && distMatrix[min][
+                                                    max - min - 1]
+                                                    < kdistances[i][l - 1]) {
+                                                kdistances[i][l] =
+                                                        kdistances[i][l - 1];
+                                                kneighbors[i][l] =
+                                                        kneighbors[i][l - 1];
+                                                l--;
+                                            }
+                                            kdistances[i][l] =
+                                                    distMatrix[min][
+                                                    max - min - 1];
+                                            kneighbors[i][l] = protoMap.get(j);
+                                            kcurrLen[i]++;
+                                        } else {
+                                            kdistances[i][kcurrLen[i]] =
+                                                    distMatrix[min][
+                                                    max - min - 1];
+                                            kneighbors[i][kcurrLen[i]] =
+                                                    protoMap.get(j);
+                                            kcurrLen[i]++;
+                                        }
+                                    }
+                                } else {
+                                    kdistances[i][0] =
+                                            distMatrix[min][max - min - 1];
+                                    kneighbors[i][0] = protoMap.get(j);
+                                    kcurrLen[i] = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            int numClasses = getNumClasses();
+            // Prototype occurrence frequency array.
+            int[] protoHubness = new int[protoIndexes.size()];
+            // Prototype good occurrence frequency array.
+            int[] protoGoodHubness = new int[protoIndexes.size()];
+            // Prototype detrimental occurrence frequency array.
+            int[] protoBadHubness = new int[protoIndexes.size()];
+            // Prototype class-conditional neighbor occurrence frequencies.
+            int[][] protoClassHubness =
+                    new int[numClasses][protoIndexes.size()];
+            setPrototypeHubness(protoHubness);
+            setPrototypeGoodHubness(protoGoodHubness);
+            setPrototypeBadHubness(protoBadHubness);
+            setProtoClassHubness(protoClassHubness);
+            int currLabel;
+            // Loop through the top-k prototype sets once.
+            for (int i = 0; i < datasize; i++) {
+                currLabel = originalDataSet.getLabelOf(i);
+                for (int j = 0; j < k; j++) {
+                    if (currLabel == originalDataSet.getLabelOf(
+                            protoIndexes.get(kneighbors[i][j]))) {
+                        protoGoodHubness[kneighbors[i][j]]++;
+                    } else
