@@ -361,4 +361,99 @@ public class Carving extends InstanceSelector implements NSFUserInterface {
                 int label = originalDataSet.getLabelOf(i);
                 if (!tabuMap.containsKey(i) && protoClassCounts[label] == 0) {
                     protoIndexes.add(i);
-                    protoClass
+                    protoClassCounts[label]++;
+                    numEmptyClasses--;
+                }
+                if (numEmptyClasses == 0) {
+                    break;
+                }
+            }
+        }
+        // Set the selected prototype indexes and sort them.
+        setPrototypeIndexes(protoIndexes);
+        sortSelectedIndexes();
+    }
+    
+    @Override
+    public void reduceDataSet(int numPrototypes) throws Exception {
+        // This method automatically determines the correct number of prototypes
+        // and it is usually a small number, so there is no way to enforce the 
+        // number of prototypes here. Automatic selection is performed instead.
+        reduceDataSet();
+    }
+    
+    @Override
+    public InstanceSelector copy() {
+        if (nsf == null) {
+            return new Carving(getOriginalDataSet(), distMat, kHM);
+        } else {
+            return new Carving(nsf, kHM);
+        }
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        distMat = nsf.getDistances();
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    @Override
+    public void noRecalcs() {
+    }
+
+    @Override
+    public void calculatePrototypeHubness(int k) throws Exception {
+        if (nsf != null) {
+            // Here we have some prior neighbor occurrence information and we
+            // can re-use it to speed-up the top k prototype search.
+            this.setNeighborhoodSize(k);
+            if (k <= 0) {
+                return;
+            }
+            DataSet originalDataSet = getOriginalDataSet();
+            // The original k-neighbor information is used in order to speed up
+            // the top-k prototype calculations, in those cases where these
+            // prototypes are already known to occur as neighbors.
+            // These occurrences are re-used dynamically.
+            int[][] kns = nsf.getKNeighbors();
+            float[][] kd = nsf.getKDistances();
+            // Array that holds the kneighbors where only prototypes are allowed
+            // as neighbor points.
+            int[][] kneighbors = new int[originalDataSet.size()][k];
+            int kNSF = kns[0].length;
+            HashMap<Integer, Integer> protoMap =
+                    new HashMap<>(getPrototypeIndexes().size() * 2);
+            ArrayList<Integer> protoIndexes = getPrototypeIndexes();
+            // Fill the HashMap with indexes of selected prototype points.
+            for (int i = 0; i < protoIndexes.size(); i++) {
+                protoMap.put(protoIndexes.get(i), i);
+            }
+            int l;
+            int datasize = originalDataSet.size();
+            // Distances to k-closest prototypes for each point from the
+            // training data.
+            float[][] kdistances = new float[datasize][k];
+            // Temporary lengths of k-neighbor lists as they are being
+            // calculated.
+            int[] kcurrLen = new int[datasize];
+            // Distance matrix.
+            float[][] distMatrix = nsf.getDistances();
+            // Intervals are there to help with re-using existing neighbors, in
+            // order to speed up the calculations and simplify the code.
+            ArrayList<Integer> intervals;
+            int upper, lower;
+            int min, max;
+            for (int i = 0; i < datasize; i++) {
+                intervals = new ArrayList(k + 2);
+                // Looping is from interval indexes + 1, so -1 goes as the left
+                // limit. All prototype occurrences from the original kNN sets
+                // are inserted into the intervals list.
+                intervals.add(-1);
+                for (int j = 0; j < kNSF; j++) {
+                    if (protoMap.containsKey(kns[i][j])) {
+      
