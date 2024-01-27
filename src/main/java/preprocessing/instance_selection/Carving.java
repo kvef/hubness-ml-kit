@@ -456,4 +456,65 @@ public class Carving extends InstanceSelector implements NSFUserInterface {
                 intervals.add(-1);
                 for (int j = 0; j < kNSF; j++) {
                     if (protoMap.containsKey(kns[i][j])) {
-      
+                        // What we insert as a neighbor is not the prototype
+                        // index within the original data, but rather among the
+                        // prototype array.
+                        kneighbors[i][kcurrLen[i]] = protoMap.get(kns[i][j]);
+                        kdistances[i][kcurrLen[i]] = kd[i][j];
+                        kcurrLen[i]++;
+                        // We insert the originalDataSet prototype index to the
+                        // intervals.
+                        intervals.add(kns[i][j]);
+                    }
+                    // If the original kNSF was larger than this neighborhood
+                    // size, we need to make sure not to exceed the k limit.
+                    if (kcurrLen[i] >= k) {
+                        break;
+                    }
+                }
+                intervals.add(datasize + 1);
+                // We sort the known prototype neighbor indexes.
+                Collections.sort(intervals);
+                // If we haven't already finished, we proceed with the nearest
+                // prototype search.
+                if (kcurrLen[i] < k) {
+                    // It needs to iterate one less than to the very end, as the
+                    // last limitation is there, so there are no elements beyond
+                    int iSizeRed = intervals.size() - 1;
+                    for (int ind = 0; ind < iSizeRed; ind++) {
+                        lower = intervals.get(ind);
+                        upper = intervals.get(ind + 1);
+                        for (int j = lower + 1; j < upper - 1; j++) {
+                            // If the point is a prototype and different from
+                            // current.
+                            if (i != j && protoMap.containsKey(j)) {
+                                min = Math.min(i, j);
+                                max = Math.max(i, j);
+                                if (kcurrLen[i] > 0) {
+                                    if (kcurrLen[i] == k) {
+                                        if (distMatrix[min][max - min - 1]
+                                                < kdistances[i][
+                                                        kcurrLen[i] - 1]) {
+                                            // Search to see where to insert.
+                                            l = k - 1;
+                                            while ((l >= 1)
+                                                    && distMatrix[min][
+                                                    max - min - 1]
+                                                    < kdistances[i][l - 1]) {
+                                                kdistances[i][l] =
+                                                        kdistances[i][l - 1];
+                                                kneighbors[i][l] =
+                                                        kneighbors[i][l - 1];
+                                                l--;
+                                            }
+                                            kdistances[i][l] =
+                                                    distMatrix[min][
+                                                    max - min - 1];
+                                            kneighbors[i][l] = protoMap.get(j);
+                                        }
+                                    } else {
+                                        if (distMatrix[min][max - min - 1]
+                                                < kdistances[i][
+                                                        kcurrLen[i] - 1]) {
+                                            //search to see where to insert
+                                            l = kcurrLen[i] - 
