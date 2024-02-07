@@ -123,4 +123,105 @@ public class ENRBF extends InstanceSelector implements NSFUserInterface {
             label = originalDataSet.getLabelOf(i);
             acceptable = true;
             for (int c = 0; c < numClasses; c++) {
-                if (c != label && point
+                if (c != label && pointClassProbs[i][label]
+                        < alpha * pointClassProbs[i][c]) {
+                    acceptable = false;
+                    break;
+                }
+            }
+            if (acceptable) {
+                protoIndexes.add(i);
+            }
+        }
+        // Check whether at least one instance of each class has been selected.
+        int[] protoClassCounts = new int[numClasses];
+        int numEmptyClasses = numClasses;
+        for (int i = 0; i < protoIndexes.size(); i++) {
+            label = originalDataSet.getLabelOf(protoIndexes.get(i));
+            if (protoClassCounts[label] == 0) {
+                numEmptyClasses--;
+            }
+            protoClassCounts[label]++;
+        }
+        if (numEmptyClasses > 0) {
+            HashMap<Integer, Integer> tabuMap =
+                    new HashMap<>(protoIndexes.size() * 2);
+            for (int i = 0; i < protoIndexes.size(); i++) {
+                tabuMap.put(protoIndexes.get(i), i);
+            }
+            for (int i = 0; i < originalDataSet.size(); i++) {
+                label = originalDataSet.getLabelOf(i);
+                if (!tabuMap.containsKey(i) && protoClassCounts[label] == 0) {
+                    protoIndexes.add(i);
+                    protoClassCounts[label]++;
+                    numEmptyClasses--;
+                }
+                if (numEmptyClasses == 0) {
+                    break;
+                }
+            }
+        }
+        // Set the selected prototype indexes and sort them.
+        setPrototypeIndexes(protoIndexes);
+        sortSelectedIndexes();
+    }
+
+    @Override
+    public void reduceDataSet(int numPrototypes) throws Exception {
+        // This method automatically determines the correct number of prototypes
+        // and it is usually a small number, so there is no way to enforce the 
+        // number of prototypes here. Automatic selection is performed instead.
+        reduceDataSet();
+    }
+
+    @Override
+    public Publication getPublicationInfo() {
+        BookChapterPublication pub = new BookChapterPublication();
+        pub.setTitle("Data regularization");
+        pub.addAuthor(new Author("N.", "Jankowski"));
+        pub.setBookName("Neural Networks and Soft Computing");
+        pub.setYear(2000);
+        pub.setStartPage(209);
+        pub.setEndPage(214);
+        return pub;
+    }
+
+    @Override
+    public InstanceSelector copy() {
+        return new ENRBF(getOriginalDataSet(), distMat, alpha);
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        distMat = nsf.getDistances();
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    @Override
+    public void noRecalcs() {
+    }
+
+    @Override
+    public void calculatePrototypeHubness(int k) throws Exception {
+        if (nsf != null) {
+            // Here we have some prior neighbor occurrence information and we
+            // can re-use it to speed-up the top k prototype search.
+            this.setNeighborhoodSize(k);
+            if (k <= 0) {
+                return;
+            }
+            DataSet originalDataSet = getOriginalDataSet();
+            // The original k-neighbor information is used in order to speed up
+            // the top-k prototype calculations, in those cases where these
+            // prototypes are already known to occur as neighbors.
+            // These occurrences are re-used dynamically.
+            int[][] kns = nsf.getKNeighbors();
+            float[][] kd = nsf.getKDistances();
+            // Array that holds the kneighbors where only prototypes are allowed
+            // as neighbor points.
+            int[][] kneighb
