@@ -224,4 +224,72 @@ public class ENRBF extends InstanceSelector implements NSFUserInterface {
             float[][] kd = nsf.getKDistances();
             // Array that holds the kneighbors where only prototypes are allowed
             // as neighbor points.
-            int[][] kneighb
+            int[][] kneighbors = new int[originalDataSet.size()][k];
+            int kNSF = kns[0].length;
+            HashMap<Integer, Integer> protoMap =
+                    new HashMap<>(getPrototypeIndexes().size() * 2);
+            ArrayList<Integer> protoIndexes = getPrototypeIndexes();
+            // Fill the HashMap with indexes of selected prototype points.
+            for (int i = 0; i < protoIndexes.size(); i++) {
+                protoMap.put(protoIndexes.get(i), i);
+            }
+            int l;
+            int datasize = originalDataSet.size();
+            // Distances to k-closest prototypes for each point from the
+            // training data.
+            float[][] kdistances = new float[datasize][k];
+            // Temporary lengths of k-neighbor lists as they are being
+            // calculated.
+            int[] kcurrLen = new int[datasize];
+            // Distance matrix.
+            float[][] distMatrix = nsf.getDistances();
+            // Intervals are there to help with re-using existing neighbors, in
+            // order to speed up the calculations and simplify the code.
+            ArrayList<Integer> intervals;
+            int upper, lower;
+            int min, max;
+            for (int i = 0; i < datasize; i++) {
+                intervals = new ArrayList(k + 2);
+                // Looping is from interval indexes + 1, so -1 goes as the left
+                // limit. All prototype occurrences from the original kNN sets
+                // are inserted into the intervals list.
+                intervals.add(-1);
+                for (int j = 0; j < kNSF; j++) {
+                    if (protoMap.containsKey(kns[i][j])) {
+                        // What we insert as a neighbor is not the prototype
+                        // index within the original data, but rather among the
+                        // prototype array.
+                        kneighbors[i][kcurrLen[i]] = protoMap.get(kns[i][j]);
+                        kdistances[i][kcurrLen[i]] = kd[i][j];
+                        kcurrLen[i]++;
+                        // We insert the originalDataSet prototype index to the
+                        // intervals.
+                        intervals.add(kns[i][j]);
+                    }
+                    // If the original kNSF was larger than this neighborhood
+                    // size, we need to make sure not to exceed the k limit.
+                    if (kcurrLen[i] >= k) {
+                        break;
+                    }
+                }
+                intervals.add(datasize + 1);
+                // We sort the known prototype neighbor indexes.
+                Collections.sort(intervals);
+                // If we haven't already finished, we proceed with the nearest
+                // prototype search.
+                if (kcurrLen[i] < k) {
+                    // It needs to iterate one less than to the very end, as the
+                    // last limitation is there, so there are no elements beyond
+                    int iSizeRed = intervals.size() - 1;
+                    for (int ind = 0; ind < iSizeRed; ind++) {
+                        lower = intervals.get(ind);
+                        upper = intervals.get(ind + 1);
+                        for (int j = lower + 1; j < upper - 1; j++) {
+                            // If the point is a prototype and different from
+                            // current.
+                            if (i != j && protoMap.containsKey(j)) {
+                                min = Math.min(i, j);
+                                max = Math.max(i, j);
+                                if (kcurrLen[i] > 0) {
+                                    if (kcurrLen[i] == k) {
+                 
