@@ -349,4 +349,77 @@ public class ENRBF extends InstanceSelector implements NSFUserInterface {
                                         }
                                     }
                                 } else {
-      
+                                    kdistances[i][0] =
+                                            distMatrix[min][max - min - 1];
+                                    kneighbors[i][0] = protoMap.get(j);
+                                    kcurrLen[i] = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            int numClasses = getNumClasses();
+            // Prototype occurrence frequency array.
+            int[] protoHubness = new int[protoIndexes.size()];
+            // Prototype good occurrence frequency array.
+            int[] protoGoodHubness = new int[protoIndexes.size()];
+            // Prototype detrimental occurrence frequency array.
+            int[] protoBadHubness = new int[protoIndexes.size()];
+            // Prototype class-conditional neighbor occurrence frequencies.
+            int[][] protoClassHubness =
+                    new int[numClasses][protoIndexes.size()];
+            setPrototypeHubness(protoHubness);
+            setPrototypeGoodHubness(protoGoodHubness);
+            setPrototypeBadHubness(protoBadHubness);
+            setProtoClassHubness(protoClassHubness);
+            int currLabel;
+            // Loop through the top-k prototype sets once.
+            for (int i = 0; i < datasize; i++) {
+                currLabel = originalDataSet.getLabelOf(i);
+                for (int j = 0; j < k; j++) {
+                    if (currLabel == originalDataSet.getLabelOf(
+                            protoIndexes.get(kneighbors[i][j]))) {
+                        protoGoodHubness[kneighbors[i][j]]++;
+                    } else {
+                        protoBadHubness[kneighbors[i][j]]++;
+                    }
+                    protoHubness[kneighbors[i][j]]++;
+                    protoClassHubness[currLabel][kneighbors[i][j]]++;
+                }
+            }
+            setProtoNeighborSets(kneighbors);
+        } else {
+            // In this case, no prior neighbor information is available, so
+            // we just proceed in a simple way.
+            this.setNeighborhoodSize(k);
+            DataSet originalDataSet = getOriginalDataSet();
+            ArrayList<Integer> prototypeIndexes = getPrototypeIndexes();
+            int[][] kneighbors = new int[originalDataSet.size()][k];
+            // Make a subcollection.
+            DataSet tCol = originalDataSet.cloneDefinition();
+            tCol.data = new ArrayList<>(prototypeIndexes.size());
+            for (int index : prototypeIndexes) {
+                tCol.data.add(originalDataSet.getInstance(index));
+            }
+            int numClasses = getNumClasses();
+            int[] protoHubness = new int[prototypeIndexes.size()];
+            int[] protoGoodHubness = new int[prototypeIndexes.size()];
+            int[] protoBadHubness = new int[prototypeIndexes.size()];
+            int[][] protoClassHubness =
+                    new int[numClasses][prototypeIndexes.size()];
+            setPrototypeHubness(protoHubness);
+            setPrototypeGoodHubness(protoGoodHubness);
+            setPrototypeBadHubness(protoBadHubness);
+            setProtoClassHubness(protoClassHubness);
+            int currLabel;
+            int protoLabel;
+            CombinedMetric cmet = this.getCombinedMetric();
+            for (int i = 0; i < originalDataSet.size(); i++) {
+                currLabel = originalDataSet.getLabelOf(i);
+                kneighbors[i] = NeighborSetFinder.getIndexesOfNeighbors(tCol,
+                        originalDataSet.getInstance(i), k, cmet);
+                for (int nIndex : kneighbors[i]) {
+                    protoClassHubness[currLabel][nIndex]++;
+                    protoHubness[nIndex]++;
+                    protoLabel = original
