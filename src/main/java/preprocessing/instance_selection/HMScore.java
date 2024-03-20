@@ -1,25 +1,27 @@
+
 /**
- * Hub Miner: a hubness-aware machine learning experimentation library.
- * Copyright (C) 2014 Nenad Tomasev. Email: nenad.tomasev at gmail.com
- * 
+* Hub Miner: a hubness-aware machine learning experimentation library.
+* Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
+* 
 * This program is free software: you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * 
+* the terms of the GNU General Public License as published by the Free Software
+* Foundation, either version 3 of the License, or (at your option) any later
+* version.
+* 
 * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- * 
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+*
 * You should have received a copy of the GNU General Public License along with
- * this program. If not, see <http://www.gnu.org/licenses/>.
- */
+* this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package preprocessing.instance_selection;
 
 import algref.Author;
-import algref.BookChapterPublication;
+import algref.JournalPublication;
 import algref.Publication;
+import algref.Publisher;
+import data.neighbors.HitMissNetwork;
 import data.neighbors.NSFUserInterface;
 import data.neighbors.NeighborSetFinder;
 import data.representation.DataSet;
@@ -27,28 +29,55 @@ import distances.primary.CombinedMetric;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Random;
-import statistics.HigherMoments;
+import learning.supervised.methods.knn.KNN;
+import util.AuxSort;
 
 /**
- * This class implements the edited normalized RBF noise filter that can be used
- * for instance selection.
+ * This class implements the instance selection method based on calculating the
+ * HM score in Hit-Miss networks, as proposed in the paper titled 'Class
+ * Conditional Nearest Neighbor and Large Margin Instance Selection' by E.
+ * Marchiori that was published in IEEE Transactions on Pattern Analysis and
+ * Machine Intelligence in 2010. The method was proposed for 1-NN classification
+ * but this implementation makes it possible to apply the method for kNN
+ * classification with k > 1 as well. Whether that is always appropriate or not
+ * remains to be seen, but it gives the users the option for experimentation.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class ENRBF extends InstanceSelector implements NSFUserInterface {
+public class HMScore extends InstanceSelector implements NSFUserInterface {
 
-    public static final double DEFAULT_ALPHA_VALUE = 0.9;
-    private double alpha = DEFAULT_ALPHA_VALUE;
-    // The upper triangular distance matrix on the data.
-    private float[][] distMat;
+    public static final int DEFAULT_NEIGHBORHOOD_SIZE = 1;
+    public static final int DEFAULT_NUM_THREADS = 8;
     // Object that holds the kNN sets.
     private NeighborSetFinder nsf;
+    // The upper triangular distance matrix on the data.
+    private float[][] distMat;
+    // Hit-Miss network on the data, used for calculating the HM scores.
+    private HitMissNetwork hmNetwork;
+    // The neighborhood size to use for the hit-miss network.
+    private int kHM = DEFAULT_NEIGHBORHOOD_SIZE;
+    private int numThreads = DEFAULT_NUM_THREADS;
+    private boolean permitNoChangeInclusions = true;
 
     /**
-     * Default constructor.
+     * @constructor
      */
-    public ENRBF() {
+    public HMScore() {
+    }
+
+    /**
+     * Initialization.
+     *
+     * @param nsf Neighbor set finder object with some existing kNN info.
+     * @param kHM Integer representing the neighborhood size to use for the
+     * hit-miss network.
+     * @constructor
+     */
+    public HMScore(NeighborSetFinder nsf, int kHM) {
+        this.nsf = nsf;
+        setOriginalDataSet(nsf.getDataSet());
+        this.distMat = nsf.getDistances();
+        this.kHM = kHM;
     }
 
     /**
@@ -57,102 +86,173 @@ public class ENRBF extends InstanceSelector implements NSFUserInterface {
      * @param dset DataSet to reduce.
      * @param distMat float[][] that is the upper triangular distance matrix on
      * the data.
-     * @param alpha Double value that is the parameter to use for determining
-     * which instances to keep.
+     * @param kHM Integer that is the neighborhood size to use for generating
+     * the hit-miss network.
      */
-    public ENRBF(DataSet dset, float[][] distMat, double alpha) {
-        this.alpha = alpha;
-        this.distMat = distMat;
+    public HMScore(DataSet dset, float[][] distMat, int kHM) {
         setOriginalDataSet(dset);
+        this.distMat = distMat;
+        this.kHM = kHM;
+    }
+
+    /**
+     * @param permitNoChangeInclusions Boolean flag indicating whether to
+     * consider elements for incremental inclusion when they have no visible
+     * negative or positive effect or to stop the process when such an element
+     * is reached. If set to false, a very small number of prototypes is
+     * selected. If set to true, a much lower error is achieved.
+     */
+    public void setInclusionPermissions(boolean permitNoChangeInclusions) {
+        this.permitNoChangeInclusions = permitNoChangeInclusions;
+    }
+
+    /**
+     * @param numThreads Integer that is the number of threads to use in parts
+     * of the code where multi-threading is supported.
+     */
+    public void setNumThreads(int numThreads) {
+        this.numThreads = numThreads;
+    }
+
+    @Override
+    public Publication getPublicationInfo() {
+        JournalPublication pub = new JournalPublication();
+        pub.setTitle("Class Conditional Nearest Neighbor and Large Margin "
+                + "Instance Selection");
+        pub.addAuthor(new Author("E.", "Marchiori"));
+        pub.setJournalName("IEEE Transactions on Pattern Analysis and Machine"
+                + " Intelligence");
+        pub.setYear(2010);
+        pub.setVolume(32);
+        pub.setIssue(2);
+        pub.setStartPage(364);
+        pub.setEndPage(370);
+        pub.setDoi("10.1109/TPAMI.2009.164");
+        pub.setPublisher(Publisher.IEEE);
+        return pub;
+    }
+
+    /**
+     * Calculate the number of false predictions according to the current kNN
+     * sets.
+     *
+     * @param dset DataSet to calculate the predictions for.
+     * @param numClasses Integer that is the number of classes in the data.
+     * @param finder NeighborSetFinder object holding the kNN sets.
+     * @return Integer value that is the count of false predictions.
+     * @throws Exception
+     */
+    private int countFalsePredictions(DataSet dset, int numClasses,
+            NeighborSetFinder finder) throws Exception {
+        int numFalsePredictions = 0;
+        KNN classifier = new KNN(dset, numClasses,
+                finder.getCombinedMetric(), finder.getCurrK());
+        for (int i = 0; i < dset.size(); i++) {
+            int queryLabel = dset.getLabelOf(i);
+            int predictedLabel = classifier.classify(
+                    dset.getInstance(i), null,
+                    finder.getKNeighbors()[i]);
+            if (queryLabel != predictedLabel) {
+                numFalsePredictions++;
+            }
+        }
+        return numFalsePredictions;
     }
 
     @Override
     public void reduceDataSet() throws Exception {
         DataSet originalDataSet = getOriginalDataSet();
-        int dataSize = originalDataSet.size();
+        int datasize = originalDataSet.size();
         // Initialization.
         int numClasses = getNumClasses();
-        // First estimate the sigma value for the kernal.
-        int minIndex, maxIndex, firstChoice, secondChoice;
-        float[] distSample = new float[50];
-        Random randa = new Random();
-        for (int i = 0; i < 50; i++) {
-            firstChoice = randa.nextInt(dataSize);
-            secondChoice = firstChoice;
-            while (firstChoice == secondChoice) {
-                secondChoice = randa.nextInt(dataSize);
-            }
-            minIndex = Math.min(firstChoice, secondChoice);
-            maxIndex = Math.max(firstChoice, secondChoice);
-            distSample[i] = distMat[minIndex][maxIndex - minIndex - 1];
+        // List that will contain the selected prototype indexes.
+        ArrayList<Integer> protoIndexes = new ArrayList<>(datasize / 4);
+        // Initialize the HM network.
+        hmNetwork = new HitMissNetwork(originalDataSet, distMat, kHM);
+        if (nsf != null) {
+            hmNetwork.generateNetworkFromExistingNSF(nsf);
+        } else {
+            hmNetwork.generateNetwork();
+            // We are going to need the kNN graph on the data for leave-one-out 
+            // estimates.
+            nsf = new NeighborSetFinder(originalDataSet, distMat);
+            nsf.calculateNeighborSets(kHM);
         }
-        float distMean = HigherMoments.calculateArrayMean(distSample);
-        float distSigma =
-                HigherMoments.calculateArrayStDev(distMean, distSample);
-        // Calculate the RBF matrix.
-        double[][] rbfMat = new double[distMat.length][];
-        double[] pointTotals = new double[dataSize];
-        for (int i = 0; i < distMat.length; i++) {
-            rbfMat[i] = new double[distMat.length - i - 1];
-            for (int j = 0; j < distMat[i].length; j++) {
-                rbfMat[i][j] = Math.exp(-(distMat[i][j] * distMat[i][j])
-                        / distSigma);
-                pointTotals[i] += rbfMat[i][j];
-                pointTotals[i + j + 1] += rbfMat[i][j];
-            }
+        // Calculate the initial leave-one-out-error without reduction.
+        int numFalsePredictions = countFalsePredictions(originalDataSet,
+                numClasses, nsf);
+        // Generate the initial core set to be expanded.
+        double[] hmScores = hmNetwork.computeAllHMScores();
+        int numCorePoints = Math.max(numClasses, Math.min(datasize / 2,
+                kHM * numClasses));
+        int[] perm = AuxSort.sortIndexedValue(hmScores, true);
+        boolean[] isInitialPrototype = new boolean[datasize];
+        for (int i = 0; i < numCorePoints; i++) {
+            protoIndexes.add(perm[i]);
+            isInitialPrototype[perm[i]] = true;
         }
-        // Calculate the class probabilities in points based on the RBF 
-        // estimate.
-        double[][] pointClassProbs = new double[dataSize][numClasses];
-        int firstLabel, secondLabel;
-        for (int i = 0; i < distMat.length; i++) {
-            firstLabel = originalDataSet.getLabelOf(i);
-            for (int j = 0; j < distMat[i].length; j++) {
-                secondLabel = originalDataSet.getLabelOf(i + j + 1);
-                pointClassProbs[i][secondLabel] +=
-                        rbfMat[i][j] / pointTotals[i];
-                pointClassProbs[i + j + 1][firstLabel] +=
-                        rbfMat[i][j] / pointTotals[i + j + 1];
-            }
+        NeighborSetFinder protoNSF = new NeighborSetFinder(originalDataSet,
+                distMat);
+        // This is the relevant neighborhood size to use in the leave-one-out 
+        // estimates.
+        int k = nsf.getCurrK();
+        // The initial kNN sets will contain only the initial prototypes as 
+        // neighbors.
+        protoNSF.calculateNeighborSetsMultiThr(k, numThreads,
+                isInitialPrototype);
+        // Calculate the error of the sample.
+        int numFalsePredictionsSample = countFalsePredictions(originalDataSet,
+                numClasses, protoNSF);
+        // Calculate the number of unacceptable instances based on the HM score.
+        int index = hmScores.length - 1;
+        while (index >= 0 && hmScores[index] <= 0) {
+            index--;
         }
-        // Now perform the filtering.
-        ArrayList<Integer> protoIndexes = new ArrayList<>(dataSize);
-        int label;
-        boolean acceptable;
-        for (int i = 0; i < dataSize; i++) {
-            label = originalDataSet.getLabelOf(i);
-            acceptable = true;
-            for (int c = 0; c < numClasses; c++) {
-                if (c != label && pointClassProbs[i][label]
-                        < alpha * pointClassProbs[i][c]) {
-                    acceptable = false;
+        NeighborSetFinder protoExtendedNSF;
+        int numUnacceptable = datasize - index - 1;
+        for (int i = numCorePoints; i < datasize - numUnacceptable; i++) {
+            if (numFalsePredictionsSample <= numFalsePredictions) {
+                break;
+            }
+            protoExtendedNSF = protoNSF.copy();
+            protoExtendedNSF.considerNeighbor(perm[i], false);
+            int numFalsePredictionsCurr = countFalsePredictions(originalDataSet,
+                    numClasses, protoExtendedNSF);
+            if (permitNoChangeInclusions) {
+                // Not strict inequality.
+                if (numFalsePredictionsCurr <= numFalsePredictionsSample) {
+                    protoNSF = protoExtendedNSF;
+                    protoIndexes.add(perm[i]);
+                    numFalsePredictionsSample = numFalsePredictionsCurr;
+                } else {
                     break;
                 }
-            }
-            if (acceptable) {
-                protoIndexes.add(i);
+            } else {
+                // Strict inequality.
+                if (numFalsePredictionsCurr < numFalsePredictionsSample) {
+                    protoNSF = protoExtendedNSF;
+                    protoIndexes.add(perm[i]);
+                    numFalsePredictionsSample = numFalsePredictionsCurr;
+                } else {
+                    break;
+                }
             }
         }
         // Check whether at least one instance of each class has been selected.
         int[] protoClassCounts = new int[numClasses];
         int numEmptyClasses = numClasses;
         for (int i = 0; i < protoIndexes.size(); i++) {
-            label = originalDataSet.getLabelOf(protoIndexes.get(i));
+            int label = originalDataSet.getLabelOf(protoIndexes.get(i));
             if (protoClassCounts[label] == 0) {
                 numEmptyClasses--;
             }
             protoClassCounts[label]++;
         }
         if (numEmptyClasses > 0) {
-            HashMap<Integer, Integer> tabuMap =
-                    new HashMap<>(protoIndexes.size() * 2);
-            for (int i = 0; i < protoIndexes.size(); i++) {
-                tabuMap.put(protoIndexes.get(i), i);
-            }
-            for (int i = 0; i < originalDataSet.size(); i++) {
-                label = originalDataSet.getLabelOf(i);
-                if (!tabuMap.containsKey(i) && protoClassCounts[label] == 0) {
-                    protoIndexes.add(i);
+            for (int i = protoIndexes.size(); i < originalDataSet.size(); i++) {
+                int label = originalDataSet.getLabelOf(perm[i]);
+                if (protoClassCounts[label] == 0) {
+                    protoIndexes.add(perm[i]);
                     protoClassCounts[label]++;
                     numEmptyClasses--;
                 }
@@ -168,27 +268,68 @@ public class ENRBF extends InstanceSelector implements NSFUserInterface {
 
     @Override
     public void reduceDataSet(int numPrototypes) throws Exception {
-        // This method automatically determines the correct number of prototypes
-        // and it is usually a small number, so there is no way to enforce the 
-        // number of prototypes here. Automatic selection is performed instead.
-        reduceDataSet();
-    }
-
-    @Override
-    public Publication getPublicationInfo() {
-        BookChapterPublication pub = new BookChapterPublication();
-        pub.setTitle("Data regularization");
-        pub.addAuthor(new Author("N.", "Jankowski"));
-        pub.setBookName("Neural Networks and Soft Computing");
-        pub.setYear(2000);
-        pub.setStartPage(209);
-        pub.setEndPage(214);
-        return pub;
+        DataSet originalDataSet = getOriginalDataSet();
+        int datasize = originalDataSet.size();
+        int numClasses = getNumClasses();
+        ArrayList<Integer> protoIndexes = new ArrayList<>(datasize / 4);
+        // Initialize the HM network.
+        hmNetwork = new HitMissNetwork(originalDataSet, distMat, kHM);
+        if (nsf != null) {
+            hmNetwork.generateNetworkFromExistingNSF(nsf);
+        } else {
+            hmNetwork.generateNetwork();
+        }
+        // Calculate the HM scores.
+        double[] hmScores = hmNetwork.computeAllHMScores();
+        int[] perm = AuxSort.sortIndexedValue(hmScores, true);
+        int numSelected = Math.max(Math.min(numPrototypes, datasize),
+                numClasses);
+        for (int i = 0; i < numSelected; i++) {
+            protoIndexes.add(perm[i]);
+        }
+        // Check whether at least one instance of each class has been selected.
+        // If not, continue considering instances in the same order and replace
+        // the lowest impact replaceable instances with the ones of the classes
+        // that have not been represented.
+        int[] protoClassCounts = new int[numClasses];
+        int numEmptyClasses = numClasses;
+        for (int i = 0; i < protoIndexes.size(); i++) {
+            int label = originalDataSet.getLabelOf(protoIndexes.get(i));
+            if (protoClassCounts[label] == 0) {
+                numEmptyClasses--;
+            }
+            protoClassCounts[label]++;
+        }
+        if (numEmptyClasses > 0) {
+            for (int i = numSelected; i < originalDataSet.size(); i++) {
+                int label = originalDataSet.getLabelOf(perm[i]);
+                if (protoClassCounts[label] == 0) {
+                    for (int j = protoIndexes.size() - 1; j >= 0; j--) {
+                        int protoLabel = originalDataSet.getLabelOf(
+                                protoIndexes.get(j));
+                        if (protoClassCounts[protoLabel] > 1) {
+                            protoIndexes.set(j, perm[i]);
+                            protoClassCounts[label]++;
+                            numEmptyClasses--;
+                        }
+                    }
+                }
+                if (numEmptyClasses == 0) {
+                    break;
+                }
+            }
+        }
+        setPrototypeIndexes(protoIndexes);
+        sortSelectedIndexes();
     }
 
     @Override
     public InstanceSelector copy() {
-        return new ENRBF(getOriginalDataSet(), distMat, alpha);
+        if (nsf == null) {
+            return new HMScore(getOriginalDataSet(), distMat, kHM);
+        } else {
+            return new HMScore(nsf, kHM);
+        }
     }
 
     @Override

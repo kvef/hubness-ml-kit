@@ -1,209 +1,352 @@
+
 /**
- * Hub Miner: a hubness-aware machine learning experimentation library.
- * Copyright (C) 2014 Nenad Tomasev. Email: nenad.tomasev at gmail.com
- * 
+* Hub Miner: a hubness-aware machine learning experimentation library.
+* Copyright (C) 2014  Nenad Tomasev. Email: nenad.tomasev at gmail.com
+* 
 * This program is free software: you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
- * 
+* the terms of the GNU General Public License as published by the Free Software
+* Foundation, either version 3 of the License, or (at your option) any later
+* version.
+* 
 * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- * 
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+*
 * You should have received a copy of the GNU General Public License along with
- * this program. If not, see <http://www.gnu.org/licenses/>.
- */
+* this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package preprocessing.instance_selection;
 
 import algref.Author;
-import algref.BookChapterPublication;
+import algref.ConferencePublication;
 import algref.Publication;
-import data.neighbors.NSFUserInterface;
 import data.neighbors.NeighborSetFinder;
 import data.representation.DataSet;
 import distances.primary.CombinedMetric;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
-import statistics.HigherMoments;
+import data.neighbors.NSFUserInterface;
 
 /**
- * This class implements the edited normalized RBF noise filter that can be used
- * for instance selection.
+ * Implements the instance selection algorithm described in the paper: The
+ * Generalized Condensed Nearest Neighbor Rule as A Data Reduction Method (2006)
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class ENRBF extends InstanceSelector implements NSFUserInterface {
+public class GCNN extends InstanceSelector implements NSFUserInterface {
 
-    public static final double DEFAULT_ALPHA_VALUE = 0.9;
-    private double alpha = DEFAULT_ALPHA_VALUE;
-    // The upper triangular distance matrix on the data.
+    // Absorption constant.
+    private float ro = 0.99f; // This value was suggested by the authors in the
+    // paper. We have determined ro = 0.75 to better fit high-dimensional data.
     private float[][] distMat;
-    // Object that holds the kNN sets.
     private NeighborSetFinder nsf;
-
-    /**
-     * Default constructor.
-     */
-    public ENRBF() {
+    // Distances to nearest points from the same class.
+    private float[] nearestProtoFriendDist;
+    // Distances to nearest prototypes of different classes.
+    private float[] nearestProtoEnemyDist;
+    
+    @Override
+    public Publication getPublicationInfo() {
+        ConferencePublication pub = new ConferencePublication();
+        pub.setTitle("The Generalized Condensed Nearest Neighbor Rule as A Data"
+                + " Reduction Method");
+        pub.addAuthor(new Author("Chien-Hsing", "Chou"));
+        pub.addAuthor(new Author("Bo-Han", "Kuo"));
+        pub.addAuthor(new Author("Fu", "Chang"));
+        pub.setConferenceName("International Conference on Pattern "
+                + "Recognition");
+        pub.setYear(2006);
+        pub.setStartPage(556);
+        pub.setEndPage(559);
+        pub.setDoi("10.1109/ICPR.2006.1119");
+        return pub;
     }
 
     /**
-     * Initialization.
-     *
-     * @param dset DataSet to reduce.
-     * @param distMat float[][] that is the upper triangular distance matrix on
-     * the data.
-     * @param alpha Double value that is the parameter to use for determining
-     * which instances to keep.
+     * @constructor
      */
-    public ENRBF(DataSet dset, float[][] distMat, double alpha) {
-        this.alpha = alpha;
+    public GCNN() {
+    }
+
+    /**
+     * @param ro Absorption constant.
+     * @constructor
+     */
+    public GCNN(float ro) {
+        this.ro = ro;
+    }
+
+    /**
+     * @param nsf Neighbor set finder object.
+     * @constructor
+     */
+    public GCNN(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        setOriginalDataSet(nsf.getDataSet());
+        this.distMat = nsf.getDistances();
+    }
+
+    /**
+     * @param distMat Distance matrix, upper diagonal.
+     * @constructor
+     */
+    public GCNN(float[][] distMat) {
         this.distMat = distMat;
-        setOriginalDataSet(dset);
+    }
+
+    /**
+     * @param nsf Neighbor set finder object.
+     * @param ro Absorption constant.
+     * @constructor
+     */
+    public GCNN(NeighborSetFinder nsf, float ro) {
+        this.nsf = nsf;
+        this.distMat = nsf.getDistances();
+        setOriginalDataSet(nsf.getDataSet());
+        this.ro = ro;
+    }
+
+    /**
+     * @param distMat Distance matrix, upper diagonal.
+     * @param ro Absorption constant.
+     * @constructor
+     */
+    public GCNN(float[][] distMat, float ro) {
+        this.distMat = distMat;
+        this.ro = ro;
+    }
+
+    /**
+     * @param originalDataSet Original data set.
+     * @param nsf Neighbor set finder object.
+     * @param ro Absorption constant.
+     * @constructor
+     */
+    public GCNN(DataSet originalDataSet, NeighborSetFinder nsf, float ro) {
+        this.nsf = nsf;
+        this.distMat = nsf.getDistances();
+        setOriginalDataSet(originalDataSet);
+        this.ro = ro;
+    }
+
+    /**
+     * @param originalDataSet Original data set.
+     * @param distMat Distance matrix, upper diagonal.
+     * @param ro Absorption constant.
+     * @constructor
+     */
+    public GCNN(DataSet originalDataSet, float[][] distMat, float ro) {
+        setOriginalDataSet(originalDataSet);
+        this.distMat = distMat;
+        this.ro = ro;
+    }
+
+    /**
+     * @param originalDataSet Original data set.
+     * @param nsf Neighbor set finder object.
+     * @constructor
+     */
+    public GCNN(DataSet originalDataSet, NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        this.distMat = nsf.getDistances();
+        setOriginalDataSet(originalDataSet);
+    }
+
+    /**
+     * @param originalDataSet Original data set.
+     * @param distMat Distance matrix, upper diagonal.
+     * @constructor
+     */
+    public GCNN(DataSet originalDataSet, float[][] distMat) {
+        setOriginalDataSet(originalDataSet);
+        this.distMat = distMat;
+    }
+
+    /**
+     * @param ro Absorption constant.
+     */
+    public void setRo(float ro) {
+        this.ro = ro;
+    }
+
+    /**
+     * @return Absorption constant.
+     */
+    public float getRo() {
+        return ro;
+    }
+
+    @Override
+    public InstanceSelector copy() {
+        if (nsf == null) {
+            return new GCNN(getOriginalDataSet(), distMat, ro);
+        } else {
+            return new GCNN(nsf, ro);
+        }
     }
 
     @Override
     public void reduceDataSet() throws Exception {
-        DataSet originalDataSet = getOriginalDataSet();
-        int dataSize = originalDataSet.size();
+        DataSet original = getOriginalDataSet();
+        int datasize = original.size();
         // Initialization.
         int numClasses = getNumClasses();
-        // First estimate the sigma value for the kernal.
-        int minIndex, maxIndex, firstChoice, secondChoice;
-        float[] distSample = new float[50];
+        ArrayList<Integer>[] classes = new ArrayList[numClasses];
+        for (int c = 0; c < numClasses; c++) {
+            classes[c] = new ArrayList<>((datasize * 3) / numClasses);
+        }
+        int currClass, protoClass;
+        for (int i = 0; i < datasize; i++) {
+            currClass = original.getLabelOf(i);
+            classes[currClass].add(i);
+        }
         Random randa = new Random();
-        for (int i = 0; i < 50; i++) {
-            firstChoice = randa.nextInt(dataSize);
-            secondChoice = firstChoice;
-            while (firstChoice == secondChoice) {
-                secondChoice = randa.nextInt(dataSize);
-            }
-            minIndex = Math.min(firstChoice, secondChoice);
-            maxIndex = Math.max(firstChoice, secondChoice);
-            distSample[i] = distMat[minIndex][maxIndex - minIndex - 1];
-        }
-        float distMean = HigherMoments.calculateArrayMean(distSample);
-        float distSigma =
-                HigherMoments.calculateArrayStDev(distMean, distSample);
-        // Calculate the RBF matrix.
-        double[][] rbfMat = new double[distMat.length][];
-        double[] pointTotals = new double[dataSize];
-        for (int i = 0; i < distMat.length; i++) {
-            rbfMat[i] = new double[distMat.length - i - 1];
-            for (int j = 0; j < distMat[i].length; j++) {
-                rbfMat[i][j] = Math.exp(-(distMat[i][j] * distMat[i][j])
-                        / distSigma);
-                pointTotals[i] += rbfMat[i][j];
-                pointTotals[i + j + 1] += rbfMat[i][j];
+        // List that will contain the selected prototype indexes.
+        ArrayList<Integer> pIndexes = new ArrayList<>(original.size() / 4);
+        // Map that will indicate which points are prototypes.
+        HashMap<Integer, Integer> protoMap = new HashMap<>(datasize);
+        // Select a few points from each class randomly to represent an initial
+        // prototype set that will be incrementally grown.
+        int choice;
+        for (int c = 0; c < numClasses; c++) {
+            if (classes[c].size() > 0) {
+                choice = randa.nextInt(classes[c].size());
+                pIndexes.add(classes[c].get(choice));
+                protoMap.put(classes[c].get(choice), c);
             }
         }
-        // Calculate the class probabilities in points based on the RBF 
-        // estimate.
-        double[][] pointClassProbs = new double[dataSize][numClasses];
-        int firstLabel, secondLabel;
-        for (int i = 0; i < distMat.length; i++) {
-            firstLabel = originalDataSet.getLabelOf(i);
-            for (int j = 0; j < distMat[i].length; j++) {
-                secondLabel = originalDataSet.getLabelOf(i + j + 1);
-                pointClassProbs[i][secondLabel] +=
-                        rbfMat[i][j] / pointTotals[i];
-                pointClassProbs[i + j + 1][firstLabel] +=
-                        rbfMat[i][j] / pointTotals[i + j + 1];
-            }
-        }
-        // Now perform the filtering.
-        ArrayList<Integer> protoIndexes = new ArrayList<>(dataSize);
-        int label;
-        boolean acceptable;
-        for (int i = 0; i < dataSize; i++) {
-            label = originalDataSet.getLabelOf(i);
-            acceptable = true;
-            for (int c = 0; c < numClasses; c++) {
-                if (c != label && pointClassProbs[i][label]
-                        < alpha * pointClassProbs[i][c]) {
-                    acceptable = false;
-                    break;
+        // The first run is to get the initial nearest friend and enemy values.
+        // In this context, friends have the same class label, enemies a
+        // different one.
+        int min, max;
+        nearestProtoFriendDist = new float[datasize];
+        nearestProtoEnemyDist = new float[datasize];
+        Arrays.fill(nearestProtoFriendDist, Float.MAX_VALUE);
+        Arrays.fill(nearestProtoEnemyDist, Float.MAX_VALUE);
+        for (int i = 0; i < datasize; i++) {
+            currClass = original.getLabelOf(i);
+            if (!protoMap.containsKey(i)) {
+                for (int pIndex : pIndexes) {
+                    protoClass = original.getLabelOf(pIndex);
+                    min = Math.min(i, pIndex);
+                    max = Math.max(i, pIndex);
+                    if (currClass == protoClass) {
+                        if (distMat[min][max - min - 1]
+                                < nearestProtoFriendDist[i]) {
+                            nearestProtoFriendDist[i] =
+                                    distMat[min][max - min - 1];
+                        }
+                    } else {
+                        if (distMat[min][max - min - 1]
+                                < nearestProtoEnemyDist[i]) {
+                            nearestProtoEnemyDist[i] =
+                                    distMat[min][max - min - 1];
+                        }
+                    }
                 }
             }
-            if (acceptable) {
-                protoIndexes.add(i);
-            }
         }
-        // Check whether at least one instance of each class has been selected.
-        int[] protoClassCounts = new int[numClasses];
-        int numEmptyClasses = numClasses;
-        for (int i = 0; i < protoIndexes.size(); i++) {
-            label = originalDataSet.getLabelOf(protoIndexes.get(i));
-            if (protoClassCounts[label] == 0) {
-                numEmptyClasses--;
-            }
-            protoClassCounts[label]++;
-        }
-        if (numEmptyClasses > 0) {
-            HashMap<Integer, Integer> tabuMap =
-                    new HashMap<>(protoIndexes.size() * 2);
-            for (int i = 0; i < protoIndexes.size(); i++) {
-                tabuMap.put(protoIndexes.get(i), i);
-            }
-            for (int i = 0; i < originalDataSet.size(); i++) {
-                label = originalDataSet.getLabelOf(i);
-                if (!tabuMap.containsKey(i) && protoClassCounts[label] == 0) {
-                    protoIndexes.add(i);
-                    protoClassCounts[label]++;
-                    numEmptyClasses--;
+        // Now go through the distance matrix and find the minimal non-zero
+        // heterogenous distance. The fastest way is not to check the intra-
+        // class ones, so let's iterate through class-class pairs.
+        int temp1, temp2;
+        int c1size, c2size;
+        float minHeterogenousDistance = Float.MAX_VALUE;
+        for (int c1 = 0; c1 < numClasses; c1++) {
+            for (int c2 = c1 + 1; c2 < numClasses; c2++) {
+                c1size = classes[c1].size();
+                c2size = classes[c2].size();
+                if ((c1size > 0) && (c2size > 0)) {
+                    for (int i = 0; i < c1size; i++) {
+                        for (int j = 0; j < c2size; j++) {
+                            temp1 = classes[c1].get(i);
+                            temp2 = classes[c2].get(j);
+                            min = Math.min(temp1, temp2);
+                            max = Math.max(temp1, temp2);
+                            if ((distMat[min][max - min - 1] > 0)
+                                    && (distMat[min][max - min - 1]
+                                    < minHeterogenousDistance)) {
+                                minHeterogenousDistance =
+                                        distMat[min][max - min - 1];
+                            }
+                        }
+                    }
                 }
-                if (numEmptyClasses == 0) {
-                    break;
+            }
+        }
+        // Now perform instance selection with a strong absorption rule.
+        boolean notDone = true;
+        ArrayList<Integer> unAbsorbed;
+        while (notDone) {
+            notDone = false;
+            unAbsorbed = new ArrayList<>(
+                    Math.max((datasize - pIndexes.size()) / 3, 5));
+            for (int i = 0; i < datasize; i++) {
+                if (!protoMap.containsKey(i)) {
+                    // If the enemy distance is not at least the minimum amount
+                    // of separation grater than the friend distance - then
+                    // this point is a candidate for prototype set extension.
+                    if (!((nearestProtoEnemyDist[i] - nearestProtoFriendDist[i])
+                            > (ro * minHeterogenousDistance))) { // Not absorbed
+                        notDone = true;
+                        unAbsorbed.add(i);
+                    }
+                }
+            }
+            // If there are prototype candidates, i.e. unabsorbed points.
+            if (unAbsorbed.size() > 0) {
+                // Pick a random one.
+                choice = unAbsorbed.get(randa.nextInt(unAbsorbed.size()));
+                protoMap.put(choice, original.getLabelOf(choice));
+                pIndexes.add(choice);
+                protoClass = original.getLabelOf(choice);
+                // Update all the nearest friend and enemy distances.
+                for (int i = 0; i < datasize; i++) {
+                    if (!protoMap.containsKey(i)) {
+                        min = Math.min(choice, i);
+                        max = Math.max(choice, i);
+                        currClass = original.getLabelOf(i);
+                        if (currClass == protoClass) {
+                            if (distMat[min][max - min - 1]
+                                    < nearestProtoFriendDist[i]) {
+                                nearestProtoFriendDist[i] =
+                                        distMat[min][max - min - 1];
+                            }
+                        } else {
+                            if (distMat[min][max - min - 1]
+                                    < nearestProtoEnemyDist[i]) {
+                                nearestProtoEnemyDist[i] =
+                                        distMat[min][max - min - 1];
+                            }
+                        }
+                    }
                 }
             }
         }
         // Set the selected prototype indexes and sort them.
-        setPrototypeIndexes(protoIndexes);
+        setPrototypeIndexes(pIndexes);
         sortSelectedIndexes();
     }
 
     @Override
     public void reduceDataSet(int numPrototypes) throws Exception {
-        // This method automatically determines the correct number of prototypes
-        // and it is usually a small number, so there is no way to enforce the 
-        // number of prototypes here. Automatic selection is performed instead.
+        // GCNN adaptively selects the proper number of prototypes. 
+        // Just for the sake of consistency, we support this variant here and
+        // we just return a subset of numPrototypes prototypes selected by GCNN.
+        // Note that this is somewhat suboptimal and the reduceDataSet method
+        // could be extended to support a cut-off criterion for a predefined
+        // number of prototypes.
         reduceDataSet();
-    }
-
-    @Override
-    public Publication getPublicationInfo() {
-        BookChapterPublication pub = new BookChapterPublication();
-        pub.setTitle("Data regularization");
-        pub.addAuthor(new Author("N.", "Jankowski"));
-        pub.setBookName("Neural Networks and Soft Computing");
-        pub.setYear(2000);
-        pub.setStartPage(209);
-        pub.setEndPage(214);
-        return pub;
-    }
-
-    @Override
-    public InstanceSelector copy() {
-        return new ENRBF(getOriginalDataSet(), distMat, alpha);
-    }
-
-    @Override
-    public void setNSF(NeighborSetFinder nsf) {
-        this.nsf = nsf;
-        distMat = nsf.getDistances();
-    }
-
-    @Override
-    public NeighborSetFinder getNSF() {
-        return nsf;
-    }
-
-    @Override
-    public void noRecalcs() {
+        ArrayList<Integer> pIndexes = getPrototypeIndexes();
+        // The index list is sorted, so we shuffle it first to remove the bias.
+        Collections.shuffle(pIndexes);
+        ArrayList<Integer> pIndexesSubset = new ArrayList<>(
+                pIndexes.subList(0, numPrototypes));
+        setPrototypeIndexes(pIndexesSubset);
+        sortSelectedIndexes();
     }
 
     @Override
@@ -431,5 +574,20 @@ public class ENRBF extends InstanceSelector implements NSFUserInterface {
                 }
             }
         }
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        distMat = nsf.getDistances();
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    @Override
+    public void noRecalcs() {
     }
 }
