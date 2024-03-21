@@ -122,4 +122,135 @@ public abstract class InstanceSelector implements Citable {
     }
 
     /**
-     * @return Neighborhood size used for 
+     * @return Neighborhood size used for hubness calculations.
+     */
+    public int getNeighborhoodSize() {
+        return k;
+    }
+
+    /**
+     * @param k Integer that represents neighborhood size to be used for hubness
+     * calculations.
+     */
+    public void setNeighborhoodSize(int k) {
+        this.k = k;
+    }
+
+    /**
+     * @param cmet CombinedMetric object.
+     */
+    public void setCombinedMetric(CombinedMetric cmet) {
+        this.cmet = cmet;
+    }
+
+    /**
+     * @return CombinedMetric object.
+     */
+    public CombinedMetric getCombinedMetric() {
+        return cmet;
+    }
+
+    /**
+     * Sorts selected indexes.
+     */
+    public void sortSelectedIndexes() {
+        Collections.sort(prototypeIndexes);
+    }
+
+    /**
+     * @return The original, non-reduced DataSet.
+     */
+    public DataSet getOriginalDataSet() {
+        return originalDSet;
+    }
+
+    /**
+     * @param originalDSet The original, non-reduced DataSet.
+     */
+    public void setOriginalDataSet(DataSet originalDSet) {
+        this.originalDSet = originalDSet;
+        if (originalDSet != null) {
+            numClasses = originalDSet.countCategories();
+        }
+    }
+
+    /**
+     * @return Integer array representing the neighbor occurrence frequencies of
+     * the selected prototypes.
+     */
+    public int[] getPrototypeHubness() {
+        return protoHubness;
+    }
+
+    /**
+     * @return Integer array representing the good neighbor occurrence
+     * frequencies of the selected prototypes, where label mismatches do not
+     * occur.
+     */
+    public int[] getPrototypeGoodHubness() {
+        return protoGoodHubness;
+    }
+
+    /**
+     * @return Integer array representing the bad neighbor occurrence
+     * frequencies of the selected prototypes, where label mismatches occur.
+     */
+    public int[] getPrototypeBadHubness() {
+        return protoBadHubness;
+    }
+
+    /**
+     * @return An integer 2d array, containing the class-conditional neighbor
+     * occurrence frequencies of the selected prototypes. The first index in the
+     * array corresponds to the class and the second one to the prototype.
+     */
+    public int[][] getProtoClassHubness() {
+        return protoClassHubness;
+    }
+
+    /**
+     * @return Integer 2d array representing the kNN sets of the selected
+     * prototypes.
+     */
+    public int[][] getProtoNeighborSets() {
+        return protoNeighborSets;
+    }
+
+    /**
+     * @param protoHubness Integer array representing the neighbor occurrence
+     * frequencies of the selected prototypes.
+     */
+    public void setPrototypeHubness(int[] protoHubness) {
+        this.protoHubness = protoHubness;
+    }
+
+    /**
+     * @param protoGoodHubness Integer array representing the good neighbor
+     * occurrence frequencies of the selected prototypes, where label mismatches
+     * do not occur.
+     */
+    public void setPrototypeGoodHubness(int[] protoGoodHubness) {
+        this.protoGoodHubness = protoGoodHubness;
+    }
+
+    /**
+     * @param protoBadHubness Integer array representing the bad neighbor
+     * occurrence frequencies of the selected prototypes, where label mismatches
+     * occur.
+     */
+    public void setPrototypeBadHubness(int[] protoBadHubness) {
+        this.protoBadHubness = protoBadHubness;
+    }
+
+    /**
+     * @param protoClassHubness An integer 2d array, containing the
+     * class-conditional neighbor occurrence frequencies of the selected
+     * prototypes. The first index in the array corresponds to the class and the
+     * second one to the prototype.
+     */
+    public void setProtoClassHubness(int[][] protoClassHubness) {
+        this.protoClassHubness = protoClassHubness;
+    }
+
+    /**
+     * @param protoNeighborSets Integer 2d array
