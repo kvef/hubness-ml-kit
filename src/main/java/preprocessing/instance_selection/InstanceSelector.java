@@ -253,4 +253,118 @@ public abstract class InstanceSelector implements Citable {
     }
 
     /**
-     * @param protoNeighborSets Integer 2d array
+     * @param protoNeighborSets Integer 2d array representing the kNN sets of
+     * the selected prototypes.
+     */
+    public void setProtoNeighborSets(int[][] protoNeighborSets) {
+        this.protoNeighborSets = protoNeighborSets;
+    }
+
+    /**
+     * @return The number of classes in the data.
+     */
+    public int getNumClasses() {
+        return numClasses;
+    }
+
+    /**
+     * @param numClasses The number of classes in the data.
+     */
+    public void setNumClasses(int numClasses) {
+        this.numClasses = numClasses;
+    }
+
+    /**
+     * @param prototypeIndexes Indexes of the selected prototypes in the
+     * original data set.
+     */
+    public void setPrototypeIndexes(ArrayList<Integer> prototypeIndexes) {
+        this.prototypeIndexes = prototypeIndexes;
+    }
+
+    /**
+     * @return Indexes of the selected prototypes in the original data set.
+     */
+    public ArrayList<Integer> getPrototypeIndexes() {
+        return prototypeIndexes;
+    }
+
+    /**
+     * Performs data reduction by automatically determining the proper reduction
+     * rate.
+     *
+     * @throws Exception
+     */
+    public abstract void reduceDataSet() throws Exception;
+
+    /**
+     * Performs data reduction to a predetermined number of prototypes.
+     *
+     * @param numPrototypes Number of prototypes to reduce the data to.
+     * @throws Exception
+     */
+    public abstract void reduceDataSet(int numPrototypes) throws Exception;
+
+    /**
+     * Reduce the data set according to the specified reduction/retainment rate.
+     *
+     * @param percRetained Percentage of prototypes to be retained.
+     * @throws Exception
+     */
+    public void reduceDataSet(float percRetained) throws Exception {
+        float datasize = originalDSet.size();
+        int numPrototypes = (int) (datasize * percRetained);
+        reduceDataSet(numPrototypes);
+    }
+
+    /**
+     * @param copyInstances Boolean flag indicating whether to make object
+     * copies of the selected prototypes when generating the reduced DataSet or
+     * not, in which case the original objects are used instead.
+     * @return DataSet that contains only the selected prototypes.
+     * @throws Exception
+     */
+    public DataSet getReducedDataSet(boolean copyInstances) throws Exception {
+        if (originalDSet == null) {
+            return null;
+        }
+        DataSet reducedDS = originalDSet.cloneDefinition();
+        if (prototypeIndexes == null || prototypeIndexes.isEmpty()) {
+            return reducedDS;
+        }
+        reducedDS.data = new ArrayList<>(prototypeIndexes.size());
+        DataInstance instance;
+        for (int i : prototypeIndexes) {
+            if (copyInstances) {
+                instance = originalDSet.getInstance(i).copy();
+                instance.embedInDataset(reducedDS);
+                reducedDS.addDataInstance(instance);
+            } else {
+                reducedDS.addDataInstance(originalDSet.getInstance(i));
+            }
+        }
+        return reducedDS;
+    }
+
+    /**
+     * @return A copy of the current InstanceSelector object.
+     */
+    public abstract InstanceSelector copy();
+
+    /**
+     * Calculates the neighbor occurrence profiles of the selected prototypes.
+     * This is meant to be overridden in those subclasses which use NSF-s
+     * (already have a kNN graph) - as this is slower, it assumes no previous
+     * neighbor information.
+     *
+     * @param k Neighborhood size to be used in hubness calculations.
+     * @throws Exception
+     */
+    public void calculatePrototypeHubness(int k) throws Exception {
+        if (k <= 0) {
+            return;
+        }
+        this.k = k;
+        int[][] kneighbors = new int[originalDSet.size()][k];
+        // Make a data subset.
+        DataSet 
