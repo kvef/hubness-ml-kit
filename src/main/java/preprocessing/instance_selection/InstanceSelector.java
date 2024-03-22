@@ -367,4 +367,91 @@ public abstract class InstanceSelector implements Citable {
         this.k = k;
         int[][] kneighbors = new int[originalDSet.size()][k];
         // Make a data subset.
-        DataSet 
+        DataSet tCol = originalDSet.cloneDefinition();
+        tCol.data = new ArrayList<>(prototypeIndexes.size());
+        for (int index : prototypeIndexes) {
+            tCol.data.add(originalDSet.getInstance(index));
+        }
+        protoHubness = new int[prototypeIndexes.size()];
+        protoGoodHubness = new int[prototypeIndexes.size()];
+        protoBadHubness = new int[prototypeIndexes.size()];
+        protoClassHubness = new int[numClasses][prototypeIndexes.size()];
+        int currLabel;
+        int protoLabel;
+        for (int i = 0; i < originalDSet.size(); i++) {
+            currLabel = originalDSet.getLabelOf(i);
+            kneighbors[i] = NeighborSetFinder.getIndexesOfNeighbors(
+                    tCol, originalDSet.getInstance(i), k, cmet);
+            for (int nIndex : kneighbors[i]) {
+                protoClassHubness[currLabel][nIndex]++;
+                protoHubness[nIndex]++;
+                protoLabel = tCol.getLabelOf(nIndex);
+                if (protoLabel == currLabel) {
+                    protoGoodHubness[nIndex]++;
+                } else {
+                    protoBadHubness[nIndex]++;
+                }
+            }
+        }
+        protoNeighborSets = kneighbors;
+    }
+
+    /**
+     * @param index Index of the prototype in the selected instances array.
+     * @return Label of the selected prototype instance.
+     */
+    public int getPrototypeLabel(int index) {
+        if (prototypeIndexes == null || prototypeIndexes.size() <= index) {
+            return 0;
+        } else {
+            return originalDSet.getLabelOf(prototypeIndexes.get(index));
+        }
+    }
+
+    /**
+     * @param numClasses Number of classes.
+     * @param laplaceEstimator Smoothing parameter.
+     * @return Fuzzy votes of prototype instances as neighbors according to
+     * h-FNN algorithm, i.e. according to their restricted reverse neighbor sets
+     * on the training data.
+     */
+    public float[][] getClassDataNeighborRelationforFuzzy(int numClasses,
+            float laplaceEstimator) {
+        int numPrototypes = prototypeIndexes.size();
+        float[][] classDataKNeighborRelation =
+                new float[numClasses][numPrototypes];
+        float laplaceTotal = numClasses * laplaceEstimator;
+        int currClass;
+        for (int i = 0; i < numPrototypes; i++) {
+            currClass = originalDSet.data.get(
+                    prototypeIndexes.get(i)).getCategory();
+            for (int j = 0; j < numClasses; j++) {
+                if (j == currClass) {
+                    classDataKNeighborRelation[j][i] =
+                            protoClassHubness[j][i] + 1;
+                    // Each element is its own neighbor, trivially.
+                } else {
+                    classDataKNeighborRelation[j][i] = protoClassHubness[j][i];
+                }
+                classDataKNeighborRelation[j][i] += laplaceEstimator;
+                classDataKNeighborRelation[j][i] /=
+                        (protoHubness[i] + 1 + laplaceTotal);
+                // Each element is its own neighbor, trivially.
+            }
+        }
+        return classDataKNeighborRelation;
+    }
+
+    /**
+     * @param numClasses Number of classes.
+     * @param laplaceEstimator Smoothing parameter.
+     * @return Class-conditional occurrence probabilities for the NHBNN
+     * algorithm, i.e. calculated from the restricted reverse neighbor sets on
+     * the training data.
+     */
+    public float[][] getClassDataNeighborRelationforBayesian(int numClasses,
+            float laplaceEstimator) {
+        int numPrototypes = prototypeIndexes.size();
+        float[][] classDataKNeighborRelation =
+                new float[numClasses][numPrototypes];
+        float[] classPriors = new floa
