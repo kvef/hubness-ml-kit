@@ -454,4 +454,91 @@ public abstract class InstanceSelector implements Citable {
         int numPrototypes = prototypeIndexes.size();
         float[][] classDataKNeighborRelation =
                 new float[numClasses][numPrototypes];
-        float[] classPriors = new floa
+        float[] classPriors = new float[numClasses];
+        for (int i = 0; i < originalDSet.size(); i++) {
+            classPriors[originalDSet.data.get(i).getCategory()]++;
+        }
+        float laplaceTotal = prototypeIndexes.size() * laplaceEstimator;
+        int currClass;
+        for (int i = 0; i < numPrototypes; i++) {
+            currClass = originalDSet.data.get(
+                    prototypeIndexes.get(i)).getCategory();
+            for (int j = 0; j < numClasses; j++) {
+                if (j == currClass) {
+                    classDataKNeighborRelation[j][i] =
+                            protoClassHubness[j][i] + 1;
+                    // Each element is its own neighbor, trivially.
+                } else {
+                    classDataKNeighborRelation[j][i] = protoClassHubness[j][i];
+                }
+                classDataKNeighborRelation[j][i] += laplaceEstimator;
+                classDataKNeighborRelation[j][i] /=
+                        ((k + 1) * classPriors[j] + laplaceTotal);
+                // Each element is its own neighbor, trivially.
+            }
+        }
+        return classDataKNeighborRelation;
+    }
+
+    /**
+     * Calculates the class-conditional prototype occurrences as neighbors.
+     *
+     * @param k Neighborhood size.
+     * @param numClasses Number of classes.
+     * @param extendByElement Whether to include each point as its own 0th
+     * neighbor by default or not.
+     * @return
+     */
+    public float[][] getClassDataNeighborRelationNonNormalized(
+            int k,
+            int numClasses,
+            boolean extendByElement) {
+        int numPrototypes = prototypeIndexes.size();
+        float[][] classDataKNeighborRelation =
+                new float[numClasses][numPrototypes];
+        int currClass;
+        for (int i = 0; i < numPrototypes; i++) {
+            currClass = originalDSet.data.get(
+                    prototypeIndexes.get(i)).getCategory();
+            for (int j = 0; j < numClasses; j++) {
+                if (j == currClass) {
+                    classDataKNeighborRelation[j][i] =
+                            protoClassHubness[j][i] + 1;
+                    // Each element is its own neighbor, trivially.
+                } else {
+                    classDataKNeighborRelation[j][i] = protoClassHubness[j][i];
+                }
+            }
+        }
+        return classDataKNeighborRelation;
+    }
+
+    /**
+     * Generates hubness-based weights for the hw-kNN algorithm. These are based
+     * on inversely exponential standardized bad hubness scores.
+     *
+     * @return
+     */
+    public float[] getKNNHubnessWeightingScheme() {
+        double meanBadness = 0;
+        double stdevBadness = 0;
+        for (int i = 0; i < protoBadHubness.length; i++) {
+            meanBadness += protoBadHubness[i];
+        }
+        meanBadness /= (float) protoBadHubness.length;
+        for (int i = 0; i < protoBadHubness.length; i++) {
+            stdevBadness += ((meanBadness - protoBadHubness[i])
+                    * (meanBadness - protoBadHubness[i]));
+        }
+        stdevBadness /= (float) protoBadHubness.length;
+        stdevBadness = Math.sqrt(stdevBadness);
+        float[] weights = new float[protoBadHubness.length];
+        for (int i = 0; i < protoBadHubness.length; i++) {
+            weights[i] = (float) Math.pow(
+                    Math.E,
+                    -((protoBadHubness[i] - (float) meanBadness)
+                    / (float) stdevBadness));
+        }
+        return weights;
+    }
+}
