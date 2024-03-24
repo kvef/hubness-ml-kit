@@ -246,3 +246,34 @@ public class RandomSelector extends InstanceSelector
                 }
             }
         }
+        // Initialize hubness-related data arrays.
+        int numClasses = getNumClasses();
+        // Prototype occurrence frequency array.
+        int[] protoHubness = new int[protoIndexes.size()];
+        // Prototype good occurrence frequency array.
+        int[] protoGoodHubness = new int[protoIndexes.size()];
+        // Prototype detrimental occurrence frequency array.
+        int[] protoBadHubness = new int[protoIndexes.size()];
+        // Prototype class-conditional neighbor occurrence frequencies.
+        int[][] protoClassHubness = new int[numClasses][protoIndexes.size()];
+        setPrototypeHubness(protoHubness);
+        setPrototypeGoodHubness(protoGoodHubness);
+        setPrototypeBadHubness(protoBadHubness);
+        setProtoClassHubness(protoClassHubness);
+        int currLabel;
+        for (int i = 0; i < datasize; i++) {
+            currLabel = originalDataSet.getLabelOf(i);
+            for (int j = 0; j < k; j++) {
+                if (currLabel == originalDataSet.getLabelOf(
+                        protoIndexes.get(kneighbors[i][j]))) {
+                    protoGoodHubness[kneighbors[i][j]]++;
+                } else {
+                    protoBadHubness[kneighbors[i][j]]++;
+                }
+                protoHubness[kneighbors[i][j]]++;
+                protoClassHubness[currLabel][kneighbors[i][j]]++;
+            }
+        }
+        setProtoNeighborSets(kneighbors);
+    }
+}
