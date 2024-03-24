@@ -92,4 +92,95 @@ public class RandomSelector extends InstanceSelector
     }
 
     @Override
-    public InstanceSel
+    public InstanceSelector copy() {
+        if (nsf == null) {
+            return new RandomSelector();
+        } else {
+            return new RandomSelector(nsf);
+        }
+    }
+
+    @Override
+    public void reduceDataSet(int numPrototypes) throws Exception {
+        DataSet original = getOriginalDataSet();
+        ArrayList<Integer> protoIndexes = new ArrayList<>(original.size());
+        Category[] cats = original.getClassesArray(original.countCategories());
+        float percRetained = (float) numPrototypes / (float) original.size();
+        for (int cIndex = 0; cIndex < cats.length; cIndex++) {
+            if (cats[cIndex] == null) {
+                continue;
+            }
+            int catSize = cats[cIndex].size();
+            int numClPrototypes = Math.max(1, (int)(percRetained * catSize));
+            int[] sample = UniformSampler.getSample(
+                    catSize, numClPrototypes);
+            for (int i = 0; i < sample.length; i++) {
+                protoIndexes.add(cats[cIndex].getIndex(sample[i]));
+            }
+        }
+        setPrototypeIndexes(protoIndexes);
+        sortSelectedIndexes();
+    }
+
+    @Override
+    public void reduceDataSet() throws Exception {
+        // There is no automatic way for determining the size of the reduced set
+        // for random subsampling, so here we use a 20% retainment rate by
+        // default.
+        reduceDataSet(0.2f);
+    }
+    
+    @Override
+    public void calculatePrototypeHubness(int k) throws Exception {
+        this.setNeighborhoodSize(k);
+        if (k <= 0) {
+            return;
+        }
+        DataSet originalDataSet = getOriginalDataSet();
+        // Original neighbor sets and neighbor distances.
+        int[][] kns = nsf.getKNeighbors();
+        float[][] kd = nsf.getKDistances();
+        // Neighbor sets with prototypes as neighbors.
+        int[][] kneighbors = new int[originalDataSet.size()][k];
+        int kNSF = kns[0].length;
+        HashMap<Integer, Integer> protoMap =
+                new HashMap<>(getPrototypeIndexes().size() * 2);
+        ArrayList<Integer> protoIndexes = getPrototypeIndexes();
+        for (int i = 0; i < protoIndexes.size(); i++) {
+            protoMap.put(protoIndexes.get(i), i);
+        }
+        int l;
+        int datasize = originalDataSet.size();
+        float[][] kdistances = new float[datasize][k];
+        int[] kcurrLen = new int[datasize];
+        float[][] distMatrix = nsf.getDistances();
+        // Auxiliary array for fast restricted kNN search.
+        ArrayList<Integer> intervals;
+        int upper, lower;
+        int min, max;
+        for (int i = 0; i < originalDataSet.size(); i++) {
+            intervals = new ArrayList(k + 2);
+            intervals.add(-1);
+            for (int j = 0; j < kNSF; j++) {
+                if (protoMap.containsKey(kns[i][j])) {
+                    kneighbors[i][kcurrLen[i]] = protoMap.get(kns[i][j]);
+                    kdistances[i][kcurrLen[i]] = kd[i][j];
+                    kcurrLen[i]++;
+                    intervals.add(kns[i][j]);
+                }
+                if (kcurrLen[i] >= k) {
+                    break;
+                }
+            }
+            intervals.add(datasize + 1);
+            Collections.sort(intervals);
+            if (kcurrLen[i] < k) {
+                int iSizeRed = intervals.size() - 1;
+                // The loop needs to iterate one less than to the end, as
+                // the last limitation is there, so there are no elements
+                // beyond.
+                for (int ind = 0; ind < iSizeRed; ind++) {
+                    lower = intervals.get(ind);
+                    upper = intervals.get(ind + 1);
+                    for (int j = lower + 1; j < upper - 1; j++) {
+                 
