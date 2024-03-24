@@ -183,4 +183,66 @@ public class RandomSelector extends InstanceSelector
                     lower = intervals.get(ind);
                     upper = intervals.get(ind + 1);
                     for (int j = lower + 1; j < upper - 1; j++) {
-                 
+                        if (i != j && protoMap.containsKey(j)) {
+                            min = Math.min(i, j);
+                            max = Math.max(i, j);
+                            if (kcurrLen[i] > 0) {
+                                if (kcurrLen[i] == k) {
+                                    if (distMatrix[min][max - min - 1]
+                                            < kdistances[i][kcurrLen[i] - 1]) {
+                                        // Search to see where to insert.
+                                        l = k - 1;
+                                        while ((l >= 1) && distMatrix[min][
+                                                max - min - 1]
+                                                < kdistances[i][l - 1]) {
+                                            kdistances[i][l] =
+                                                    kdistances[i][l - 1];
+                                            kneighbors[i][l] =
+                                                    kneighbors[i][l - 1];
+                                            l--;
+                                        }
+                                        kdistances[i][l] =
+                                                distMatrix[min][max - min - 1];
+                                        kneighbors[i][l] = protoMap.get(j);
+                                    }
+                                } else {
+                                    if (distMatrix[min][max - min - 1]
+                                            < kdistances[i][kcurrLen[i] - 1]) {
+                                        // Search to see where to insert.
+                                        l = kcurrLen[i] - 1;
+                                        kdistances[i][kcurrLen[i]] =
+                                                kdistances[i][kcurrLen[i] - 1];
+                                        kneighbors[i][kcurrLen[i]] =
+                                                kneighbors[i][kcurrLen[i] - 1];
+                                        while ((l >= 1) && distMatrix[min][
+                                                max - min - 1]
+                                                < kdistances[i][l - 1]) {
+                                            kdistances[i][l] =
+                                                    kdistances[i][l - 1];
+                                            kneighbors[i][l] =
+                                                    kneighbors[i][l - 1];
+                                            l--;
+                                        }
+                                        kdistances[i][l] =
+                                                distMatrix[min][max - min - 1];
+                                        kneighbors[i][l] = protoMap.get(j);
+                                        kcurrLen[i]++;
+                                    } else {
+                                        kdistances[i][kcurrLen[i]] =
+                                                distMatrix[min][max - min - 1];
+                                        kneighbors[i][kcurrLen[i]] =
+                                                protoMap.get(j);
+                                        kcurrLen[i]++;
+                                    }
+                                }
+                            } else {
+                                kdistances[i][0] =
+                                        distMatrix[min][max - min - 1];
+                                kneighbors[i][0] = protoMap.get(j);
+                                kcurrLen[i] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
