@@ -217,4 +217,93 @@ public class Wilson72 extends InstanceSelector implements NSFUserInterface {
         // Prototype occurrence frequency array.
         int[] protoHubness = new int[protoIndexes.size()];
         // Prototype good occurrence frequency array.
-   
+        int[] protoGoodHubness = new int[protoIndexes.size()];
+        // Prototype detrimental occurrence frequency array.
+        int[] protoBadHubness = new int[protoIndexes.size()];
+        // Prototype class-conditional neighbor occurrence frequencies.
+        int[][] protoClassHubness = new int[numClasses][protoIndexes.size()];
+        setPrototypeHubness(protoHubness);
+        setPrototypeGoodHubness(protoGoodHubness);
+        setPrototypeBadHubness(protoBadHubness);
+        setProtoClassHubness(protoClassHubness);
+        int currLabel;
+        for (int i = 0; i < datasize; i++) {
+            currLabel = originalDataSet.getLabelOf(i);
+            for (int j = 0; j < k; j++) {
+                if (currLabel == originalDataSet.getLabelOf(
+                        protoIndexes.get(kneighbors[i][j]))) {
+                    protoGoodHubness[kneighbors[i][j]]++;
+                } else {
+                    protoBadHubness[kneighbors[i][j]]++;
+                }
+                protoHubness[kneighbors[i][j]]++;
+                protoClassHubness[currLabel][kneighbors[i][j]]++;
+            }
+        }
+        setProtoNeighborSets(kneighbors);
+    }
+
+    @Override
+    public void noRecalcs() {
+    }
+
+    @Override
+    public void setNSF(NeighborSetFinder nsf) {
+        this.nsf = nsf;
+        kSelection = nsf.getKNeighbors()[0].length;
+    }
+
+    @Override
+    public NeighborSetFinder getNSF() {
+        return nsf;
+    }
+
+    @Override
+    public void reduceDataSet() throws Exception {
+        if (nsf == null) {
+            nsf = new NeighborSetFinder(getOriginalDataSet(),
+                    CombinedMetric.FLOAT_MANHATTAN);
+            nsf.calculateDistances();
+            nsf.calculateNeighborSets(kSelection);
+        }
+        DataSet originalDataSet = getOriginalDataSet();
+        int[][] kneighbors = nsf.getKNeighbors();
+        int currClass;
+        int currClassCount;
+        int threshold = kSelection / 2 + 1;
+        int[] classCounts = new int[originalDataSet.countCategories()];
+        ArrayList<Integer> pIndexes = new ArrayList<>(originalDataSet.size());
+        for (int i = 0; i < originalDataSet.size(); i++) {
+            currClass = originalDataSet.getLabelOf(i);
+            currClassCount = 0;
+            for (int j = 0; j < kSelection; j++) {
+                if (originalDataSet.getLabelOf(kneighbors[i][j])
+                        == currClass) {
+                    currClassCount++;
+                }
+            }
+            if (currClassCount >= threshold || classCounts[currClass] == 0) {
+                pIndexes.add(i);
+                classCounts[currClass]++;
+            }
+        }
+        setPrototypeIndexes(pIndexes);
+        sortSelectedIndexes();
+    }
+
+    @Override
+    public void reduceDataSet(int numPrototypes) throws Exception {
+        reduceDataSet();
+        // This class has no way of controlling how much is retained.
+    }
+
+    @Override
+    public InstanceSelector copy() {
+        CombinedMetric cmet = getCombinedMetric();
+        if (nsf == null) {
+            return new Wilson72(kSelection, cmet);
+        } else {
+            return new Wilson72(nsf, cmet);
+        }
+    }
+}
