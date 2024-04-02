@@ -103,4 +103,34 @@ public class GaussianMixtureModel extends ProbabilityModel {
     }
 
     @Override
-    public double[] calcTestDataProbabilities(DataInstance[] test
+    public double[] calcTestDataProbabilities(DataInstance[] testArray) {
+        double[] probs = new double[testArray.length];
+        double[] cProbs;
+        int N = testArray.length;
+        for (int i = 0; i < N; i++) {
+            cProbs = calcProbArray(testArray[i]);
+            probs[i] = Math.max(Math.min(ArrayUtil.max(cProbs), 1), 0);
+        }
+        return probs;
+    }
+
+    /**
+     * Calculate the class (model index) that an instance is most likely to have
+     * originated from.
+     *
+     * @param instance DataInstance object.
+     * @return The index of the most likely model.
+     */
+    public int calcDataPointClass(DataInstance instance) {
+        double[] cProbs = calcProbArray(instance);
+        int cl = -1;
+        double maxProb = -1;
+        for (int c = 0; c < models.length; c++) {
+            if (cProbs[c] > maxProb) {
+                maxProb = cProbs[c];
+                cl = c;
+            }
+        }
+        return cl;
+    }
+}
