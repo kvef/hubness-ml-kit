@@ -74,4 +74,22 @@ public class NormalDistributionCalculator {
         tDeg *= t;
         result += b4 * tDeg;
         tDeg *= t;
-        result += 
+        result += b5 * tDeg;
+        result = 1 - phi(x) * result;
+        return result;
+    }
+
+    /**
+     * Zelen & Severo (1964) - method for approximating the cumulative
+     * distribution function
+     *
+     * @param x Double value.
+     * @param mean Mean value.
+     * @param sigma Standard deviation.
+     * @return Cumulative distribution function for the normal distribution,
+     * upper bounded by the passed value x.
+     */
+    public static double PhiCumulative(double x, double mean, double stDev) {
+        return PhiCumulative((x - mean) / stDev);
+    }
+}
