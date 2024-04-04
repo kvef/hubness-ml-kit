@@ -65,4 +65,11 @@ public abstract class Sampler {
     /**
      * Gets a uniform subsample.
      *
-     * @param dsets DataSet
+     * @param dsets DataSet object array to be sampled from.
+     * @param sampleSize Size of the desired sample.
+     * @return DataSet object containing the subsample of the original data.
+     * @throws Exception
+     */
+    public abstract DataSet getSample(DataSet[] dsets, int sampleSize)
+            throws Exception;
+}
