@@ -82,4 +82,49 @@ public class VectorQuantization {
             index = randa.nextInt(dset.size());
             instance = dset.data.get(index);
             // Find the closest codebook.
-         
+            minDist = Float.MAX_VALUE;
+            for (int j = 0; j < codebook.length; j++) {
+                currDist = 0;
+                for (int k = 0; k < instance.fAttr.length; k++) {
+                    currDist += (instance.fAttr[k] - codebook[j][k])
+                            * (instance.fAttr[k] - codebook[j][k]);
+                }
+                if (currDist < minDist) {
+                    minDist = currDist;
+                    minIndex = j;
+                }
+            }
+            // Move the closest codebook toward the data point.
+            for (int j = 0; j < codebook[minIndex].length; j++) {
+                codebook[minIndex][j] +=
+                        alpha * (instance.fAttr[j] - codebook[minIndex][j]);
+            }
+            alpha *= fact;
+        }
+        return codebook;
+    }
+
+    /**
+     * Perform vector quantization.
+     *
+     * @return Codebook produced by VQ.
+     */
+    public DataSet getCodebookInstances() {
+        float[][] fArr = getCodebook();
+        DataSet resCol = new DataSet();
+        resCol.fAttrNames = new String[fArr[0].length];
+        for (int i = 0; i < resCol.fAttrNames.length; i++) {
+            resCol.fAttrNames[i] = "floatAtt" + i;
+        }
+        DataInstance instance;
+        for (int i = 0; i < fArr.length; i++) {
+            instance = new DataInstance(resCol);
+            instance.embedInDataset(resCol);
+            resCol.addDataInstance(instance);
+            for (int j = 0; j < instance.fAttr.length; j++) {
+                instance.fAttr[j] = fArr[i][j];
+            }
+        }
+        return resCol;
+    }
+}
