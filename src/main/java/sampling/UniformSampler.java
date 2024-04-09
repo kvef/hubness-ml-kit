@@ -88,4 +88,86 @@ public class UniformSampler extends Sampler {
             }
         }
         return sample;
-  
+    }
+
+    @Override
+    public DataSet getSample(DataSet[] dsets, int sampleSize) throws Exception {
+        if (sampleSize <= 0 || dsets == null || dsets.length == 0) {
+            return new DataSet();
+        }
+        DataSet sample;
+        // A flag for when all data sets have size zero.
+        boolean allZero = true;
+
+        // We count the non-empty data sets.
+        int totalSize = 0;
+        int numNonEmpty = 0;
+        for (int i = 0; i < dsets.length; i++) {
+            if (dsets[i] == null || dsets[i].isEmpty()) {
+            } else {
+                allZero = false;
+                numNonEmpty++;
+            }
+        }
+        if (allZero) {
+            return new DataSet();
+        }
+        // Clean up the null collections so that the joiner can join later on.
+        DataSet[] nonEmptyCollections = dsets;
+        if (numNonEmpty < dsets.length) {
+            nonEmptyCollections = new DataSet[numNonEmpty];
+        }
+        // Make a new collection array, where all data sets are non-null and
+        // non-empty.
+        int curr = -1;
+        for (int i = 0; i < dsets.length; i++) {
+            if (dsets[i] != null && !(dsets[i].isEmpty())) {
+                nonEmptyCollections[++curr] = dsets[i];
+            }
+        }
+        // Get sizes of all non-empty data sets into an array.
+        int[] sizeArray = new int[nonEmptyCollections.length];
+        for (int i = 0; i < nonEmptyCollections.length; i++) {
+            sizeArray[i] = nonEmptyCollections[i].size();
+            totalSize += sizeArray[i];
+        }
+        // As we need a sample of a fixed size, samples from individual datasets
+        // need to sum up exactly to that, while maintaining proportions as well
+        // as possible. Here we calculate a sample size array for all target
+        // data sets.
+        float[] sampleSizeArrayFloat = new float[nonEmptyCollections.length];
+        int[] sampleSizeArray = new int[nonEmptyCollections.length];
+        int currSize = 0;
+        for (int i = 0; i < nonEmptyCollections.length; i++) {
+            if (sizeArray[i] != 0) {
+                sampleSizeArrayFloat[i] = ((float) sizeArray[i]
+                        / (float) totalSize) * (float) sampleSize;
+                sampleSizeArray[i] = (int) (sampleSizeArrayFloat[i]);
+                currSize += sampleSizeArray[i];
+            }
+        }
+        // As the integer cast loses decimal places, sampleSize will always be
+        // higher than currSize.
+        int bad = sampleSize - currSize;
+        // Now scatter these randomly
+        int numFix = 0;
+        int candidate;
+        Random randa = new Random();
+        // We just fix individual data set sample size specifications prior to
+        // extracting the sample.
+        while (numFix < bad) {
+            candidate = randa.nextInt(sampleSizeArray.length);
+            if (sizeArray[candidate] > sampleSizeArray[candidate]) {
+                numFix++;
+                sampleSizeArray[candidate]++;
+            }
+        }
+        // We go and iteratively sample through the data sets.
+        DataSet[] samples = new DataSet[sampleSizeArray.length];
+        for (int i = 0; i < sampleSizeArray.length; i++) {
+            samples[i] = getSample(nonEmptyCollections[i], sampleSizeArray[i]);
+        }
+        sample = DataSetJoiner.join(samples);
+        return sample;
+    }
+}
