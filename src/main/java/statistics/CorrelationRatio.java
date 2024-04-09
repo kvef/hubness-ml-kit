@@ -96,4 +96,15 @@ public class CorrelationRatio {
         for (int i = 0; i < dset.size(); i++) {
             instance = dset.data.get(i);
             tmpDist = cmet.dist(instance, globalCentroid);
-          
+            totalVar += tmpDist * tmpDist;
+        }
+        if (totalVar > 0) {
+            // Correlation ratio is defined as a ratio between the dispersions.
+            correlation = categoriesVar / totalVar;
+            return correlation;
+        } else {
+            // In this case all examples are the same.
+            return 1;
+        }
+    }
+}
