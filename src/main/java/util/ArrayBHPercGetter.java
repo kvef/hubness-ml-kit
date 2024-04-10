@@ -51,4 +51,16 @@ public class ArrayBHPercGetter {
             s = br.readLine();
             while (s != null) {
                 s = s.trim();
-                li
+                line = s.split(",");
+                total += Integer.parseInt(line[0]);
+                badTotal += Integer.parseInt(line[1]);
+                s = br.readLine();
+            }
+        } catch (IOException | NumberFormatException e) {
+            throw e;
+        } finally {
+            br.close();
+        }
+        System.out.println(badTotal / total);
+    }
+}
