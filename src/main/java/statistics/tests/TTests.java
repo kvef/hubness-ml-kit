@@ -61,4 +61,102 @@ public class TTests {
         float[] difs = new float[resA.length];
         for (int i = 0; i < difs.length; i++) {
             difs[i] = resA[i] - resB[i];
-            difsSUM += difs
+            difsSUM += difs[i];
+        }
+        difsMean = difsSUM / numSamples;
+        for (int i = 0; i < difs.length; i++) {
+            difsSQSUM += (difs[i] - difsMean) * (difs[i] - difsMean);
+        }
+        float denominator = (float) Math.sqrt(difsSQSUM / (numSamples - 1));
+        float numerator = difsMean * (float) Math.sqrt(numSamples);
+        t = numerator / denominator;
+        if (t > critTable.critVals1TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_1;
+        } else if (t > critTable.critVals5TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_5;
+        } else {
+            return NO_SIGNIFICANCE;
+        }
+    }
+
+    /**
+     * Paired two-tailed t-test, corrected re-sampled, for use in
+     * cross-validation hypothesis testing . Note that fracTrain + fracTest = 1.
+     *
+     * @param resA First float value array.
+     * @param resB Second float value array.
+     * @param fracTrain fraction of the data used for training
+     * @param fracTest fraction of the data used for testing
+     * @return 0: no significance, 1: .05 level 2: .01 level
+     */
+    public int pairedTwoTailedCorrectedResampled(
+            float[] resA,
+            float[] resB,
+            float fracTrain,
+            float fracTest) {
+        if (resA == null || resB == null) {
+            return 0;
+        }
+        float numSamples = resA.length;
+        // This is Student's t-value.
+        float t;
+        float difsSUM = 0;
+        float difsSQSUM = 0;
+        float difsMean;
+        float[] difs = new float[resA.length];
+        for (int i = 0; i < difs.length; i++) {
+            difs[i] = resA[i] - resB[i];
+            difsSUM += difs[i];
+        }
+        difsMean = difsSUM / numSamples;
+        for (int i = 0; i < difs.length; i++) {
+            difsSQSUM += (difs[i] - difsMean) * (difs[i] - difsMean);
+        }
+        float denominator = (float) Math.sqrt(difsSQSUM
+                * ((1 / numSamples) + (fracTest / fracTrain)));
+        float numerator = Math.abs(difsMean) * (float) Math.sqrt(numSamples);
+        t = numerator / denominator;
+        System.out.println(t);
+        if (t > critTable.critVals1TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_1;
+        } else if (t > critTable.critVals5TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_5;
+        } else {
+            return NO_SIGNIFICANCE;
+        }
+    }
+
+    /**
+     * Paired two-tailed t-test.
+     *
+     * @param resA First double value array.
+     * @param resB Second double value array.
+     * @return 0: no significance, 1: .05 level 2: .01 level
+     */
+    public int pairedTwoTailed(double[] resA, double[] resB) {
+        if (resA == null || resB == null) {
+            return 0;
+        }
+        float numSamples = resA.length;
+        // This is Student's t-value.
+        double t;
+        double difsSUM = 0;
+        double difsSQSUM = 0;
+        double difsMean;
+        double[] difs = new double[resA.length];
+        for (int i = 0; i < difs.length; i++) {
+            difs[i] = resA[i] - resB[i];
+            difsSUM += difs[i];
+        }
+        difsMean = difsSUM / numSamples;
+        for (int i = 0; i < difs.length; i++) {
+            difsSQSUM += (difs[i] - difsMean) * (difs[i] - difsMean);
+        }
+        double denominator = (float) Math.sqrt(difsSQSUM / (numSamples - 1));
+        double numerator = difsMean * (float) Math.sqrt(numSamples);
+        t = numerator / denominator;
+        if (t > critTable.critVals1TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_1;
+        } else if (t > critTable.critVals5TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_5;
+    
