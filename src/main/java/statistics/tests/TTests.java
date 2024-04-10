@@ -159,4 +159,101 @@ public class TTests {
             return SIGNIFICANCE_1;
         } else if (t > critTable.critVals5TwoTailed[resA.length - 1]) {
             return SIGNIFICANCE_5;
-    
+        } else {
+            return NO_SIGNIFICANCE;
+        }
+    }
+
+    /**
+     * Paired two-tailed t-test, corrected re-sampled, for use in
+     * cross-validation hypothesis testing . Note that fracTrain + fracTest = 1.
+     *
+     * @param resA First double value array.
+     * @param resB Second double value array.
+     * @param fracTrain fraction of the data used for training
+     * @param fracTest fraction of the data used for testing
+     * @return 0: no significance, 1: .05 level 2: .01 level
+     */
+    public int pairedTwoTailedCorrectedResampled(
+            double[] resA,
+            double[] resB,
+            float fracTrain,
+            float fracTest) {
+        if (resA == null || resB == null) {
+            return 0;
+        }
+        float numSamples = resA.length;
+        // This is Student's t-value.
+        double t;
+        double difsSUM = 0;
+        double difsSQSUM = 0;
+        double difsMean;
+        double[] difs = new double[resA.length];
+        for (int i = 0; i < difs.length; i++) {
+            difs[i] = resA[i] - resB[i];
+            difsSUM += difs[i];
+        }
+        difsMean = difsSUM / numSamples;
+        for (int i = 0; i < difs.length; i++) {
+            difsSQSUM += (difs[i] - difsMean) * (difs[i] - difsMean);
+        }
+        double denominator = (float) Math.sqrt(difsSQSUM
+                * ((1 / numSamples) + (fracTest / fracTrain)));
+        double numerator = difsMean * (float) Math.sqrt(numSamples);
+        t = numerator / denominator;
+        if (t > critTable.critVals1TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_1;
+        } else if (t > critTable.critVals5TwoTailed[resA.length - 1]) {
+            return SIGNIFICANCE_5;
+        } else {
+            return NO_SIGNIFICANCE;
+        }
+    }
+
+    /**
+     * arg0: One csv file with two columns to be compared by the corrected
+     * re-sampled t-test. First line in the file is the number of rows.
+     *
+     * @param args Command line arguments. A single argument pointing to the csv
+     * file that contains the columns to be compared, preceded by a number of
+     * rows on a separate line.
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        File inFile = new File(args[0]);
+        float[] arr1;
+        float[] arr2;
+        try (BufferedReader br = new BufferedReader(
+                     new InputStreamReader(new FileInputStream(inFile)))) {
+            // Processing the first line.
+            int numLines = Integer.parseInt(br.readLine());
+            arr1 = new float[numLines];
+            arr2 = new float[numLines];
+            String[] pair;
+            String s;
+            // Processing the remaining lines.
+            for (int i = 0; i < numLines; i++) {
+                s = br.readLine();
+                pair = s.split(",");
+                arr1[i] = Float.parseFloat(pair[0]);
+                arr2[i] = Float.parseFloat(pair[1]);
+            }
+            TTests tt = new TTests();
+            int retVal = tt.pairedTwoTailedCorrectedResampled(
+                    arr1, arr2, 0.9f, 0.1f);
+            switch (retVal) {
+                case NO_SIGNIFICANCE: {
+                    System.out.println("no significance");
+                    break;
+                }
+                case SIGNIFICANCE_5: {
+                    System.out.println("significance level 0.5");
+                    break;
+                }
+                case SIGNIFICANCE_1: {
+                    System.out.println("significance level 0.01");
+                    break;
+                }
+            }
+        } catch (Exception e) {
+          
