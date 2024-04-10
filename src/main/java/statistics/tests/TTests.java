@@ -256,4 +256,7 @@ public class TTests {
                 }
             }
         } catch (Exception e) {
-          
+            throw e;
+        }
+    }
+}
