@@ -52,4 +52,110 @@ public class CommandLineParser {
     private ArrayList<String> paramDescVect = new ArrayList<>(INIT_SIZE);
     private ArrayList<Integer> paramTypeVect = new ArrayList<>(INIT_SIZE);
     private ArrayList<Boolean> paramObligatoryVect = new ArrayList<>(INIT_SIZE);
-    private ArrayLis
+    private ArrayList<Boolean> paramMultipleValuesVect =
+            new ArrayList<>(INIT_SIZE);
+    private ArrayList<ArrayList> parsedValues = new ArrayList<>(INIT_SIZE);
+    private int paramNum = 0;
+    private boolean ignoreExtraParams = false;
+
+    /**
+     *
+     * @param priorInfo Boolean indicating whether to use prior information for
+     * notifying the user of parameter info and for parsing the parameters. If
+     * not, the parameters will be fetched automatically, without structure.
+     */
+    public CommandLineParser(boolean priorInfo) {
+        this.priorInfo = priorInfo;
+    }
+
+    /**
+     * Checks if the specified parameter is already defined in the hash.
+     *
+     * @param paramName String that is the parameter name.
+     * @return True if already defined, false otherwise.
+     */
+    public boolean hasParamDefinition(String paramName) {
+        return paramNamesHash.containsKey(trimLeadingDashes(paramName));
+    }
+
+    /**
+     * Checks if a value was already parsed for the specified parameter.
+     *
+     * @param paramName String that is the parameter name.
+     * @return True if a value already exists, false otherwise.
+     */
+    public boolean hasParamValue(String paramName) {
+        return hasParamDefinition(trimLeadingDashes(paramName))
+                && (parsedValues.get(paramNamesHash.get(trimLeadingDashes(
+                paramName))).size() > 0);
+    }
+
+    /**
+     * This method trims the leading dashes of the parameter name, if provided.
+     *
+     * @param paramName String that is the parameter name with possible leading
+     * dashes.
+     * @return String that is the parameter name trimmed of the leading dashes.
+     */
+    private String trimLeadingDashes(String paramName) {
+        int cInd = 0;
+        while (cInd < paramName.length() && paramName.charAt(cInd) == '-') {
+            cInd++;
+        }
+        if (cInd == paramName.length()) {
+            // The pathological case.
+            return "";
+        } else if (cInd == 0) {
+            return paramName;
+        } else {
+            return paramName.substring(cInd, paramName.length());
+        }
+    }
+
+    /**
+     * @param ignoreExtraParams Boolean flag indicating whether to ignore when
+     * unknown parameters are encountered in the prior info mode or to throw an
+     * exception.
+     */
+    public void setIgnoreExtraParams(boolean ignoreExtraParams) {
+        this.ignoreExtraParams = ignoreExtraParams;
+    }
+
+    /**
+     * Get the parsed values for the specified parameter.
+     *
+     * @param paramName String that is the parameter name.
+     * @return ArrayList of values for the specified parameter.
+     * @throws Exception
+     */
+    public ArrayList getParamValues(String paramName) throws Exception {
+        String paramNameTrimmed = trimLeadingDashes(paramName);
+        if (!paramNamesHash.containsKey(paramNameTrimmed)) {
+            throw new Exception(
+                    "Parameter " + paramNameTrimmed
+                    + " doesn't exist in the hash");
+        }
+        int index = (Integer) (paramNamesHash.get(paramNameTrimmed));
+        if (parsedValues.get(index).isEmpty()) {
+            throw new Exception("Parameter " + paramNameTrimmed
+                    + " not provided");
+        }
+        return parsedValues.get(index);
+    }
+
+    /**
+     * Parses the command line arguments.
+     *
+     * @param args String[] representing the command line arguments.
+     * @throws Exception
+     */
+    public void parseLine(String[] args) throws Exception {
+        String head, body;
+        String[] breakUp;
+        for (String s : args) {
+            breakUp = s.split("::");
+            // Separate parameter name from the values.
+            if (breakUp.length < 2) {
+                continue;
+            }
+            head = trimLeadin
