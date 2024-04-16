@@ -59,4 +59,40 @@ public class BasicMathUtil {
             return x;
         }
         float tenPower = (float) Math.pow(10, numDecimalPlaces);
-        float result = tenPow
+        float result = tenPower * x;
+        int resultInt = (int) result;
+        if (result - resultInt > 0.5) {
+            resultInt++;
+        } else if (result - resultInt == 0.5) {
+            if (resultInt % 2 == 1) {
+                // Odd numbers are rounded up on 0.5 case.
+                resultInt++;
+            }
+        }
+        result = (float) resultInt / tenPower;
+        return result;
+    }
+
+    /**
+     * Cut off some decimal places that are not significant.
+     *
+     * @param x A double value.
+     * @param numDecimalPlaces Number of decimal places to keep.
+     * @return The float value with certain decimals cut off.
+     */
+    public static double makeADecimalCutOff(double x, int numDecimalPlaces) {
+        double tenPower = Math.pow(10, numDecimalPlaces);
+        double result = tenPower * x;
+        int resultInt = (int) result;
+        if (result - resultInt > 0.5) {
+            resultInt++;
+        } else if (result - resultInt == 0.5) {
+            // Odd numbers are rounded up on 0.5 case.
+            if (resultInt % 2 == 1) {
+                resultInt++;
+            }
+        }
+        result = resultInt / tenPower;
+        return result;
+    }
+}
