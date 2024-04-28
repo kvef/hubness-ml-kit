@@ -250,4 +250,81 @@ public class CommandLineParser {
                         System.out.print("string -");
                         break;
                 }
-                System.out.prin
+                System.out.print(paramDescVect.get(i));
+                if (paramObligatoryVect.get(i)) {
+                    System.out.print(" obligatory ");
+                } else {
+                    System.out.print(" optional ");
+                }
+                if (paramMultipleValuesVect.get(i)) {
+                    System.out.print(" and multi-valued ");
+                } else {
+                    System.out.print(" and single-valued ");
+                }
+                System.out.println();
+            }
+            System.out.println("---------------------------------------------");
+        }
+    }
+
+    /**
+     * Add a new parameter specification to the expected structure.
+     *
+     * @param paramName String that is the parameter name.
+     * @param paramDesc String that is the parameter description, for informing
+     * the user.
+     * @param paramType Integer that is the parameter type.
+     * @param obligatory Boolean, indicating whether the parameter is mandatory.
+     * @param multipleValues Boolean, indicating whether the parameter takes
+     * multiple values.
+     * @throws Exception
+     */
+    public void addParam(
+            String paramName,
+            String paramDesc,
+            int paramType,
+            boolean obligatory,
+            boolean multipleValues) throws Exception {
+        String paramNameTrimmed = trimLeadingDashes(paramName);
+        if (priorInfo) {
+            if (!paramNamesHash.containsKey(paramNameTrimmed)) {
+                paramNamesHash.put(paramNameTrimmed, paramNum);
+                paramNamesVect.add(paramNameTrimmed);
+                paramDescVect.add(paramDesc);
+                paramTypeVect.add(paramType % 5);
+                paramObligatoryVect.add(obligatory);
+                paramMultipleValuesVect.add(multipleValues);
+                parsedValues.add(new ArrayList(50));
+                paramNum++;
+            } else {
+                throw new Exception("Param " + paramNameTrimmed
+                        + " already specified");
+            }
+        } else {
+            if (!paramNamesHash.containsKey(paramNameTrimmed)) {
+                paramNamesHash.put(paramNameTrimmed, paramNum);
+                paramNamesVect.add(paramNameTrimmed);
+                paramDescVect.add("");
+                paramTypeVect.add(STRING);
+                paramObligatoryVect.add(obligatory);
+                paramMultipleValuesVect.add(multipleValues);
+                parsedValues.add(new ArrayList(50));
+                paramNum++;
+            }
+        }
+    }
+
+    /**
+     * General information on the format of providing the parameters.
+     */
+    public static void generalFormatInfo() {
+        System.out.println("CommandLineParser info:");
+        System.out.println("Parameters can be given in any order, separated by"
+                + "empty spaces");
+        System.out.println("Each parameter declaration should start with"
+                + "param_name:: followed by a list of values separated by"
+                + "commas");
+        System.out.println("In case of type mismatches, appropriate error"
+                + "message will be generated");
+    }
+}
