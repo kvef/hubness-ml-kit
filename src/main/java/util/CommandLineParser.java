@@ -158,4 +158,96 @@ public class CommandLineParser {
             if (breakUp.length < 2) {
                 continue;
             }
-            head = trimLeadin
+            head = trimLeadingDashes(breakUp[0]);
+            body = breakUp[1];
+            // Handle multiple values.
+            if (body.contains(",")) {
+                breakUp = body.split(",");
+            } else {
+                breakUp = new String[1];
+                breakUp[0] = body;
+            }
+            if (priorInfo) {
+                if (!paramNamesHash.containsKey(head)) {
+                    if (ignoreExtraParams) {
+                        continue;
+                    } else {
+                        throw new Exception(
+                                "Parameter \"" + head + "\" not defined");
+                    }
+                }
+            } else {
+                addParam(head, "", STRING, true, true);
+            }
+            int paramIndex = paramNamesHash.get(head);
+            if (!paramMultipleValuesVect.get(paramIndex)) {
+                if (breakUp.length + parsedValues.get(paramIndex).size() > 1) {
+                    throw new Exception(
+                            "Multiple values for parameter " + head
+                            + " not expected");
+                }
+            }
+            // Parse the values into correct types.
+            for (int i = 0; i < breakUp.length; i++) {
+                switch (paramTypeVect.get(paramIndex)) {
+                    case BOOLEAN:
+                        parsedValues.get(paramIndex).
+                                add(Boolean.parseBoolean(breakUp[i]));
+                        break;
+                    case INTEGER:
+                        parsedValues.get(paramIndex).
+                                add(Integer.parseInt(breakUp[i]));
+                        break;
+                    case FLOAT:
+                        parsedValues.get(paramIndex).
+                                add(Float.parseFloat(breakUp[i]));
+                        break;
+                    case DOUBLE:
+                        parsedValues.get(paramIndex).
+                                add(Double.parseDouble(breakUp[i]));
+                        break;
+                    case STRING:
+                        parsedValues.get(paramIndex).
+                                add(breakUp[i]);
+                        break;
+                }
+            }
+        }
+        // Ensure all the mandatory parameters were provided.
+        for (int i = 0; i < paramNum; i++) {
+            if (paramObligatoryVect.get(i)) {
+                if (parsedValues.get(i).size() < 1) {
+                    printInfo();
+                    throw new Exception("Obligatory parameter "
+                            + paramNamesVect.get(i) + " wasn't provided");
+                }
+            }
+        }
+    }
+
+    /**
+     * Print out command line parameter specification information.
+     */
+    public void printInfo() {
+        if (priorInfo) {
+            System.out.println(paramNum + " parameters");
+            for (int i = 0; i < paramNum; i++) {
+                System.out.print("-" + paramNamesVect.get(i) + ":: ");
+                switch (paramTypeVect.get(i)) {
+                    case BOOLEAN:
+                        System.out.print("bool -");
+                        break;
+                    case INTEGER:
+                        System.out.print("int -");
+                        break;
+                    case FLOAT:
+                        System.out.print("float -");
+                        break;
+                    case DOUBLE:
+                        System.out.print("double -");
+                        break;
+                    case STRING:
+                        System.out.print("string -");
+                        break;
+                }
+                System.out.prin
