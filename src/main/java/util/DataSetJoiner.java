@@ -100,4 +100,11 @@ public class DataSetJoiner {
             for (int i = 0; i < dsets.length; i++) {
                 if ((dsets[i] != null) && !dsets[i].isEmpty()) {
                     for (int j = 0; j < dsets[i].data.size(); j++) {
-               
+                        joineDSet.addDataInstance(dsets[i].data.get(j));
+                    }
+                }
+            }
+            return joineDSet;
+        }
+    }
+}
