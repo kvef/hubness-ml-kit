@@ -50,4 +50,44 @@ public class NonHomogenityCalculator {
     /**
      * Calculates the non-homogeneity of the array.
      *
-     * @param arr An array of do
+     * @param arr An array of double values.
+     * @return Non-homogeneity score.
+     */
+    public static double calculateNonHomogeneity(double[] arr) {
+        if (arr == null) {
+            return Double.NaN;
+        }
+        int length = arr.length;
+        double denominator = Math.sqrt(
+                (Math.pow((1 / ((double) length)), 2) * (length - 1)
+                + Math.pow(((length - 1) / ((double) length)), 2))
+                / ((double) length));
+        double sum = 0;
+        for (int i = 0; i < length; i++) {
+            sum += Math.pow(arr[i] - (1 / ((double) length)), 2);
+        }
+        sum = Math.sqrt(sum / (double) length);
+        double result = sum / denominator;
+        return result;
+    }
+
+    /**
+     * An array of values.
+     *
+     * @param args
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length < 2) {
+            System.out.println("args: probs");
+            return;
+        }
+        int length = args.length;
+        double[] arr = new double[length];
+        for (int i = 0; i < length; i++) {
+            arr[i] = Double.parseDouble(args[i]);
+        }
+        double result = calculateNonHomogeneity(arr);
+        System.out.println(result);
+    }
+}
