@@ -49,3 +49,71 @@ public class ImageUtil {
     }
 
     /**
+     * Get the list of image names of a given extension in a directory.
+     * Non-recursive.
+     *
+     * @param dir Target directory.
+     * @param extension Extension to check for.
+     * @return
+     */
+    public static ArrayList<String> getImageNameList(
+            File dir,
+            String extension) {
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        } else {
+            File[] children = dir.listFiles();
+            if (children == null || children.length == 0) {
+                return null;
+            } else {
+                ArrayList<String> result = new ArrayList<>(500);
+                int index;
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i].getName().endsWith(extension)) {
+                        index = children[i].getName().lastIndexOf(".");
+                        result.add(children[i].getName().substring(0, index));
+                    }
+                }
+                return result;
+            }
+        }
+    }
+
+    /**
+     * Get an array of image names of a given extension in a directory.
+     * Non-recursive.
+     *
+     * @param dir Target directory.
+     * @param extension Extension to check for.
+     * @return
+     */
+    public static String[] getImageNamesArray(File dir, String extension) {
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        } else {
+            File[] children = dir.listFiles();
+            // First just count.
+            if (children == null || children.length == 0) {
+                return null;
+            } else {
+                int count = 0;
+                int index;
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i].getName().endsWith(extension)) {
+                        count++;
+                    }
+                }
+                String[] result = new String[count];
+                count = 0;
+                for (int i = 0; i < children.length; i++) {
+                    if (children[i].getName().endsWith(extension)) {
+                        index = children[i].getName().lastIndexOf(".");
+                        result[count++] =
+                                children[i].getName().substring(0, index);
+                    }
+                }
+                return result;
+            }
+        }
+    }
+}
