@@ -141,4 +141,136 @@ public class SOPLUtil {
      */
     public static void printArrayToStream(int[] arr, PrintWriter pw) {
         if (arr == null) {
-            pw.println("Null
+            pw.println("Null array.");
+            return;
+        }
+        for (int i = 0; i < arr.length - 1; i++) {
+            pw.print(arr[i] + " ");
+        }
+        pw.print(arr[arr.length - 1]);
+        pw.println();
+    }
+
+    /**
+     * Prints out the array to the specified stream output.
+     *
+     * @param arr An array of float values.
+     * @param pw PrintWriter object for output.
+     */
+    public static void printArrayToStream(float[] arr, PrintWriter pw) {
+        if (arr == null) {
+            pw.println("Null array.");
+            return;
+        }
+        for (int i = 0; i < arr.length - 1; i++) {
+            pw.print(arr[i] + " ");
+        }
+        pw.print(arr[arr.length - 1]);
+        pw.println();
+    }
+
+    /**
+     * Prints out the array to the specified stream output.
+     *
+     * @param arr An array of string values.
+     * @param pw PrintWriter object for output.
+     */
+    public static void printArrayToStream(String[] arr, PrintWriter pw) {
+        if (arr == null) {
+            pw.println("Null array.");
+            return;
+        }
+        for (int i = 0; i < arr.length - 1; i++) {
+            pw.print(arr[i] + " ");
+        }
+        pw.print(arr[arr.length - 1]);
+        pw.println();
+    }
+
+    /**
+     * Prints out the ArrayList to the specified stream output.
+     *
+     * @param arr An ArrayList of double values.
+     * @param pw PrintWriter object for output.
+     */
+    public static void printArrayListToStream(ArrayList arr, PrintWriter pw) {
+        if (arr == null) {
+            pw.println("Null ArrayList.");
+            return;
+        }
+        if (arr.isEmpty()) {
+            pw.println("Empty ArrayList");
+            return;
+        }
+        for (int i = 0; i < arr.size() - 1; i++) {
+            pw.print(arr.get(i) + " ");
+        }
+        pw.print(arr.get(arr.size() - 1));
+        pw.println();
+    }
+
+    /**
+     * Prints out the array to the specified stream output.
+     *
+     * @param arr An array of double values.
+     * @param pw PrintWriter object for output.
+     * @param sep String separator.
+     */
+    public static void printArrayToStream(double[] arr, PrintWriter pw,
+            String sep) {
+        if (arr == null) {
+            pw.println("Null array.");
+            return;
+        }
+        for (int i = 0; i < arr.length - 1; i++) {
+            pw.print(arr[i] + sep);
+        }
+        pw.print(arr[arr.length - 1]);
+        pw.println();
+    }
+
+    /**
+     * Prints out the array to the specified stream output.
+     *
+     * @param arr An array of integer values.
+     * @param pw PrintWriter object for output.
+     * @param sep String separator.
+     */
+    public static void printArrayToStream(int[] arr, PrintWriter pw,
+            String sep) {
+        if (arr == null) {
+            pw.println("Null array.");
+            return;
+        }
+        for (int i = 0; i < arr.length - 1; i++) {
+            pw.print(arr[i] + sep);
+        }
+        pw.print(arr[arr.length - 1]);
+        pw.println();
+    }
+
+    /**
+     * Prints out the array to the specified stream output.
+     *
+     * @param arr An array of float values.
+     * @param pw PrintWriter object for output.
+     * @param sep String separator.
+     */
+    public static void printArrayToStream(float[] arr, PrintWriter pw,
+            String sep) {
+        if (arr == null) {
+            pw.println("Null array.");
+            return;
+        }
+        for (int i = 0; i < arr.length - 1; i++) {
+            pw.print(arr[i] + sep);
+        }
+        pw.print(arr[arr.length - 1]);
+        pw.println();
+    }
+
+    /**
+     * Prints out the array to the specified stream output.
+     *
+     * @param arr An array of string values.
+     * @param pw PrintWriter object for output
