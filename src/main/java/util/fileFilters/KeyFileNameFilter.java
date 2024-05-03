@@ -17,30 +17,17 @@
 package util.fileFilters;
 
 import java.io.File;
-import java.io.FileFilter;
+import java.io.FilenameFilter;
 
 /**
- * Filter for files of small size.
+ * Filter for .key files.
  *
  * @author Nenad Tomasev <nenad.tomasev at gmail.com>
  */
-public class FileSizeFilter implements FileFilter {
-
-    // Limit size, in bytes.
-    private int minFileSize = 3000;
-
-    public FileSizeFilter() {
-    }
-
-    /**
-     * @param minFileSize Minimum file size in bytes.
-     */
-    public FileSizeFilter(int minFileSize) {
-        this.minFileSize = minFileSize;
-    }
+public class KeyFileNameFilter implements FilenameFilter {
 
     @Override
-    public boolean accept(File f) {
-        return (f.length() > minFileSize);
+    public boolean accept(File dir, String name) {
+        return name.endsWith(".key");
     }
 }
