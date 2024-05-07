@@ -70,4 +70,13 @@ public class BOWLoaderFromARFF {
      * and the second is the output file.
      * @throws Exception
      */
-    public static void main(Stri
+    public static void main(String[] args) throws Exception {
+        if (args.length != 2) {
+            System.out.println("arg0: inFile (.arff of a BOW DataSet)");
+            System.out.println("arg1: outFile (sparse matrix format)");
+        }
+        BOWDataSet bdset = load(new File(args[0]));
+        bdset.removeLessFrequentWords(6);
+        bdset.printToSparseMatrixFile(args[1]);
+    }
+}
